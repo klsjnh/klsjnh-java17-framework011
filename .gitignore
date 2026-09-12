@@ -1,0 +1,36 @@
+# ---- build ----
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.code-workspace
+.settings/
+.project
+.classpath
+
+# ---- OS（Windows / WSL / macOS 混合开发）----
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+
+# ---- logs & temp ----
+*.log
+logs/
+tmp/
+*.tmp
+
+# ---- 本地私有配置（不入库；三套 profile 的 yml 正常提交）----
+application-local.yml
+application-local.yaml
+*.local
+
+# ---- node（tools/*.mjs 只用 Node 标准库，防误装依赖）----
+node_modules/
