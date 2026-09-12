@@ -108,7 +108,8 @@ public class JulyUserUseCase {
      * @return new user id
      */
     @Transactional
-    public String insert(String userAccount, String userName, String password, String mobile, String email) {
+    public String insert(String userAccount, String userName, String password, String mobile, String email,
+            String avatar, String pkOrg) {
         if (password == null || password.isBlank()) {
             throw BusinessException.badRequest("insert: password is required");
         }
@@ -118,7 +119,7 @@ public class JulyUserUseCase {
         }
 
         JulyUser user = new JulyUser(EntityId.generate(), userAccount, userName, passwordPort.encode(password),
-                mobile, email, null, Status011.ENABLED.getCode(), AuditInfo.empty());
+                mobile, email, avatar, pkOrg, null, Status011.ENABLED.getCode(), AuditInfo.empty());
         repository.insert(user);
 
         return user.id().value();
@@ -133,9 +134,9 @@ public class JulyUserUseCase {
      * @param email    email
      */
     @Transactional
-    public void update(String id, String userName, String mobile, String email) {
+    public void update(String id, String userName, String mobile, String email, String avatar, String pkOrg) {
         JulyUser user = require(id);
-        user.updateProfile(userName, mobile, email);
+        user.updateProfile(userName, mobile, email, avatar, pkOrg);
         repository.update(user);
     }
 

@@ -47,6 +47,14 @@ public class JulyUserVo011 {
     @Schema(description = "邮箱")
     private String email;
 
+    /** Avatar. */
+    @Schema(description = "头像")
+    private String avatar;
+
+    /** Organization link (pk_org), nullable. */
+    @Schema(description = "所属组织（pk_org，可空）")
+    private String pkOrg;
+
     /** Last login time. */
     @Schema(description = "最后登录时间")
     private LocalDateTime lastLoginTime;

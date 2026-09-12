@@ -240,6 +240,8 @@ public class JulyUserRepositoryImpl
         po.setPassword(user.password());
         po.setMobile(user.mobile());
         po.setEmail(user.email());
+        po.setAvatar(user.avatar());
+        po.setPkOrg(user.pkOrg());
         po.setLastLoginTime(user.lastLoginTime());
         po.setStatus(user.status());
 
@@ -256,6 +258,7 @@ public class JulyUserRepositoryImpl
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
         return new JulyUser(EntityId.of(po.getId()), po.getUserAccount(), po.getUserName(), po.getPassword(),
-                po.getMobile(), po.getEmail(), po.getLastLoginTime(), po.getStatus(), audit);
+                po.getMobile(), po.getEmail(), po.getAvatar(), po.getPkOrg(), po.getLastLoginTime(), po.getStatus(),
+                audit);
     }
 }

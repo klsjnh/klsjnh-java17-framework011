@@ -42,6 +42,8 @@ public class JulyUserConverter {
         vo.setUserName(user.userName());
         vo.setMobile(user.mobile());
         vo.setEmail(user.email());
+        vo.setAvatar(user.avatar());
+        vo.setPkOrg(user.pkOrg());
         vo.setLastLoginTime(user.lastLoginTime());
         vo.setStatus(user.status());
         vo.setCreateBy(user.audit().createBy());

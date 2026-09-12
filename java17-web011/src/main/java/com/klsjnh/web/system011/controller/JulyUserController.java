@@ -87,7 +87,7 @@ public class JulyUserController {
 
         return Response011.successId(funcName,
                 useCase.insert(vo.getUserAccount(), vo.getUserName(), vo.getPassword(), vo.getMobile(),
-                        vo.getEmail()));
+                        vo.getEmail(), vo.getAvatar(), vo.getPkOrg()));
     }
 
     /**
@@ -101,7 +101,7 @@ public class JulyUserController {
     public Response011<IdVo011> update(@RequestBody JulyUserUpdateVo011 vo) {
         String funcName = "update";
 
-        useCase.update(vo.getId(), vo.getUserName(), vo.getMobile(), vo.getEmail());
+        useCase.update(vo.getId(), vo.getUserName(), vo.getMobile(), vo.getEmail(), vo.getAvatar(), vo.getPkOrg());
 
         return Response011.successId(funcName, vo.getId());
     }

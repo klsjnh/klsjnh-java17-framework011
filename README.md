@@ -38,9 +38,9 @@ web ──► application ──► domain ◄── infrastructure
 | 模块 | 层 | 内容 |
 |------|-----|------|
 | java17-common011 | common | FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011、Response011 + IdVo011、BusinessException、分页对、批量删除对 |
-| java17-domain011 | domain | EntityId / AuditInfo（record 值对象） |
-| java17-application011 | application | 用例编排（将落） |
-| java17-infrastructure011 | infrastructure | BasePo 四件套 + MasterLinked、CommonMapper、仓库基座家族（BaseRepository / 011 / Tree / Tree011 / MasterSub021） |
+| java17-domain011 | domain | EntityId / AuditInfo / JulyScheduler / JulyUser / JulyRole / 各仓储接口 |
+| java17-application011 | application | JulyScheduler / JulyUser / JulyRole 用例 |
+| java17-infrastructure011 | infrastructure | 基座家族五层 + 业务持久化（system011：user/role/关联/审计/scheduler）+ IAM 适配器（bcrypt / JWT / 审计记录器） |
 | java17-web011 | web | Controller / 全局异常 / 鉴权过滤器（将落） |
 | java17-app011 | app | 唯一 main：Framework011Application |
 

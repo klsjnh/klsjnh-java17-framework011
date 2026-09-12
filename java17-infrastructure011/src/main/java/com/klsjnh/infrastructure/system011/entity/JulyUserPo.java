@@ -47,6 +47,12 @@ public class JulyUserPo extends BasePo {
     /** Email. */
     private String email;
 
+    /** Avatar. */
+    private String avatar;
+
+    /** Organization link (pk_org), nullable. */
+    private String pkOrg;
+
     /** Last login time. */
     private LocalDateTime lastLoginTime;
 }

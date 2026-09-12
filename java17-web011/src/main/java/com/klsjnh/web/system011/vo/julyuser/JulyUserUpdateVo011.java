@@ -39,4 +39,10 @@ public class JulyUserUpdateVo011 {
     /** Email. */
     @Schema(description = "邮箱")
     private String email;
+
+    /** Avatar. */
+    private String avatar;
+
+    /** Organization link (pk_org), nullable. */
+    private String pkOrg;
 }

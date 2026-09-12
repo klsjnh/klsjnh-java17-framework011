@@ -61,6 +61,17 @@ public class JulyUser {
     private String email;
 
     /**
+     * Avatar.
+     */
+    private String avatar;
+
+    /**
+     * Organization link (pk_org), nullable — the user may belong to no
+     * organization.
+     */
+    private String pkOrg;
+
+    /**
      * Last login time.
      */
     private LocalDateTime lastLoginTime;
@@ -84,18 +95,22 @@ public class JulyUser {
      * @param password  password hash (bcrypt)
      * @param mobile    mobile number
      * @param email     email
+     * @param avatar    avatar
+     * @param pkOrg     organization link, nullable
      * @param lastLoginTime last login time
      * @param status    account status
      * @param audit     audit info
      */
     public JulyUser(EntityId id, String userAccount, String userName, String password, String mobile, String email,
-            LocalDateTime lastLoginTime, String status, AuditInfo audit) {
+            String avatar, String pkOrg, LocalDateTime lastLoginTime, String status, AuditInfo audit) {
         this.id = id;
         this.userAccount = userAccount;
         this.userName = userName;
         this.password = password;
         this.mobile = mobile;
         this.email = email;
+        this.avatar = avatar;
+        this.pkOrg = pkOrg;
         this.lastLoginTime = lastLoginTime;
         this.status = status == null ? Status011.ENABLED.getCode() : status;
         this.audit = audit == null ? AuditInfo.empty() : audit;
@@ -113,7 +128,8 @@ public class JulyUser {
      */
     public static JulyUser create(EntityId id, String userAccount, String userName, String password, AuditInfo audit) {
         validate(userAccount, userName, password);
-        return new JulyUser(id, userAccount, userName, password, null, null, null, Status011.ENABLED.getCode(), audit);
+        return new JulyUser(id, userAccount, userName, password, null, null, null, null, null,
+                Status011.ENABLED.getCode(), audit);
     }
 
     /**
@@ -122,8 +138,10 @@ public class JulyUser {
      * @param userName user name
      * @param mobile   mobile number
      * @param email    email
+     * @param avatar   avatar
+     * @param pkOrg    organization link, nullable
      */
-    public void updateProfile(String userName, String mobile, String email) {
+    public void updateProfile(String userName, String mobile, String email, String avatar, String pkOrg) {
         if (userName == null || userName.isBlank() || userName.length() > 60) {
             throw new IllegalArgumentException("user name is required (max 60)");
         }
@@ -131,6 +149,8 @@ public class JulyUser {
         this.userName = userName;
         this.mobile = mobile;
         this.email = email;
+        this.avatar = avatar;
+        this.pkOrg = pkOrg;
     }
 
     /**
@@ -242,6 +262,24 @@ public class JulyUser {
      */
     public String email() {
         return email;
+    }
+
+    /**
+     * Get the avatar.
+     *
+     * @return avatar
+     */
+    public String avatar() {
+        return avatar;
+    }
+
+    /**
+     * Get the organization link.
+     *
+     * @return organization id or null
+     */
+    public String pkOrg() {
+        return pkOrg;
     }
 
     /**

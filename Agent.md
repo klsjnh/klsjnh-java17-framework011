@@ -13,11 +13,11 @@
 
 | 模块 | 层 | 依赖 | 内容 |
 |------|-----|------|------|
-| java17-common011 | common | 无 | 跨层契约：四个枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011）、Response011 + IdVo011、BusinessException、分页对 PageQuery011/PageResult011、批量删除对 BatchDeleteErrorVo011/BatchDeleteResultVo011 |
-| java17-domain011 | domain | common（仅共享内核枚举） | 纯内核：EntityId / AuditInfo / 聚合 / 仓储接口 / SchedulerPort |
-| java17-application011 | application | domain + common | 用例编排 + @Transactional（将落） |
-| java17-infrastructure011 | infrastructure | domain + common | PO 四件套 + MasterLinked（pk_mt 契约）、CommonMapper、仓库基座家族（BaseRepository / 011 排序层 / Tree / Tree011 / MasterSub021）、KrtConfig011（krt.status 绑定 + 启动卫兵） |
-| java17-web011 | web | application + common | Controller / 统一信封 / 全局异常 / 鉴权过滤器（将落） |
+| java17-common011 | common | 无 | 跨层契约：四个枚举、Response011 + IdVo011、BusinessException、分页对、批量删除对、StringUtil011 |
+| java17-domain011 | domain | common（仅共享内核） | 纯内核：EntityId / AuditInfo / JulyScheduler / JulyUser / JulyRole / 各仓储接口 / SchedulerPort |
+| java17-application011 | application | domain + common | JulySchedulerUseCase / JulyUserUseCase（CRUD+双登录+分配）/ JulyRoleUseCase |
+| java17-infrastructure011 | infrastructure | domain + common | 持久化基座（BasePo 四件套 / MasterLinked / CommonMapper / 仓库基座家族）、业务持久化（system011：scheduler + IAM 的 PO/Mapper/Impl）、IAM 适配器（bcrypt / JWT / RuntimeStatus / 审计记录器）、KrtConfig011 |
+| java17-web011 | web | application + common | JulyScheduler / JulyUser / JulyRole Controller、转换器、GlobalExceptionHandler（鉴权过滤器将落） |
 | java17-app011 | app | 全部 | 唯一 main：Framework011Application；application.yml（port 11610 / 默认 profile development / krt.status debug——生产须显式改 production，启动卫兵兜底） |
 
 依赖箭头：`web → application → domain ← infrastructure`；common 被各层引用，不反向依赖任何层。
@@ -93,7 +93,7 @@ BaseRepository                 ← BasePo      基础 CRUD/分页/逻辑删/批�
 
 ## 6. 红线（DDD）
 
-- **domain 纯净**：纯 Java + record，禁 Lombok 与一切框架（Spring / MyBatis-Plus）；仅允许依赖 common 的纯枚举共享内核（如 Status011），且该枚举类本身必须零框架依赖
+- **domain 纯净**：纯 Java + record，禁 Lombok 与一切框架（Spring / MyBatis-Plus）；仅允许依赖 common 的纯 Java 共享内核（枚举 / 工具类，如 Status011 / StringUtil011），共享内核类本身必须零框架依赖
 - **@Transactional 只出现在 application**
 - **PO 只活在 infrastructure**：application / web 不 import 任何 `Po` / `Mapper`
 - RepositoryImpl 实现 domain 仓储接口；Controller 只注入 application 服务
