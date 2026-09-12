@@ -43,4 +43,17 @@ public record PageResult011<T>(int pageIndex, int pageSize, long total, long tot
 
         return new PageResult011<>(query.pageIndex(), query.pageSize(), total, totalPages, safeRows);
     }
+
+    /**
+     * Copy the paging fields and swap the rows (VO mapping in the web layer).
+     *
+     * @param rows new rows, never null
+     * @param <V>  row type
+     * @return page result with the same paging fields and the given rows
+     */
+    public <V> PageResult011<V> withRows(List<V> rows) {
+        List<V> safeRows = rows == null ? List.of() : List.copyOf(rows);
+
+        return new PageResult011<>(pageIndex, pageSize, total, totalPages, safeRows);
+    }
 }

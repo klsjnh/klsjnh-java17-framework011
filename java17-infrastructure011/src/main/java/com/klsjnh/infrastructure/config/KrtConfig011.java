@@ -15,6 +15,7 @@ package com.klsjnh.infrastructure.config;
  */
 
 import com.klsjnh.common.enums.FrameworkStatus011;
+
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -51,11 +52,17 @@ public class KrtConfig011 {
     private final Environment environment;
 
     /**
-     * Runtime mode; missing config resolves to PRODUCTION (fail safe: a missing
-     * config must never open the auth gate). The debug profile yaml sets it to
-     * debug explicitly for development convenience.
+     * Runtime mode; a MISSING config resolves to PRODUCTION (fail safe: a
+     * missing config must never open the auth gate). application.yml ships
+     * with {@code debug} for development convenience — the startup guard
+     * rejects that combination when the production profile is active.
      */
     private FrameworkStatus011 status = FrameworkStatus011.PRODUCTION;
+
+    /**
+     * JWT settings, default expire minutes 480.
+     */
+    private JwtConfig jwt = new JwtConfig();
 
     /**
      * Startup guard: reject unsafe config combinations at boot.
@@ -66,8 +73,38 @@ public class KrtConfig011 {
             throw new IllegalStateException("krt.status=debug is not allowed with the production profile");
         }
 
+        if (status == FrameworkStatus011.PRODUCTION && jwtSecretBlank()) {
+            throw new IllegalStateException("krt.jwt.secret is required in production");
+        }
+
         log.info("krt.status = {} (passwordless login {})", status,
                 status.allowsPasswordlessLogin() ? "enabled" : "disabled");
+    }
+
+    /**
+     * Whether the JWT secret is blank.
+     *
+     * @return true when blank
+     */
+    private boolean jwtSecretBlank() {
+        return jwt.getSecret() == null || jwt.getSecret().isBlank();
+    }
+
+    /**
+     * JWT settings.
+     */
+    @Data
+    public static class JwtConfig {
+
+        /**
+         * HS256 signing secret, string, no default — inject via env in production.
+         */
+        private String secret;
+
+        /**
+         * Token expire minutes, int, default 480.
+         */
+        private int expireMinutes = 480;
     }
 
     /**

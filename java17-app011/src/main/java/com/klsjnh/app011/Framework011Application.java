@@ -23,7 +23,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 
 @SpringBootApplication(scanBasePackages = "com.klsjnh")
-@MapperScan("com.klsjnh.infrastructure.persistence.mapper")
+@MapperScan({"com.klsjnh.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.system011.mapper"})
 public class Framework011Application {
 
     /**

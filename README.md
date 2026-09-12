@@ -27,7 +27,7 @@ web ──► application ──► domain ◄── infrastructure
 | 层 | 职责 | 依赖 |
 |----|------|------|
 | common | 跨层契约：枚举、响应信封、共享 VO | 无 |
-| domain | 聚合、值对象、仓储接口、Port | **零依赖**（纯 Java + record） |
+| domain | 聚合、值对象、仓储接口、Port | common 共享内核（纯 Java 枚举），禁框架 |
 | application | 用例编排、事务边界 | domain + common |
 | infrastructure | PO、Mapper、RepositoryImpl、技术适配 | domain + common |
 | web | Controller、统一信封、全局异常、鉴权过滤器 | application + common |
@@ -84,11 +84,14 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 | ✅ | domain 内核值对象（EntityId / AuditInfo） |
 | ✅ | 统一响应信封 + 状态码 + 契约文档 |
 | ✅ | 编码规则门禁（正则 + AST，经 script011.sh 强制） |
-| 🔜 | OperatorContext + MetaObjectHandler（审计自动填充） |
-| 🔜 | 全局异常处理器 + 分页 |
-| 🔜 | krt 配置绑定 + JWT 鉴权过滤器 |
-| ✅ | 通用仓库基座 BaseRepository011（替代旧版 BaseCrudService011，含注入防护重设计） |
-| 🔜 | 三 profile 配置 + 打包运行 |
+| ✅ | 仓库基座家族（BaseRepository / 011 / Tree / Tree011 / MasterSub021，替代旧版含注入防护重设计） |
+| ✅ | 审计时间列自动填充（AuditMetaObjectHandler） |
+| ✅ | 启动配置（port 11610 / development 默认 / krt.status）——应用已在 11610 实测启动 |
+| ✅ | 首个业务聚合全链路（017 julyScheduler：CRUD / 启停 / 执行一次，Quartz 内存模式） |
+| 🔜 | OperatorContext（JWT 登录上下文 → create_by/update_by 填充） |
+| ✅ | 全局异常处理器（BusinessException → 统一信封，HTTP 与 statusCode 同步） |
+| 🔜 | JWT 鉴权过滤器 |
+| 🔜 | production 数据源注入与部署验证 |
 
 ## 版本
 

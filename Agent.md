@@ -7,18 +7,18 @@
 - Java17 **纯血 DDD** 技术底座，供第三方业务系统 Maven 依赖引用；全新项目、无历史技术债
 - 技术栈：Java 17 · Spring Boot 3.4.5 · MyBatis-Plus 3.5.9 · MySQL 8 · Druid · JJWT 0.12.6 · knife4j 4.5.0 · Lombok
 - 版本统一在父 `pom.xml` 的 `dependencyManagement` 管理，子模块不许自带版本号
-- 文档地图：文档体系与编号约定 → [docs/011.agreements.md](docs/011.agreements.md)（docs/README.md 为索引）；架构选型与设计思路 → [docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md)；目录结构与命名 → [docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)；编码规则 → [docs/015.coding-standards.md](docs/015.coding-standards.md)；API 契约 → [docs/016.api-contract.md](docs/016.api-contract.md)
+- 文档地图：文档体系与编号约定 → [docs/011.agreements.md](docs/011.agreements.md)（docs/README.md 为索引）；架构选型与设计思路 → [docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md)；目录结构与命名 → [docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)；配置体系 → [docs/infrastructure011/015.topic-config.md](docs/infrastructure011/015.topic-config.md)；编码规则 → [docs/015.coding-standards.md](docs/015.coding-standards.md)；API 契约 → [docs/016.api-contract.md](docs/016.api-contract.md)
 
 ## 2. 模块与依赖方向（DDD 分层）
 
 | 模块 | 层 | 依赖 | 内容 |
 |------|-----|------|------|
-| java17-common011 | common | 无 | 跨层契约：三个枚举、Response011 + IdVo011、BusinessException、分页对 PageQuery011/PageResult011、批量删除对 BatchDeleteErrorVo011/BatchDeleteResultVo011 |
-| java17-domain011 | domain | **零依赖** | 纯内核：EntityId / AuditInfo（后续：聚合/值对象/仓储接口/Port） |
+| java17-common011 | common | 无 | 跨层契约：四个枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011）、Response011 + IdVo011、BusinessException、分页对 PageQuery011/PageResult011、批量删除对 BatchDeleteErrorVo011/BatchDeleteResultVo011 |
+| java17-domain011 | domain | common（仅共享内核枚举） | 纯内核：EntityId / AuditInfo / 聚合 / 仓储接口 / SchedulerPort |
 | java17-application011 | application | domain + common | 用例编排 + @Transactional（将落） |
 | java17-infrastructure011 | infrastructure | domain + common | PO 四件套 + MasterLinked（pk_mt 契约）、CommonMapper、仓库基座家族（BaseRepository / 011 排序层 / Tree / Tree011 / MasterSub021）、KrtConfig011（krt.status 绑定 + 启动卫兵） |
 | java17-web011 | web | application + common | Controller / 统一信封 / 全局异常 / 鉴权过滤器（将落） |
-| java17-app011 | app | 全部 | 唯一 main：Framework011Application |
+| java17-app011 | app | 全部 | 唯一 main：Framework011Application；application.yml（port 11610 / 默认 profile development / krt.status debug——生产须显式改 production，启动卫兵兜底） |
 
 依赖箭头：`web → application → domain ← infrastructure`；common 被各层引用，不反向依赖任何层。
 
@@ -93,7 +93,7 @@ BaseRepository                 ← BasePo      基础 CRUD/分页/逻辑删/批�
 
 ## 6. 红线（DDD）
 
-- **domain 零依赖**：只允许纯 Java + record，禁 Lombok、禁 common、禁任何框架注解
+- **domain 纯净**：纯 Java + record，禁 Lombok 与一切框架（Spring / MyBatis-Plus）；仅允许依赖 common 的纯枚举共享内核（如 Status011），且该枚举类本身必须零框架依赖
 - **@Transactional 只出现在 application**
 - **PO 只活在 infrastructure**：application / web 不 import 任何 `Po` / `Mapper`
 - RepositoryImpl 实现 domain 仓储接口；Controller 只注入 application 服务

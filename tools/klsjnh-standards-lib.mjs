@@ -316,6 +316,82 @@ export function testNestedControlBlankLines(path, content, violations) {
   }
 }
 
+/**
+ * Import group for a line: 0 org.slf4j, 1 com.klsjnh.common, 2 other klsjnh,
+ * 3 third-party, 4 JDK (java / javax).
+ */
+function importGroup(line) {
+  const m = line.match(/^import\s+((?:static\s+)?[\w.]+)\./);
+  if (!m) {
+    return 3;
+  }
+  const p = m[1].replace(/^static\s+/, '');
+  if (p.startsWith('org.slf4j')) {
+    return 0;
+  }
+  if (p === 'com.klsjnh.common' || p.startsWith('com.klsjnh.common.')) {
+    return 1;
+  }
+  if (p === 'com.klsjnh' || p.startsWith('com.klsjnh.')) {
+    return 2;
+  }
+  if (p.startsWith('java.') || p.startsWith('javax.')) {
+    return 4;
+  }
+  return 3;
+}
+
+/**
+ * Import order rule (015 §9): groups in canonical order, blank line between
+ * groups, no blank lines inside a group.
+ */
+export function testImportOrder(path, content, violations) {
+  const lines = content.split(/\r?\n/);
+  const imports = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/^import\s+/.test(lines[i])) {
+      imports.push({ line: i, group: importGroup(lines[i]) });
+    }
+  }
+
+  if (imports.length === 0) {
+    return;
+  }
+
+  for (let k = 1; k < imports.length; k++) {
+    const prev = imports[k - 1];
+    const cur = imports[k];
+    const gap = cur.line - prev.line;
+
+    if (cur.group < prev.group) {
+      violations.push({
+        file: path,
+        line: cur.line + 1,
+        rule: 'import-order',
+        detail: `import group out of order (group ${prev.group} -> ${cur.group})`,
+        fix: 'regroup imports: org.slf4j, com.klsjnh.common, other com.klsjnh, third-party, java/javax — blank line between groups (015 §9)',
+      });
+    } else if (cur.group === prev.group && gap > 1) {
+      violations.push({
+        file: path,
+        line: cur.line + 1,
+        rule: 'import-order',
+        detail: 'imports of the same group must stay together',
+        fix: 'remove the blank line inside the import group',
+      });
+    } else if (cur.group > prev.group && gap === 1) {
+      violations.push({
+        file: path,
+        line: cur.line + 1,
+        rule: 'import-order',
+        detail: 'need blank line between import groups',
+        fix: 'insert one blank line before the new import group',
+      });
+    }
+  }
+}
+
 export async function runStandardsCheck(projectRoot) {
   const files = await collectJavaSources(projectRoot);
   const violations = [];
@@ -333,6 +409,7 @@ export async function runStandardsCheck(projectRoot) {
     testMethodJavadocs(file, content, violations);
     testDuplicateJavadocs(file, content, violations);
     testJavadocEnglish(file, content, violations);
+    testImportOrder(file, content, violations);
     testApiUrlStandards(file, content, violations);
     testBraceAdjacentBlankLines(file, content, violations);
     testNestedControlBlankLines(file, content, violations);

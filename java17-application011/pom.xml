@@ -24,6 +24,16 @@
             <artifactId>java17-common011</artifactId>
         </dependency>
 
+        <!-- 用例事务边界（@Transactional）；web/infra 依赖由运行时装配 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

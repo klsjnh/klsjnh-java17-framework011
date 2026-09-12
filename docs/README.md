@@ -15,8 +15,8 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型与设计思路 · 013 项目结构与目录说明 |
+| [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型与设计思路 · 013 项目结构与目录说明 · 015 配置体系 · 017 认证授权体系总设计 |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板） |
-| requirement011/ | 业务设计与业务要求（按主题推进，预留） |
-| requirement013/ | 技术方案（双源合流唯一落点，预留） |
+| requirement011/ | 业务设计：017 julyScheduler（已编码）· 018 菜单 / 019 用户（含关联表与审计）/ 022 角色（含权限挂菜单）——总设计 infrastructure011/017 |
+| requirement013/ | 技术方案（017 julyScheduler 已出并编码完成；IAM 各主题待推进） |
 | archive011/ | 历史工作日志归档 |

@@ -16,6 +16,7 @@ package com.klsjnh.common.response;
 
 import com.klsjnh.common.enums.HttpCodeEnum011;
 import com.klsjnh.common.vo.IdVo011;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -164,6 +165,23 @@ public class Response011<T> implements Serializable {
         Response011<T> body = new Response011<>();
         body.setStatusCode(codeEnum.getCode());
         body.setMessage(message != null ? message : codeEnum.getMsg());
+        return body;
+    }
+
+    /**
+     * Create an envelope from a raw status code with a custom safe hint.
+     *
+     * @param statusCode contract status code
+     * @param message    safe human readable hint; null falls back to an empty
+     *                   message
+     * @param <T>        payload type
+     * @return envelope carrying the code and the given message
+     */
+    public static <T> Response011<T> of(Integer statusCode, String message) {
+        Response011<T> body = new Response011<>();
+        body.setStatusCode(statusCode);
+        body.setMessage(message == null ? "" : message);
+
         return body;
     }
 

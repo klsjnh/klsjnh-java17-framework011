@@ -244,6 +244,77 @@ export async function createAstChecker() {
     }
   }
 
+  /**
+   * funcName value format rule: lowercase words separated by single spaces
+   * (e.g. 're register') — no hyphens, underscores or uppercase, enforced
+   * wherever a funcName declaration appears.
+   *
+   * @param tree parsed syntax tree
+   * @param file file path
+   * @param out  violations array
+   */
+  function testFuncNameFormat(tree, file, out) {
+    for (const decl of tree.rootNode.descendantsOfType('local_variable_declaration')) {
+      if (!decl.text.startsWith('String funcName = "')) {
+        continue;
+      }
+
+      const m = decl.text.match(/String funcName = "([^"]*)"/);
+      if (m && !/^[a-z0-9]+( [a-z0-9]+)*$/.test(m[1])) {
+        out.push({
+          file,
+          line: decl.startPosition.row + 1,
+          rule: 'func-name',
+          detail: `funcName value must be lowercase space-separated words (e.g. 're register'), got '${m[1]}'`,
+          fix: `replace the value with '${m[1].replace(/[-_]+/g, ' ')}'`,
+        });
+      }
+    }
+  }
+
+  /**
+   * pk_mt rule (015 §7): inside persistence.entity POs the master link field
+   * is always pkMt (MasterLinked contract) — no other *Id style fields.
+   * Whitelist: id (PK), pkMt (master link), parentId (tree link).
+   */
+  function checkPkMt(tree, pkg, file, out) {
+    if (!/\.persistence\.entity$/.test(pkg ?? '')) {
+      return;
+    }
+
+    for (const cls of tree.rootNode.descendantsOfType('class_declaration')) {
+      const body = cls.childForFieldName('body');
+      if (!body) {
+        continue;
+      }
+
+      for (const fd of body.namedChildren) {
+        if (fd.type !== 'field_declaration') {
+          continue;
+        }
+        for (const vd of fd.descendantsOfType('variable_declarator')) {
+          const name = vd.childForFieldName('name')?.text;
+          if (!name) {
+            continue;
+          }
+          const lower = name.toLowerCase();
+          if (lower === 'id' || lower === 'pkmt' || lower === 'parentid' || lower === 'serialversionuid') {
+            continue;
+          }
+          if (/id$/.test(lower)) {
+            out.push({
+              file,
+              line: vd.startPosition.row + 1,
+              rule: 'pk-mt',
+              detail: `master link field must be 'pkMt' (MasterLinked contract), got '${name}'`,
+              fix: `rename '${name}' to 'pkMt' and implement the MasterLinked interface`,
+            });
+          }
+        }
+      }
+    }
+  }
+
   return {
     /**
      * Run AST checks over all Java sources of the project.
@@ -264,8 +335,10 @@ export async function createAstChecker() {
         const tree = parser.parse(source);
         const pkg = filePackageName(tree.rootNode);
         checkFuncName(tree, pkg, file, violations);
+        testFuncNameFormat(tree, file, violations);
         checkLogConcat(tree, file, violations);
         checkNaming(tree, pkg, file, violations);
+        checkPkMt(tree, pkg, file, violations);
       }
 
       return violations;
