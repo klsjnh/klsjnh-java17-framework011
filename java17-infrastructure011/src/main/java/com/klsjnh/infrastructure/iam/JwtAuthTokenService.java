@@ -14,9 +14,14 @@ package com.klsjnh.infrastructure.iam;
  *
  */
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.klsjnh.domain.iam.AuthTokenPort;
 import com.klsjnh.infrastructure.config.KrtConfig011;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +42,16 @@ public class JwtAuthTokenService implements AuthTokenPort {
      * Minimum secret length for HS256 (bytes).
      */
     private static final int MIN_SECRET_BYTES = 32;
+
+    /**
+     * Claim name carrying the operator user id.
+     */
+    private static final String CLAIM_ID = "id";
+
+    /**
+     * Logger.
+     */
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthTokenService.class);
 
     /**
      * Framework config (secret / expire minutes).
@@ -75,10 +90,46 @@ public class JwtAuthTokenService implements AuthTokenPort {
 
         return Jwts.builder()
                 .subject(userAccount)
-                .claim("id", id)
+                .claim(CLAIM_ID, id)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
                 .compact();
+    }
+
+    /**
+     * Verify a signed token and return its operator user id.
+     *
+     * @param token signed JWT
+     * @return the user id claim, or null when missing / malformed / expired /
+     *         signature-invalid
+     */
+    @Override
+    public String verifyAndGetId(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+
+        String secret = krtConfig.getJwt().getSecret();
+
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
+            return null;
+        }
+
+        try {
+            SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Object id = claims.get(CLAIM_ID);
+
+            return id == null ? null : id.toString();
+        } catch (JwtException | IllegalArgumentException ex) {
+            logger.debug("jwt verify failed {} ...", ex.getClass().getSimpleName());
+            return null;
+        }
     }
 }

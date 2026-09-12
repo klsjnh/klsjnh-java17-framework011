@@ -252,12 +252,12 @@ public class JulyUserUseCase {
 
         if (user == null || !passwordPort.matches(password == null ? "" : password, user.password())) {
             recordFailed(userAccount, "wrong account or password", ip);
-            throw BusinessException.badRequest("wrong account or password");
+            throw BusinessException.unauthorized("wrong account or password");
         }
 
         if (Status011.DISABLED.getCode().equals(user.status())) {
             recordFailed(userAccount, "account disabled", ip);
-            throw BusinessException.badRequest("account is disabled");
+            throw BusinessException.unauthorized("account is disabled");
         }
 
         String token = authTokenPort.issue(user.id().value(), user.userAccount());
@@ -278,19 +278,19 @@ public class JulyUserUseCase {
     @Transactional
     public LoginResult loginByUserName(String userAccount, String ip) {
         if (!runtimeStatusPort.allowsPasswordlessLogin()) {
-            throw BusinessException.badRequest("passwordless login is not allowed in production");
+            throw BusinessException.unauthorized("passwordless login is not allowed in production");
         }
 
         JulyUser user = repository.findByAccount(userAccount);
 
         if (user == null) {
             recordFailed(userAccount, "wrong account or password", ip);
-            throw BusinessException.badRequest("wrong account or password");
+            throw BusinessException.unauthorized("wrong account or password");
         }
 
         if (Status011.DISABLED.getCode().equals(user.status())) {
             recordFailed(userAccount, "account disabled", ip);
-            throw BusinessException.badRequest("account is disabled");
+            throw BusinessException.unauthorized("account is disabled");
         }
 
         String token = authTokenPort.issue(user.id().value(), user.userAccount());

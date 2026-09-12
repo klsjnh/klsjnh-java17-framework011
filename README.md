@@ -11,7 +11,7 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | Java | 17 (LTS) |
 | Spring Boot | 3.4.5 |
 | MyBatis-Plus | 3.5.9（spring-boot3-starter） |
-| 数据库 | MySQL 8 · Druid 1.2.23 |
+| 数据库 | MySQL 8 · Druid 1.2.23（仅 dependencyManagement 声明，尚未接入模块） |
 | 鉴权 | JJWT 0.12.6 |
 | API 文档 | knife4j 4.5.0 (OpenAPI3) |
 | 工具 | Lombok 1.18.36（domain 层禁用） |
@@ -37,11 +37,11 @@ web ──► application ──► domain ◄── infrastructure
 
 | 模块 | 层 | 内容 |
 |------|-----|------|
-| java17-common011 | common | FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011、Response011 + IdVo011、BusinessException、分页对、批量删除对 |
+| java17-common011 | common | FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011、Response011 + IdVo011、BusinessException、分页对、批量删除对、AuthAttribute011 |
 | java17-domain011 | domain | EntityId / AuditInfo / JulyScheduler / JulyUser / JulyRole / 各仓储接口 |
 | java17-application011 | application | JulyScheduler / JulyUser / JulyRole 用例 |
 | java17-infrastructure011 | infrastructure | 基座家族五层 + 业务持久化（system011：user/role/关联/审计/scheduler）+ IAM 适配器（bcrypt / JWT / 审计记录器） |
-| java17-web011 | web | Controller / 全局异常 / 鉴权过滤器（将落） |
+| java17-web011 | web | Controller / 全局异常 / GlobalAuthFilter（JWT 校验） |
 | java17-app011 | app | 唯一 main：Framework011Application |
 
 ## 快速开始
@@ -54,7 +54,7 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 ./script011.sh gate                       # 规范检查 + 编译，一键提交门禁
 ```
 
-> 说明：app011 已可打包，但运行所需的 profile 配置与数据源尚未落地（随 web/global 模块一起到）。
+> 说明：`application.yml` 已配置端口 11610 与默认 development profile，数据源落在环境私有的 `application-development.yml`（不入库）；应用已在 11610 实测启动。
 
 ## API 契约要点
 
@@ -88,9 +88,9 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 | ✅ | 审计时间列自动填充（AuditMetaObjectHandler） |
 | ✅ | 启动配置（port 11610 / development 默认 / krt.status）——应用已在 11610 实测启动 |
 | ✅ | 首个业务聚合全链路（017 julyScheduler：CRUD / 启停 / 执行一次，Quartz 内存模式） |
-| 🔜 | OperatorContext（JWT 登录上下文 → create_by/update_by 填充） |
+| ✅ | 审计操作人填充（JWT 请求属性 `AuthAttribute011.OPERATOR_ID` → create_by/update_by，无 OperatorContext） |
 | ✅ | 全局异常处理器（BusinessException → 统一信封，HTTP 与 statusCode 同步） |
-| 🔜 | JWT 鉴权过滤器 |
+| ✅ | JWT 鉴权过滤器（GlobalAuthFilter，Authorization: Bearer，401 统一） |
 | 🔜 | production 数据源注入与部署验证 |
 
 ## 版本

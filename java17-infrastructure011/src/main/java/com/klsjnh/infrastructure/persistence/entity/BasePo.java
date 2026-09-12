@@ -41,11 +41,11 @@ public class BasePo implements Serializable {
     /** Status, '1' enabled / '0' disabled. */
     private String status;
 
-    /** Creator, filled from OperatorContext on insert. */
+    /** Creator, filled from the request-scoped operator attribute on insert. */
     @TableField(fill = FieldFill.INSERT)
     private String createBy;
 
-    /** Last modifier, filled from OperatorContext on insert and update. */
+    /** Last modifier, filled from the request-scoped operator attribute on insert and update. */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
 

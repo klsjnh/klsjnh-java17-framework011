@@ -19,16 +19,17 @@ import java.util.Locale;
 /**
  * Runtime mode of the framework, bound to {@code krt.status}.
  * <p>
- * Gates the auth filter: {@code DEBUG} skips token verification entirely,
- * {@code DEVELOPMENT} additionally allows passwordless login, {@code PRODUCTION}
- * is whitelist + valid token only. A missing value resolves to
- * {@code PRODUCTION} — a missing config must never open the gate.
+ * Gates the auth filter: {@code DEBUG} never rejects (a present token is still
+ * parsed best-effort so the audit operator can be filled), {@code DEVELOPMENT}
+ * additionally allows passwordless login, {@code PRODUCTION} requires a valid
+ * token. A missing value resolves to {@code PRODUCTION} — a missing config must
+ * never open the gate.
  * </p>
  */
 
 public enum FrameworkStatus011 {
 
-    /** No token verification, passthrough. */
+    /** Never rejects; best-effort parses a token for the audit operator. */
     DEBUG("debug"),
 
     /** Token verified; login checks configured user list by username only. */

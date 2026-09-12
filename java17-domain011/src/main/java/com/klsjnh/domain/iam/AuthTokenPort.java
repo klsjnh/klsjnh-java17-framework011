@@ -29,4 +29,13 @@ public interface AuthTokenPort {
      * @return signed JWT string
      */
     String issue(String id, String userAccount);
+
+    /**
+     * Verify a signed token and return its operator user id.
+     *
+     * @param token signed JWT
+     * @return the user id claim, or null when missing / malformed / expired /
+     *         signature-invalid
+     */
+    String verifyAndGetId(String token);
 }

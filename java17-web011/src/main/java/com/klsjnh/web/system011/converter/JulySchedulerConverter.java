@@ -44,6 +44,10 @@ public class JulySchedulerConverter {
         vo.setSchedulerCron(scheduler.schedulerCron());
         vo.setExecuteTimes(scheduler.executeTimes());
         vo.setStatus(scheduler.status());
+        vo.setCreateBy(scheduler.audit().createBy());
+        vo.setUpdateBy(scheduler.audit().updateBy());
+        vo.setCreateTime(scheduler.audit().createTime());
+        vo.setUpdateTime(scheduler.audit().updateTime());
 
         return vo;
     }

@@ -5,7 +5,7 @@
 ## 1. 项目是什么
 
 - Java17 **纯血 DDD** 技术底座，供第三方业务系统 Maven 依赖引用；全新项目、无历史技术债
-- 技术栈：Java 17 · Spring Boot 3.4.5 · MyBatis-Plus 3.5.9 · MySQL 8 · Druid · JJWT 0.12.6 · knife4j 4.5.0 · Lombok
+- 技术栈：Java 17 · Spring Boot 3.4.5 · MyBatis-Plus 3.5.9 · MySQL 8 · Druid（待接入）· JJWT 0.12.6 · knife4j 4.5.0 · Lombok
 - 版本统一在父 `pom.xml` 的 `dependencyManagement` 管理，子模块不许自带版本号
 - 文档地图：文档体系与编号约定 → [docs/011.agreements.md](docs/011.agreements.md)（docs/README.md 为索引）；架构选型与设计思路 → [docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md)；目录结构与命名 → [docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)；配置体系 → [docs/infrastructure011/015.topic-config.md](docs/infrastructure011/015.topic-config.md)；编码规则 → [docs/015.coding-standards.md](docs/015.coding-standards.md)；API 契约 → [docs/016.api-contract.md](docs/016.api-contract.md)
 
@@ -13,11 +13,11 @@
 
 | 模块 | 层 | 依赖 | 内容 |
 |------|-----|------|------|
-| java17-common011 | common | 无 | 跨层契约：四个枚举、Response011 + IdVo011、BusinessException、分页对、批量删除对、StringUtil011 |
+| java17-common011 | common | 无 | 跨层契约：四个枚举、Response011 + IdVo011、BusinessException、分页对、批量删除对、StringUtil011、AuthAttribute011 |
 | java17-domain011 | domain | common（仅共享内核） | 纯内核：EntityId / AuditInfo / JulyScheduler / JulyUser / JulyRole / 各仓储接口 / SchedulerPort |
 | java17-application011 | application | domain + common | JulySchedulerUseCase / JulyUserUseCase（CRUD+双登录+分配）/ JulyRoleUseCase |
 | java17-infrastructure011 | infrastructure | domain + common | 持久化基座（BasePo 四件套 / MasterLinked / CommonMapper / 仓库基座家族）、业务持久化（system011：scheduler + IAM 的 PO/Mapper/Impl）、IAM 适配器（bcrypt / JWT / RuntimeStatus / 审计记录器）、KrtConfig011 |
-| java17-web011 | web | application + common | JulyScheduler / JulyUser / JulyRole Controller、转换器、GlobalExceptionHandler（鉴权过滤器将落） |
+| java17-web011 | web | application + common | JulyScheduler / JulyUser / JulyRole Controller、转换器、GlobalExceptionHandler、GlobalAuthFilter（JWT 校验） |
 | java17-app011 | app | 全部 | 唯一 main：Framework011Application；application.yml（port 11610 / 默认 profile development / krt.status debug——生产须显式改 production，启动卫兵兜底） |
 
 依赖箭头：`web → application → domain ← infrastructure`；common 被各层引用，不反向依赖任何层。
@@ -58,7 +58,7 @@ BaseRepository                 ← BasePo      基础 CRUD/分页/逻辑删/批�
 - id：用例显式调用 `EntityId.generate()` 生成 32 位无连字符 UUID，列宽 33；BasePo 的 `ASSIGN_UUID` 仅在 id 为空时兜底，不是主生成路径（应用侧生成是多数据源架构下的一致性要求，主键约束兜底冲突）
 - dr 逻辑删除：`@TableLogic`，'0' 正常 / '1' 已删除；树形根节点 parent_id 为空串
 - sort_order 越小越靠前，默认 9999（建表默认值兜底，Java 侧不设初值）
-- 审计四列由 MetaObjectHandler 配合 OperatorContext 自动填充（将落，接 JWT 登录上下文）
+- 审计四列由 MetaObjectHandler 自动填充：时间列直接取当前时间；操作人列读请求作用域属性 `AuthAttribute011.OPERATOR_ID`（GlobalAuthFilter 校验 JWT 后写入，无 OperatorContext 全局上下文）
 - DDL 模板：[docs/sql/base-entity-columns.sql](docs/sql/base-entity-columns.sql)
 - API 契约（信封六键 + 状态码表）：[docs/016.api-contract.md](docs/016.api-contract.md)；JSON 键 camelCase，加状态码先扩契约文档
 
