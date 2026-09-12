@@ -54,7 +54,7 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 ./script011.sh gate                       # 规范检查 + 编译，一键提交门禁
 ```
 
-> 说明：`application.yml` 已配置端口 11610 与默认 development profile，数据源落在环境私有的 `application-development.yml`（不入库）；应用已在 11610 实测启动。
+> 说明：`application.yml` 配置端口 11610 与默认 development profile（公共结构、无密钥）；数据源与 dev 用 krt 配置落在入库的 `application-development.yml`，本机差异走忽略的 `application-local.yml`；应用已在 11610 实测启动。
 
 ## API 契约要点
 

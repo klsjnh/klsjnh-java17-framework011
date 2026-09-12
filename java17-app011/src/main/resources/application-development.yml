@@ -1,0 +1,17 @@
+# 开发共享配置（入库；键说明见 docs/infrastructure011/015.topic-config.md）
+# 数据库：docker 容器 klsjnh-framework011-mysql（mysql 5.7.26），宿主机端口 33306 → 容器 3306
+# Druid 细化配置待持久化体系接入；当前 MyBatis-Plus 走默认 HikariCP 即可工作
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:33306/dev202609120001?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: dev202608011
+    password: dev202608011
+
+# 开发运行态：debug 不拒绝请求（免密登录可用），并注入 dev 用 JWT secret
+# 生产必须改为 production + 真实 secret（见 application-production.yml）
+krt:
+  status: debug
+  jwt:
+    secret: dev-secret-klsjnh-framework011-20260912-change-me-in-production-0123456789
+    expire-minutes: 480

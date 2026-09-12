@@ -6,13 +6,8 @@ spring:
     name: java17-app011
   profiles:
     active: development
+    #active: local
     #active: production
-
-# 框架运行态：开发默认开调试门禁（免鉴权）。
-# 切 production profile 时 krt.status 必须改为 production、krt.jwt.secret 必须注入，
-# 否则 KrtConfig011 启动卫兵会拒绝启动（debug 不允许出现在生产环境）。
-krt:
-  status: debug
-  jwt:
-    secret: dev-secret-klsjnh-framework011-20260912-change-me-in-production-0123456789
-    expire-minutes: 480
+    group:
+      # local 叠加在 development 之上：application-local.yml 只写本机差异，其余继承 development
+      local: development
