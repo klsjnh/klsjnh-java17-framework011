@@ -1,6 +1,6 @@
 package com.klsjnh.common.vo;
 
-/*                IdVo class
+/*                IdVo011 class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
@@ -10,7 +10,7 @@ package com.klsjnh.common.vo;
  *===========================================
  *          modify history
  *
- *      2026.09.12  id vo class
+ *      2026.09.12  id vo 011 class
  *
  */
 
@@ -21,7 +21,7 @@ import lombok.Data;
  */
 
 @Data
-public class IdVo {
+public class IdVo011 {
 
     /** Primary key of the affected row. */
     private String id;

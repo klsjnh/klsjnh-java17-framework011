@@ -15,7 +15,7 @@ package com.klsjnh.common.response;
  */
 
 import com.klsjnh.common.enums.HttpCodeEnum011;
-import com.klsjnh.common.vo.IdVo;
+import com.klsjnh.common.vo.IdVo011;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -125,8 +125,8 @@ public class Response011<T> implements Serializable {
      * @param id     primary key of the affected row
      * @return envelope whose data is {@code {"id": "<id>"}}
      */
-    public static Response011<IdVo> successId(String action, String id) {
-        IdVo data = new IdVo();
+    public static Response011<IdVo011> successId(String action, String id) {
+        IdVo011 data = new IdVo011();
         data.setId(id);
         return success(action, data);
     }

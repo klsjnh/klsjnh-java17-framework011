@@ -37,10 +37,10 @@ web ──► application ──► domain ◄── infrastructure
 
 | 模块 | 层 | 内容 |
 |------|-----|------|
-| java17-common011 | common | FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011、Response011 + IdVo |
+| java17-common011 | common | FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011、Response011 + IdVo011、BusinessException、分页对、批量删除对 |
 | java17-domain011 | domain | EntityId / AuditInfo（record 值对象） |
 | java17-application011 | application | 用例编排（将落） |
-| java17-infrastructure011 | infrastructure | BasePo / BasePo011 / TreePo / TreePo011 |
+| java17-infrastructure011 | infrastructure | BasePo 四件套 + MasterLinked、CommonMapper、仓库基座家族（BaseRepository / 011 / Tree / Tree011 / MasterSub021） |
 | java17-web011 | web | Controller / 全局异常 / 鉴权过滤器（将落） |
 | java17-app011 | app | 唯一 main：Framework011Application |
 
@@ -51,7 +51,7 @@ web ──► application ──► domain ◄── infrastructure
 ```bash
 mvn -o clean package -DskipTests          # 离线构建，产出 app011 可执行 jar
 node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
-bash tools/push-gate.sh                   # 规范检查 + 编译，一键提交门禁
+./script011.sh gate                       # 规范检查 + 编译，一键提交门禁
 ```
 
 > 说明：app011 已可打包，但运行所需的 profile 配置与数据源尚未落地（随 web/global 模块一起到）。
@@ -73,7 +73,7 @@ bash tools/push-gate.sh                   # 规范检查 + 编译，一键提交
 - domain 层零依赖（纯 Java + record）；`@Transactional` 只出现在 application；PO 只活在 infrastructure
 - 逻辑删除统一走 `dr`（'0' 正常 / '1' 已删除）；主键由用例显式调 `EntityId.generate()`（32 位无连字符 UUID，列宽 33）
 
-完整规范与工具说明：[tools/STANDARDS.md](tools/STANDARDS.md)
+完整编码规则（含门禁映射）：[docs/015.coding-standards.md](docs/015.coding-standards.md)
 
 ## 状态与路线
 
@@ -83,11 +83,11 @@ bash tools/push-gate.sh                   # 规范检查 + 编译，一键提交
 | ✅ | PO 四件套 + 公共列 DDL 模板（[docs/sql](docs/sql/base-entity-columns.sql)） |
 | ✅ | domain 内核值对象（EntityId / AuditInfo） |
 | ✅ | 统一响应信封 + 状态码 + 契约文档 |
-| ✅ | 注释规范门禁（check/fix/push-gate） |
+| ✅ | 编码规则门禁（正则 + AST，经 script011.sh 强制） |
 | 🔜 | OperatorContext + MetaObjectHandler（审计自动填充） |
 | 🔜 | 全局异常处理器 + 分页 |
 | 🔜 | krt 配置绑定 + JWT 鉴权过滤器 |
-| 🔜 | 通用仓库基座（RepositoryImpl 基类，替代旧版 BaseCrudService011） |
+| ✅ | 通用仓库基座 BaseRepository011（替代旧版 BaseCrudService011，含注入防护重设计） |
 | 🔜 | 三 profile 配置 + 打包运行 |
 
 ## 版本
