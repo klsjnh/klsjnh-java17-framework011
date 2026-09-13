@@ -8,6 +8,7 @@
 |------|------|
 | [../Agent.md](../Agent.md) | **项目入口手册**（先读）：模块、门禁、工作流、红线 |
 | [011.agreements.md](011.agreements.md) | 文档体系与编号约定（本文档体系宪法） |
+| [013.project-info.md](013.project-info.md) | 项目信息（定位 / 技术栈 / 构建运行 / 当前能力） |
 | [015.coding-standards.md](015.coding-standards.md) | 编码规则（真实代码示例 + 门禁规则映射） |
 | [016.api-contract.md](016.api-contract.md) | API 契约（信封六键 + 状态码表） |
 

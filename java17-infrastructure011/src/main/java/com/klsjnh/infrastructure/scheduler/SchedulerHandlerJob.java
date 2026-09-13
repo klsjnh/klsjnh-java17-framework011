@@ -17,6 +17,7 @@ package com.klsjnh.infrastructure.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.klsjnh.domain.scheduler.JobHandler;
 import com.klsjnh.infrastructure.system011.entity.JulySchedulerPo;
 import com.klsjnh.infrastructure.system011.mapper.JulySchedulerMapper;
 
@@ -54,11 +55,10 @@ public class SchedulerHandlerJob implements Job {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerHandlerJob.class);
 
     /**
-     * Application context, injected into quartz job instances by the spring
-     * bean job factory.
+     * Handler registry (resolves scheduler_handler by name).
      */
     @Autowired
-    private ApplicationContext applicationContext;
+    private JobHandlerRegistry handlerRegistry;
 
     /**
      * Mapper for the execute counter increment.
@@ -67,7 +67,9 @@ public class SchedulerHandlerJob implements Job {
     private JulySchedulerMapper mapper;
 
     /**
-     * Run the handler bean and count the trigger.
+     * Run the handler and count the trigger. The handler resolves through the
+     * JobHandlerRegistry; missing or failing handlers log a WARN and never
+     * interrupt the schedule.
      *
      * @param context quartz execution context
      */
@@ -80,7 +82,13 @@ public class SchedulerHandlerJob implements Job {
         String handler = data.getString(DATA_HANDLER);
 
         try {
-            applicationContext.getBean(handler, Runnable.class).run();
+            JobHandler jobHandler = handlerRegistry.get(handler);
+
+            if (jobHandler == null) {
+                logger.warn("{} {} handler {} not registered ...", funcName, id, handler);
+            } else {
+                jobHandler.execute(data);
+            }
         } catch (Exception ex) {
             logger.warn("{} {} {} failed {} ...", funcName, id, handler, ex.getMessage());
         } finally {

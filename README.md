@@ -42,7 +42,7 @@ web ──► application ──► domain ◄── infrastructure
 | java17-application011 | application | JulyScheduler / JulyUser / JulyRole 用例 |
 | java17-infrastructure011 | infrastructure | 基座家族五层 + 业务持久化（system011：user/role/关联/审计/scheduler）+ IAM 适配器（bcrypt / JWT / 审计记录器） |
 | java17-web011 | web | Controller / 全局异常 / GlobalAuthFilter（JWT 校验） |
-| java17-app011 | app | 唯一 main：Framework011Application |
+| java17-app011 | app | 唯一 main + 配置 + 参考样板（demo11 纵切面 / Demo011Scheduler） |
 
 ## 快速开始
 
@@ -90,6 +90,7 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 | ✅ | 首个业务聚合全链路（021 julyScheduler：CRUD / 启停 / 执行一次，Quartz 内存模式） |
 | ✅ | 审计操作人填充（JWT 请求属性 `AuthAttribute011.OPERATOR_ID` → create_by/update_by，无 OperatorContext） |
 | ✅ | 全局异常处理器（BusinessException → 统一信封，HTTP 与 statusCode 同步） |
+| ✅ | Swagger 分组（system011 / 存储中心 / 第三方 app 组条件装配）+ JobHandler 调度样板 + demo11 DDD 参考样板 |
 | ✅ | JWT 鉴权过滤器（GlobalAuthFilter，Authorization: Bearer，401 统一） |
 | ✅ | 动态数据源（yaml ci011 懒加载 + SqlRoutingPort 读写/方言分页 clamp[10,500]） |
 | ✅ | 存储中心（对象 + 桶 CRUD + stat 元数据，local011/minio011 双适配器 E2E，厂商适配器分期） |
