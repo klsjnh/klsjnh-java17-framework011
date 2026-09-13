@@ -17,7 +17,7 @@ package com.klsjnh.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.klsjnh.domain.scheduler.JobHandler;
+import com.klsjnh.domain.system011.scheduler.JobHandler;
 
 import org.springframework.stereotype.Component;
 

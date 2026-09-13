@@ -21,7 +21,7 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
 
 import com.klsjnh.application.scheduler.JulySchedulerUseCase;
-import com.klsjnh.domain.scheduler.JulyScheduler;
+import com.klsjnh.domain.system011.scheduler.JulyScheduler;
 import com.klsjnh.web.system011.converter.JulySchedulerConverter;
 import com.klsjnh.web.system011.vo.JulySchedulerInsertVo011;
 import com.klsjnh.web.system011.vo.JulySchedulerQueryVo011;

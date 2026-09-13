@@ -14,7 +14,7 @@ package com.klsjnh.infrastructure.scheduler;
  *
  */
 
-import com.klsjnh.domain.scheduler.SchedulerPort;
+import com.klsjnh.domain.system011.scheduler.SchedulerPort;
 
 import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;

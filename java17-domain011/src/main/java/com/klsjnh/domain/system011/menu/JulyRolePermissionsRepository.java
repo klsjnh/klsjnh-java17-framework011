@@ -1,4 +1,4 @@
-package com.klsjnh.domain.menu;
+package com.klsjnh.domain.system011.menu;
 
 /*                JulyRolePermissionsRepository interface
  *

@@ -350,6 +350,22 @@ public class JulyUserUseCase {
     }
 
     /**
+     * Logout of the current operator: stateless JWT cannot be revoked, so the
+     * server side only records the LOGOUT audit row — the client clears the
+     * token.
+     *
+     * @param operatorId  current operator user id, nullable (debug no-token)
+     * @param userAccount current operator account, nullable
+     * @param ip          client IP
+     */
+    @Transactional
+    public void logout(String operatorId, String userAccount, String ip) {
+        if (operatorId != null && !operatorId.isBlank()) {
+            userAuditPort.record(operatorId, userAccount, "LOGOUT", "july_user", "logout", ip);
+        }
+    }
+
+    /**
      * Role codes currently granted to a user.
      *
      * @param userId user id

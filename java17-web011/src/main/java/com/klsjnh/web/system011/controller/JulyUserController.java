@@ -241,6 +241,24 @@ public class JulyUserController {
     }
 
     /**
+     * Logout: records the LOGOUT audit row (stateless JWT — the client clears
+     * the token).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return empty envelope
+     */
+    @PostMapping("/logout")
+    @Operation(summary = "登出（记录 LOGOUT 审计，客户端清除 token）")
+    public Response011<Void> logout(HttpServletRequest request) {
+        String funcName = "logout";
+
+        String operatorId = (String) request.getAttribute(FrameConst011.OPERATOR_ID);
+        useCase.logout(operatorId, null, request.getRemoteAddr());
+
+        return Response011.success(funcName, null);
+    }
+
+    /**
      * Map the login result to the session VO.
      *
      * @param result login result

@@ -14,7 +14,7 @@ package com.klsjnh.web.system011.converter;
  *
  */
 
-import com.klsjnh.domain.scheduler.JulyScheduler;
+import com.klsjnh.domain.system011.scheduler.JulyScheduler;
 import com.klsjnh.web.system011.vo.JulySchedulerVo011;
 
 import org.springframework.stereotype.Component;

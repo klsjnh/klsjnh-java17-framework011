@@ -21,9 +21,9 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.vo.BatchDeleteErrorVo011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
-import com.klsjnh.domain.scheduler.JulyScheduler;
-import com.klsjnh.domain.scheduler.JulySchedulerRepository;
-import com.klsjnh.domain.scheduler.SchedulerPort;
+import com.klsjnh.domain.system011.scheduler.JulyScheduler;
+import com.klsjnh.domain.system011.scheduler.JulySchedulerRepository;
+import com.klsjnh.domain.system011.scheduler.SchedulerPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 

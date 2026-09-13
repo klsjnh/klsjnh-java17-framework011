@@ -17,7 +17,7 @@ package com.klsjnh.infrastructure.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.klsjnh.domain.scheduler.JobHandler;
+import com.klsjnh.domain.system011.scheduler.JobHandler;
 import com.klsjnh.infrastructure.system011.entity.JulySchedulerPo;
 import com.klsjnh.infrastructure.system011.mapper.JulySchedulerMapper;
 

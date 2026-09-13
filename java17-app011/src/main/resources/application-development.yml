@@ -11,8 +11,8 @@ spring:
       stat-view-servlet:
         enabled: true
         url-pattern: /druid/*
-        login-username: demo011
-        login-password: demo011
+        login-username: klsjnh
+        login-password: klsjnh
 
 # 开发运行态：debug 不拒绝请求（免密登录可用），并注入 dev 用 JWT secret
 # 生产必须改为 production + 真实 secret（见 application-production.yml）

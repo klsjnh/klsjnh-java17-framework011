@@ -14,7 +14,7 @@
 | 模块 | 层 | 依赖 | 内容 |
 |------|-----|------|------|
 | java17-common011 | common | 无 | 跨层契约：四个枚举、Response011 + IdVo011、BusinessException、分页对、批量删除对、StringUtil011、AuthAttribute011 |
-| java17-domain011 | domain | common（仅共享内核） | 纯内核：EntityId / AuditInfo / JulyScheduler / JulyUser / JulyRole / 各仓储接口 / SchedulerPort |
+| java17-domain011 | domain | common（仅共享内核） | 纯内核：shared（EntityId / AuditInfo）· iam（用户/角色 + 4 Port）· datasource / storage（设施 Port）· system011（menu / config / scheduler 聚合与仓储 + JobHandler） |
 | java17-application011 | application | domain + common | JulySchedulerUseCase / JulyUserUseCase（CRUD+双登录+分配）/ JulyRoleUseCase |
 | java17-infrastructure011 | infrastructure | domain + common | 持久化基座（BasePo 四件套 / MasterLinked / CommonMapper / 仓库基座家族）、业务持久化（system011：scheduler + IAM 的 PO/Mapper/Impl）、IAM 适配器（bcrypt / JWT / RuntimeStatus / 审计记录器）、KrtConfig011 |
 | java17-web011 | web | application + common | JulyScheduler / JulyUser / JulyRole Controller、转换器、GlobalExceptionHandler、GlobalAuthFilter（JWT 校验） |

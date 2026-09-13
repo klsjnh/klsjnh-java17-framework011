@@ -87,4 +87,19 @@ public interface JulyUserRepository {
      * @param id user id
      */
     void touchLastLoginTime(String id);
+
+    /**
+     * Count the alive users mounted on one organization.
+     *
+     * @param pkOrg organization id
+     * @return member count
+     */
+    long countByOrg(String pkOrg);
+
+    /**
+     * Member counts grouped by organization (the member-count badge source).
+     *
+     * @return orgId → member count
+     */
+    java.util.Map<String, Long> countByOrgGrouped();
 }

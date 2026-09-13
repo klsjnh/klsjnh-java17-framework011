@@ -38,7 +38,7 @@ web ──► application ──► domain ◄── infrastructure
 | 模块 | 层 | 内容 |
 |------|-----|------|
 | java17-common011 | common | FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011、Response011 + IdVo011、BusinessException、分页对、批量删除对、AuthAttribute011 |
-| java17-domain011 | domain | EntityId / AuditInfo / JulyScheduler / JulyUser / JulyRole / 各仓储接口 |
+| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + 4 Port）· datasource / storage（设施 Port）· system011（menu / config / scheduler 聚合与仓储 + JobHandler） |
 | java17-application011 | application | JulyScheduler / JulyUser / JulyRole 用例 |
 | java17-infrastructure011 | infrastructure | 基座家族五层 + 业务持久化（system011：user/role/关联/审计/scheduler）+ IAM 适配器（bcrypt / JWT / 审计记录器） |
 | java17-web011 | web | Controller / 全局异常 / GlobalAuthFilter（JWT 校验） |
@@ -91,6 +91,9 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 | ✅ | 审计操作人填充（JWT 请求属性 `AuthAttribute011.OPERATOR_ID` → create_by/update_by，无 OperatorContext） |
 | ✅ | 全局异常处理器（BusinessException → 统一信封，HTTP 与 statusCode 同步） |
 | ✅ | Swagger 分组（system011 / 存储中心 / 第三方 app 组条件装配）+ JobHandler 调度样板 + demo11 DDD 参考样板 |
+| ✅ | 配置管理 july_config（运行时键值参数，每次查库，getByCode 程序读取入口） |
+| ✅ | 组织机构 july_organization（树 CRUD / 层级维护与防环移动 / 人数角标 / 删除双约束） |
+| ✅ | 平台数据导出（注册制 Provider + json/csv + 500 行上限 + EXPORT 审计）+ 登出端点 |
 | ✅ | JWT 鉴权过滤器（GlobalAuthFilter，Authorization: Bearer，401 统一） |
 | ✅ | 动态数据源（yaml ci011 懒加载 + SqlRoutingPort 读写/方言分页 clamp[10,500]） |
 | ✅ | 存储中心（对象 + 桶 CRUD + stat 元数据，local011/minio011 双适配器 E2E，厂商适配器分期） |

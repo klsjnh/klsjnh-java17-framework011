@@ -14,8 +14,8 @@ package com.klsjnh.infrastructure.scheduler;
  *
  */
 
-import com.klsjnh.domain.scheduler.JobHandler;
-import com.klsjnh.domain.scheduler.JobHandlerRegistryPort;
+import com.klsjnh.domain.system011.scheduler.JobHandler;
+import com.klsjnh.domain.system011.scheduler.JobHandlerRegistryPort;
 
 import org.springframework.stereotype.Component;
 

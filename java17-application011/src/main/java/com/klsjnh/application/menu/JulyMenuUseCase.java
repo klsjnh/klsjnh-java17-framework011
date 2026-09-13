@@ -23,9 +23,9 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.domain.iam.JulyRole;
 import com.klsjnh.domain.iam.JulyRoleRepository;
 import com.klsjnh.domain.iam.JulyUserRoleRepository;
-import com.klsjnh.domain.menu.JulyMenu;
-import com.klsjnh.domain.menu.JulyMenuRepository;
-import com.klsjnh.domain.menu.JulyRolePermissionsRepository;
+import com.klsjnh.domain.system011.menu.JulyMenu;
+import com.klsjnh.domain.system011.menu.JulyMenuRepository;
+import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 

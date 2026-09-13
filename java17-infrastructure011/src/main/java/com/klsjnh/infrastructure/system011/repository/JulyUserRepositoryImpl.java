@@ -227,6 +227,46 @@ public class JulyUserRepositoryImpl
     }
 
     /**
+     * Count the alive users mounted on one organization.
+     *
+     * @param pkOrg organization id
+     * @return member count
+     */
+    @Override
+    public long countByOrg(String pkOrg) {
+        QueryWrapper<JulyUserPo> wrapper = new QueryWrapper<>();
+        wrapper.eq("pk_org", pkOrg);
+
+        Long count = mapper.selectCount(wrapper);
+
+        return count == null ? 0 : count;
+    }
+
+    /**
+     * Member counts grouped by organization.
+     *
+     * @return orgId → member count
+     */
+    @Override
+    public java.util.Map<String, Long> countByOrgGrouped() {
+        QueryWrapper<JulyUserPo> wrapper = new QueryWrapper<>();
+        wrapper.select("pk_org", "COUNT(*) AS cnt").isNotNull("pk_org").groupBy("pk_org");
+
+        java.util.Map<String, Long> counts = new java.util.HashMap<>();
+
+        for (java.util.Map<String, Object> row : mapper.selectMaps(wrapper)) {
+            Object org = row.get("pk_org");
+            Object cnt = row.get("cnt");
+
+            if (org != null && cnt != null) {
+                counts.put(org.toString(), ((Number) cnt).longValue());
+            }
+        }
+
+        return counts;
+    }
+
+    /**
      * Map the aggregate to a PO.
      *
      * @param user aggregate

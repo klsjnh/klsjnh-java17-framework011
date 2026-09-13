@@ -14,8 +14,8 @@ package com.klsjnh.infrastructure.system011.repository;
  *
  */
 
-import com.klsjnh.domain.scheduler.JulyScheduler;
-import com.klsjnh.domain.scheduler.JulySchedulerRepository;
+import com.klsjnh.domain.system011.scheduler.JulyScheduler;
+import com.klsjnh.domain.system011.scheduler.JulySchedulerRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.infrastructure.system011.entity.JulySchedulerPo;

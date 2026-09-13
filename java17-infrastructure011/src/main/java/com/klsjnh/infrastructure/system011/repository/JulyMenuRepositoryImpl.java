@@ -14,8 +14,8 @@ package com.klsjnh.infrastructure.system011.repository;
  *
  */
 
-import com.klsjnh.domain.menu.JulyMenu;
-import com.klsjnh.domain.menu.JulyMenuRepository;
+import com.klsjnh.domain.system011.menu.JulyMenu;
+import com.klsjnh.domain.system011.menu.JulyMenuRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;

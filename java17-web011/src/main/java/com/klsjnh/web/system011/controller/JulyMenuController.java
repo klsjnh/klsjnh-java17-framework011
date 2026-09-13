@@ -23,7 +23,7 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
 
 import com.klsjnh.application.menu.JulyMenuUseCase;
-import com.klsjnh.domain.menu.JulyMenu;
+import com.klsjnh.domain.system011.menu.JulyMenu;
 import com.klsjnh.web.system011.converter.JulyMenuConverter;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuInsertVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuQueryVo011;
