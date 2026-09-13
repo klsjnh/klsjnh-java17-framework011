@@ -16,6 +16,8 @@ package com.klsjnh.infrastructure.config;
 
 import com.klsjnh.common.enums.FrameworkStatus011;
 
+import com.klsjnh.domain.datasource.ConnectionInfo;
+
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,6 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Framework config bound to the {@code krt.*} keys in application yaml.
@@ -53,8 +58,8 @@ public class KrtConfig011 {
 
     /**
      * Runtime mode; a MISSING config resolves to PRODUCTION (fail safe: a
-     * missing config must never open the auth gate). application.yml ships
-     * with {@code debug} for development convenience — the startup guard
+     * missing config must never open the auth gate). application-development.yml
+     * ships with {@code debug} for development convenience — the startup guard
      * rejects that combination when the production profile is active.
      */
     private FrameworkStatus011 status = FrameworkStatus011.PRODUCTION;
@@ -63,6 +68,12 @@ public class KrtConfig011 {
      * JWT settings, default expire minutes 480.
      */
     private JwtConfig jwt = new JwtConfig();
+
+    /**
+     * Dynamic datasource connection list (krt.ci011) — declared at startup,
+     * pools connect lazily on first routing call.
+     */
+    private List<ConnectionInfo> ci011 = new ArrayList<>();
 
     /**
      * Startup guard: reject unsafe config combinations at boot.

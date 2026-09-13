@@ -188,7 +188,7 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
         T master = getById(id);
 
         if (master == null) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -222,7 +222,7 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
         T master = getById(id);
 
         if (master == null) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         return logicDelete(master);

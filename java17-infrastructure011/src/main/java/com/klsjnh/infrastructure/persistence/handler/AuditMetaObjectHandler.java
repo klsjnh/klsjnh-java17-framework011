@@ -14,7 +14,7 @@ package com.klsjnh.infrastructure.persistence.handler;
  *
  */
 
-import com.klsjnh.common.constant.AuthAttribute011;
+import com.klsjnh.common.constant.FrameConst011;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
@@ -82,7 +82,7 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
             return null;
         }
 
-        Object operatorId = attributes.getAttribute(AuthAttribute011.OPERATOR_ID, RequestAttributes.SCOPE_REQUEST);
+        Object operatorId = attributes.getAttribute(FrameConst011.OPERATOR_ID, RequestAttributes.SCOPE_REQUEST);
 
         return operatorId == null ? null : operatorId.toString();
     }

@@ -7,7 +7,7 @@
 - Java17 **纯血 DDD** 技术底座，供第三方业务系统 Maven 依赖引用；全新项目、无历史技术债
 - 技术栈：Java 17 · Spring Boot 3.4.5 · MyBatis-Plus 3.5.9 · MySQL 8 · Druid（待接入）· JJWT 0.12.6 · knife4j 4.5.0 · Lombok
 - 版本统一在父 `pom.xml` 的 `dependencyManagement` 管理，子模块不许自带版本号
-- 文档地图：文档体系与编号约定 → [docs/011.agreements.md](docs/011.agreements.md)（docs/README.md 为索引）；架构选型与设计思路 → [docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md)；目录结构与命名 → [docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)；配置体系 → [docs/infrastructure011/015.topic-config.md](docs/infrastructure011/015.topic-config.md)；编码规则 → [docs/015.coding-standards.md](docs/015.coding-standards.md)；API 契约 → [docs/016.api-contract.md](docs/016.api-contract.md)
+- 文档地图：文档体系与编号约定 → [docs/011.agreements.md](docs/011.agreements.md)（docs/README.md 为索引）；架构选型与设计思路 → [docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md)；目录结构与命名 → [docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)；配置体系 → [docs/infrastructure011/015.topic-config.md](docs/infrastructure011/015.topic-config.md)；持久化体系 → [docs/infrastructure011/016.topic-persistence.md](docs/infrastructure011/016.topic-persistence.md)；动态数据源 → [docs/infrastructure011/017.topic-dynamic-datasource.md](docs/infrastructure011/017.topic-dynamic-datasource.md)；IAM 总设计 → [docs/infrastructure011/018.topic-iam-overview.md](docs/infrastructure011/018.topic-iam-overview.md)；存储中心 → [docs/infrastructure011/019.topic-storage-center.md](docs/infrastructure011/019.topic-storage-center.md)；编码规则 → [docs/015.coding-standards.md](docs/015.coding-standards.md)；API 契约 → [docs/016.api-contract.md](docs/016.api-contract.md)
 
 ## 2. 模块与依赖方向（DDD 分层）
 
@@ -18,7 +18,7 @@
 | java17-application011 | application | domain + common | JulySchedulerUseCase / JulyUserUseCase（CRUD+双登录+分配）/ JulyRoleUseCase |
 | java17-infrastructure011 | infrastructure | domain + common | 持久化基座（BasePo 四件套 / MasterLinked / CommonMapper / 仓库基座家族）、业务持久化（system011：scheduler + IAM 的 PO/Mapper/Impl）、IAM 适配器（bcrypt / JWT / RuntimeStatus / 审计记录器）、KrtConfig011 |
 | java17-web011 | web | application + common | JulyScheduler / JulyUser / JulyRole Controller、转换器、GlobalExceptionHandler、GlobalAuthFilter（JWT 校验） |
-| java17-app011 | app | 全部 | 唯一 main：Framework011Application；application.yml（port 11610 / 默认 profile development / krt.status debug——生产须显式改 production，启动卫兵兜底） |
+| java17-app011 | app | 全部 | 唯一 main：Framework011Application；application.yml（port 11610 / 默认 profile development，公共结构无密钥）；数据源与 krt（debug + dev secret）落在入库的 application-development.yml；logback-spring.xml 分环境日志——生产须显式改 production，启动卫兵兜底 |
 
 依赖箭头：`web → application → domain ← infrastructure`；common 被各层引用，不反向依赖任何层。
 

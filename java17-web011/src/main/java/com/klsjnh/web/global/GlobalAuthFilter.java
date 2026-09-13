@@ -17,7 +17,7 @@ package com.klsjnh.web.global;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.klsjnh.common.constant.AuthAttribute011;
+import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.domain.iam.AuthTokenPort;
@@ -137,7 +137,7 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
         String operatorId = resolveOperatorId(request);
 
         if (operatorId != null) {
-            request.setAttribute(AuthAttribute011.OPERATOR_ID, operatorId);
+            request.setAttribute(FrameConst011.OPERATOR_ID, operatorId);
         }
 
         if (operatorId == null && !runtimeStatusPort.isDebug()) {

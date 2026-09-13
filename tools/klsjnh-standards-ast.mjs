@@ -315,6 +315,57 @@ export async function createAstChecker() {
     }
   }
 
+  /**
+   * log-funcname rule: inside a method that declares funcName, every logger
+   * call with placeholders must use funcName as the first placeholder
+   * argument. Calls without a {} placeholder (e.g. bare message + throwable)
+   * are exempt.
+   *
+   * @param tree parsed syntax tree
+   * @param file file path
+   * @param out  violations array
+   */
+  function testLogFuncNameFirst(tree, file, out) {
+    for (const m of tree.rootNode.descendantsOfType('method_declaration')) {
+      const body = m.childForFieldName('body');
+      if (!body) {
+        continue;
+      }
+
+      const declaresFuncName = body.namedChildren.some((c) =>
+          c.type === 'local_variable_declaration' && c.text.startsWith('String funcName = '));
+      if (!declaresFuncName) {
+        continue;
+      }
+
+      for (const inv of body.descendantsOfType('method_invocation')) {
+        if (!isLoggerCall(inv)) {
+          continue;
+        }
+
+        const args = inv.childForFieldName('arguments');
+        if (!args) {
+          continue;
+        }
+
+        const named = args.namedChildren;
+        const format = named[0];
+        const hasPlaceholder = format && format.type === 'string_literal' && format.text.includes('{}');
+        const second = named[1];
+
+        if (hasPlaceholder && (!second || second.type !== 'identifier' || second.text !== 'funcName')) {
+          out.push({
+            file,
+            line: inv.startPosition.row + 1,
+            rule: 'log-funcname',
+            detail: 'log first placeholder must be funcName (015 §4)',
+            fix: 'pass funcName as the first placeholder argument',
+          });
+        }
+      }
+    }
+  }
+
   return {
     /**
      * Run AST checks over all Java sources of the project.
@@ -336,6 +387,7 @@ export async function createAstChecker() {
         const pkg = filePackageName(tree.rootNode);
         checkFuncName(tree, pkg, file, violations);
         testFuncNameFormat(tree, file, violations);
+        testLogFuncNameFirst(tree, file, violations);
         checkLogConcat(tree, file, violations);
         checkNaming(tree, pkg, file, violations);
         checkPkMt(tree, pkg, file, violations);

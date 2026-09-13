@@ -21,6 +21,9 @@ Thumbs.db
 desktop.ini
 *~
 
+# ---- runtime storage (local011 adapter) ----
+storage011/
+
 # ---- logs & temp ----
 *.log
 logs/

@@ -87,10 +87,12 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 | ✅ | 仓库基座家族（BaseRepository / 011 / Tree / Tree011 / MasterSub021，替代旧版含注入防护重设计） |
 | ✅ | 审计时间列自动填充（AuditMetaObjectHandler） |
 | ✅ | 启动配置（port 11610 / development 默认 / krt.status）——应用已在 11610 实测启动 |
-| ✅ | 首个业务聚合全链路（017 julyScheduler：CRUD / 启停 / 执行一次，Quartz 内存模式） |
+| ✅ | 首个业务聚合全链路（021 julyScheduler：CRUD / 启停 / 执行一次，Quartz 内存模式） |
 | ✅ | 审计操作人填充（JWT 请求属性 `AuthAttribute011.OPERATOR_ID` → create_by/update_by，无 OperatorContext） |
 | ✅ | 全局异常处理器（BusinessException → 统一信封，HTTP 与 statusCode 同步） |
 | ✅ | JWT 鉴权过滤器（GlobalAuthFilter，Authorization: Bearer，401 统一） |
+| ✅ | 动态数据源（yaml ci011 懒加载 + SqlRoutingPort 读写/方言分页 clamp[10,500]） |
+| ✅ | 存储中心（对象 + 桶 CRUD + stat 元数据，local011/minio011 双适配器 E2E，厂商适配器分期） |
 | 🔜 | production 数据源注入与部署验证 |
 
 ## 版本

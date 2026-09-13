@@ -68,6 +68,8 @@ public class UserAuditRecorder implements UserAuditPort {
     @Override
     public void record(String pkMt, String userAccount, String auditType, String objectCode, String content,
             String ip) {
+        String funcName = "audit write";
+
         try {
             JulyUserAuditPo po = new JulyUserAuditPo();
             po.setPkMt(pkMt);
@@ -78,7 +80,7 @@ public class UserAuditRecorder implements UserAuditPort {
             po.setAuditIp(ip);
             mapper.insert(po);
         } catch (Exception ex) {
-            logger.warn("audit write failed type {} account {} error {} ...", auditType, userAccount, ex.getMessage());
+            logger.warn("{} type {} account {} failed {} ...", funcName, auditType, userAccount, ex.getMessage());
         }
     }
 }

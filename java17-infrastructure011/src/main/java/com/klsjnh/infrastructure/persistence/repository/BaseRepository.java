@@ -128,7 +128,7 @@ public abstract class BaseRepository<T extends BasePo, M extends BaseMapper<T>> 
         int rows = mapper.updateById(entity);
 
         if (rows == 0) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         return entity;
@@ -186,7 +186,7 @@ public abstract class BaseRepository<T extends BasePo, M extends BaseMapper<T>> 
         int rows = mapper.deleteById(id);
 
         if (rows == 0) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         logger.info("{} {} {} success ...", funcName, getTableName(), id);

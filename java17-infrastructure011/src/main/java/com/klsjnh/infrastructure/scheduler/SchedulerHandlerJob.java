@@ -73,6 +73,8 @@ public class SchedulerHandlerJob implements Job {
      */
     @Override
     public void execute(JobExecutionContext context) {
+        String funcName = "scheduler job";
+
         JobDataMap data = context.getMergedJobDataMap();
         String id = data.getString(DATA_ID);
         String handler = data.getString(DATA_HANDLER);
@@ -80,7 +82,7 @@ public class SchedulerHandlerJob implements Job {
         try {
             applicationContext.getBean(handler, Runnable.class).run();
         } catch (Exception ex) {
-            logger.warn("scheduler job {} handler {} failed {} ...", id, handler, ex.getMessage());
+            logger.warn("{} {} {} failed {} ...", funcName, id, handler, ex.getMessage());
         } finally {
             incrementTimes(id);
         }

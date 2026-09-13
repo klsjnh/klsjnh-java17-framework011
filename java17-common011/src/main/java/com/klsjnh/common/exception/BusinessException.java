@@ -86,6 +86,27 @@ public class BusinessException extends RuntimeException {
     }
 
     /**
+     * Build a 404 exception for a missing record, with the id as context.
+     *
+     * @param id primary key that was not found
+     * @return exception instance
+     */
+    public static BusinessException recordNotFound(String id) {
+        return notFound("record not found, id=" + id);
+    }
+
+    /**
+     * Build a 401 exception for a failed authentication attempt (wrong
+     * account or password). The message is deliberately vague — it must not
+     * reveal which of the two was wrong.
+     *
+     * @return exception instance
+     */
+    public static BusinessException wrongAccountOrPassword() {
+        return unauthorized("wrong account or password");
+    }
+
+    /**
      * Get the contract status code.
      *
      * @return status code

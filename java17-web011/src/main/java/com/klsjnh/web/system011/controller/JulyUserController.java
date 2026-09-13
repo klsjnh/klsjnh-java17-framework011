@@ -14,6 +14,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -25,6 +26,7 @@ import com.klsjnh.application.iam.LoginResult;
 import com.klsjnh.domain.iam.JulyUser;
 import com.klsjnh.web.system011.converter.JulyUserConverter;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserAssignRolesVo011;
+import com.klsjnh.web.system011.vo.julyuser.JulyUserChangePasswordVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserInsertVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserLoginVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserQueryVo011;
@@ -217,6 +219,25 @@ public class JulyUserController {
         LoginResult result = useCase.loginByUserName(vo.getUserAccount(), request.getRemoteAddr());
 
         return Response011.success(funcName, toSession(result));
+    }
+
+    /**
+     * Change the password of the current operator (old password verified).
+     *
+     * @param vo      change request
+     * @param request http request (operator id from the auth filter)
+     * @return envelope with the operator id
+     */
+    @PostMapping("/changePassword")
+    @Operation(summary = "本人修改密码（验旧密）")
+    public Response011<IdVo011> changePassword(@RequestBody JulyUserChangePasswordVo011 vo,
+            HttpServletRequest request) {
+        String funcName = "change password";
+
+        String operatorId = (String) request.getAttribute(FrameConst011.OPERATOR_ID);
+        useCase.changePassword(operatorId, vo.getOldPassword(), vo.getNewPassword());
+
+        return Response011.successId(funcName, operatorId);
     }
 
     /**

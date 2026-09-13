@@ -141,7 +141,7 @@ public class JulyRoleUseCase {
         JulyRole role = repository.findById(id);
 
         if (role == null) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         return role;

@@ -40,6 +40,18 @@
             <artifactId>spring-web</artifactId>
         </dependency>
 
+        <!-- 连接池（动态数据源） -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+        </dependency>
+
+        <!-- 对象存储（MinIO SDK，S3 兼容厂商适配器基础） -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+        </dependency>
+
         <!-- 调度引擎 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

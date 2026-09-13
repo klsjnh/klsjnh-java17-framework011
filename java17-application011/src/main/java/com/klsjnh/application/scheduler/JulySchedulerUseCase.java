@@ -229,7 +229,7 @@ public class JulySchedulerUseCase {
         JulyScheduler scheduler = repository.findById(id);
 
         if (scheduler == null) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         return scheduler;

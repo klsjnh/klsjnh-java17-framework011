@@ -15,3 +15,18 @@ krt:
   jwt:
     secret: dev-secret-klsjnh-framework011-20260912-change-me-in-production-0123456789
     expire-minutes: 480
+
+  ci011:
+    - ds-code: page-demo
+      ds-name: 路由分页演示库
+      ds-type: mysql
+      ds-url: jdbc:mysql://127.0.0.1:33306/ds20260913001?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+      username: dev202608011
+      password: dev202608011
+  storage-center:
+    default-type: local011
+    minio011:
+      endpoint: http://192.168.1.88:11230
+      access-key: demo011
+      secret-key: "123456789"
+      default-bucket: demo011

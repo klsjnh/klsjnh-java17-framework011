@@ -11,3 +11,10 @@ spring:
     group:
       # local 叠加在 development 之上：application-local.yml 只写本机差异，其余继承 development
       local: development
+
+# 存储中心：本期 local011（本地盘）/ minio011（自部署 MinIO）双适配器，按需切换
+krt:
+  storage-center:
+    default-type: local011
+    local011:
+      base-path: ./storage011

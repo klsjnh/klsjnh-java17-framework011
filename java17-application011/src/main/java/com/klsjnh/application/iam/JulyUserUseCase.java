@@ -252,7 +252,7 @@ public class JulyUserUseCase {
 
         if (user == null || !passwordPort.matches(password == null ? "" : password, user.password())) {
             recordFailed(userAccount, "wrong account or password", ip);
-            throw BusinessException.unauthorized("wrong account or password");
+            throw BusinessException.wrongAccountOrPassword();
         }
 
         if (Status011.DISABLED.getCode().equals(user.status())) {
@@ -285,7 +285,7 @@ public class JulyUserUseCase {
 
         if (user == null) {
             recordFailed(userAccount, "wrong account or password", ip);
-            throw BusinessException.unauthorized("wrong account or password");
+            throw BusinessException.wrongAccountOrPassword();
         }
 
         if (Status011.DISABLED.getCode().equals(user.status())) {
@@ -298,6 +298,37 @@ public class JulyUserUseCase {
         userAuditPort.record(user.id().value(), user.userAccount(), "LOGIN", "july_user", "passwordless login", ip);
 
         return new LoginResult(token, user.userAccount(), user.userName());
+    }
+
+    /**
+     * Change the password of the current operator: verify the old password,
+     * then replace the hash. The operator id comes from the auth filter (via
+     * the controller).
+     *
+     * @param operatorId  current operator user id
+     * @param oldPassword old raw password
+     * @param newPassword new raw password
+     */
+    @Transactional
+    public void changePassword(String operatorId, String oldPassword, String newPassword) {
+        if (operatorId == null || operatorId.isBlank()) {
+            throw BusinessException.unauthorized("not authenticated");
+        }
+
+        if (newPassword == null || newPassword.isBlank()) {
+            throw BusinessException.badRequest("change password: new password is required");
+        }
+
+        JulyUser user = require(operatorId);
+
+        if (!passwordPort.matches(oldPassword == null ? "" : oldPassword, user.password())) {
+            throw BusinessException.badRequest("old password is wrong");
+        }
+
+        user.resetPassword(passwordPort.encode(newPassword));
+        repository.update(user);
+        userAuditPort.record(operatorId, user.userAccount(), "CHANGE_PASSWORD", "july_user", "password changed",
+                null);
     }
 
     /**
@@ -321,7 +352,7 @@ public class JulyUserUseCase {
         JulyUser user = repository.findById(id);
 
         if (user == null) {
-            throw BusinessException.notFound("record not found, id=" + id);
+            throw BusinessException.recordNotFound(id);
         }
 
         return user;
