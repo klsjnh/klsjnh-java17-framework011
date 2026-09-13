@@ -185,6 +185,24 @@ public class JulyRoleRepositoryImpl
     }
 
     /**
+     * Role codes of the given role ids (alive roles only).
+     *
+     * @param ids role ids
+     * @return role code list
+     */
+    @Override
+    public List<String> findCodesByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        QueryWrapper<JulyRolePo> wrapper = new QueryWrapper<>();
+        wrapper.in("id", ids).eq("dr", "0");
+
+        return mapper.selectList(wrapper).stream().map(JulyRolePo::getRoleCode).toList();
+    }
+
+    /**
      * Keyword filter wrapper shared by findPage and count.
      *
      * @param keyword role code / name keyword, nullable

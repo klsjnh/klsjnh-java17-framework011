@@ -78,4 +78,12 @@ public interface JulyRoleRepository {
      * @return total row count
      */
     long count(String keyword);
+
+    /**
+     * Role codes of the given role ids (alive roles only).
+     *
+     * @param ids role ids
+     * @return role code list
+     */
+    List<String> findCodesByIds(List<String> ids);
 }

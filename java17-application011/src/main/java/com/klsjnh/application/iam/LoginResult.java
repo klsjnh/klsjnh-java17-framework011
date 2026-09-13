@@ -14,13 +14,17 @@ package com.klsjnh.application.iam;
  *
  */
 
+import java.util.List;
+
 /**
- * Login use case result: the signed token plus the profile of the user.
+ * Login use case result: the signed token plus the profile and roles of the
+ * user.
  *
- * @param token      signed JWT
+ * @param token       signed JWT
  * @param userAccount login account
- * @param userName   user name
+ * @param userName    user name
+ * @param roles       granted role codes
  */
 
-public record LoginResult(String token, String userAccount, String userName) {
+public record LoginResult(String token, String userAccount, String userName, List<String> roles) {
 }

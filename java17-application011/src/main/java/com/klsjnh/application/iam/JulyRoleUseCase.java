@@ -21,6 +21,9 @@ import com.klsjnh.common.page.PageResult011;
 
 import com.klsjnh.domain.iam.JulyRole;
 import com.klsjnh.domain.iam.JulyRoleRepository;
+import com.klsjnh.domain.menu.JulyMenu;
+import com.klsjnh.domain.menu.JulyMenuRepository;
+import com.klsjnh.domain.menu.JulyRolePermissionsRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -42,12 +45,62 @@ public class JulyRoleUseCase {
     private final JulyRoleRepository repository;
 
     /**
+     * JulyMenu repository (menu existence + permission code lookup).
+     */
+    private final JulyMenuRepository menuRepository;
+
+    /**
+     * Role permissions junction repository.
+     */
+    private final JulyRolePermissionsRepository rolePermissionsRepository;
+
+    /**
      * Create the use case.
      *
-     * @param repository july role repository
+     * @param repository                 july role repository
+     * @param menuRepository             july menu repository
+     * @param rolePermissionsRepository  role permissions junction repository
      */
-    public JulyRoleUseCase(JulyRoleRepository repository) {
+    public JulyRoleUseCase(JulyRoleRepository repository, JulyMenuRepository menuRepository,
+            JulyRolePermissionsRepository rolePermissionsRepository) {
         this.repository = repository;
+        this.menuRepository = menuRepository;
+        this.rolePermissionsRepository = rolePermissionsRepository;
+    }
+
+    /**
+     * Assign menus to a role (toggle semantics, replace strategy): granted
+     * menus revive their permission rows, revoked menus stop theirs. The row
+     * records the menu's current permission code as a snapshot (blank for
+     * pure visibility).
+     *
+     * @param id      role id
+     * @param pkMenus menu ids to grant
+     */
+    @Transactional
+    public void assignMenus(String id, List<String> pkMenus) {
+        require(id);
+
+        List<String> desired = pkMenus == null ? List.of()
+                : pkMenus.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
+        List<String> current = rolePermissionsRepository.findMenuIds(id);
+
+        for (String pkMenu : desired) {
+            JulyMenu menu = menuRepository.findById(pkMenu);
+
+            if (menu == null) {
+                throw BusinessException.badRequest("menu not found, id=" + pkMenu);
+            }
+
+            String code = menu.permissionCode() == null ? "" : menu.permissionCode();
+            rolePermissionsRepository.grant(id, pkMenu, code);
+        }
+
+        for (String pkMenu : current) {
+            if (!desired.contains(pkMenu)) {
+                rolePermissionsRepository.revokeByMenu(id, pkMenu);
+            }
+        }
     }
 
     /**

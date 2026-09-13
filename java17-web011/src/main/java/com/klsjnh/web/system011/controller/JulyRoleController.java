@@ -22,6 +22,7 @@ import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.application.iam.JulyRoleUseCase;
 import com.klsjnh.domain.iam.JulyRole;
 import com.klsjnh.web.system011.converter.JulyRoleConverter;
+import com.klsjnh.web.system011.vo.julyrole.JulyRoleAssignMenusVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleInsertVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleQueryVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleUpdateVo011;
@@ -109,6 +110,22 @@ public class JulyRoleController {
         useCase.logicDelete(idVo.getId());
 
         return Response011.successId(funcName, idVo.getId());
+    }
+
+    /**
+     * Assign menus to a role (toggle semantics, replace strategy).
+     *
+     * @param vo assign request
+     * @return envelope with the role id
+     */
+    @PostMapping("/assignMenus")
+    @Operation(summary = "角色授权菜单（整存替换）")
+    public Response011<IdVo011> assignMenus(@RequestBody JulyRoleAssignMenusVo011 vo) {
+        String funcName = "assign menus";
+
+        useCase.assignMenus(vo.getId(), vo.getPkMenus());
+
+        return Response011.successId(funcName, vo.getId());
     }
 
     /**

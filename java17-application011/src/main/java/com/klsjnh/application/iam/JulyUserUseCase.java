@@ -24,6 +24,7 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.domain.iam.AuthTokenPort;
 import com.klsjnh.domain.iam.JulyUser;
 import com.klsjnh.domain.iam.JulyUserRepository;
+import com.klsjnh.domain.iam.JulyRoleRepository;
 import com.klsjnh.domain.iam.JulyUserRoleRepository;
 import com.klsjnh.domain.iam.PasswordPort;
 import com.klsjnh.domain.iam.RuntimeStatusPort;
@@ -72,6 +73,11 @@ public class JulyUserUseCase {
     private final RuntimeStatusPort runtimeStatusPort;
 
     /**
+     * JulyRole repository.
+     */
+    private final JulyRoleRepository roleRepository;
+
+    /**
      * User audit port.
      */
     private final UserAuditPort userAuditPort;
@@ -88,12 +94,13 @@ public class JulyUserUseCase {
      */
     public JulyUserUseCase(JulyUserRepository repository, JulyUserRoleRepository userRoleRepository,
             PasswordPort passwordPort, AuthTokenPort authTokenPort, RuntimeStatusPort runtimeStatusPort,
-            UserAuditPort userAuditPort) {
+            JulyRoleRepository roleRepository, UserAuditPort userAuditPort) {
         this.repository = repository;
         this.userRoleRepository = userRoleRepository;
         this.passwordPort = passwordPort;
         this.authTokenPort = authTokenPort;
         this.runtimeStatusPort = runtimeStatusPort;
+        this.roleRepository = roleRepository;
         this.userAuditPort = userAuditPort;
     }
 
@@ -264,7 +271,7 @@ public class JulyUserUseCase {
         repository.touchLastLoginTime(user.id().value());
         userAuditPort.record(user.id().value(), user.userAccount(), "LOGIN", "july_user", "login success", ip);
 
-        return new LoginResult(token, user.userAccount(), user.userName());
+        return new LoginResult(token, user.userAccount(), user.userName(), currentRoleCodes(user.id().value()));
     }
 
     /**
@@ -297,7 +304,7 @@ public class JulyUserUseCase {
         repository.touchLastLoginTime(user.id().value());
         userAuditPort.record(user.id().value(), user.userAccount(), "LOGIN", "july_user", "passwordless login", ip);
 
-        return new LoginResult(token, user.userAccount(), user.userName());
+        return new LoginResult(token, user.userAccount(), user.userName(), currentRoleCodes(user.id().value()));
     }
 
     /**
@@ -340,6 +347,16 @@ public class JulyUserUseCase {
      */
     private void recordFailed(String userAccount, String reason, String ip) {
         userAuditPort.record(null, userAccount, "LOGIN_FAILED", "july_user", reason, ip);
+    }
+
+    /**
+     * Role codes currently granted to a user.
+     *
+     * @param userId user id
+     * @return role code list
+     */
+    private List<String> currentRoleCodes(String userId) {
+        return roleRepository.findCodesByIds(userRoleRepository.findRoleIds(userId));
     }
 
     /**

@@ -22,6 +22,7 @@ import lombok.Data;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -43,6 +44,7 @@ import java.util.List;
  */
 
 @Configuration
+@EnableConfigurationProperties(SpringDocConfig011.Properties.class)
 public class SpringDocConfig011 {
 
     /**

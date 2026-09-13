@@ -251,6 +251,7 @@ public class JulyUserController {
         vo.setToken(result.token());
         vo.setUserAccount(result.userAccount());
         vo.setUserName(result.userName());
+        vo.setRoles(result.roles());
 
         return vo;
     }
