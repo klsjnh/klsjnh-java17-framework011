@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
  * program behavior (JulyConfigUseCase.getByCode), not a management action.
  */
 
-@Tag(name = "配置管理")
+@Tag(name = "系统管理 - 配置管理")
 @RestController
 @RequestMapping("/klsjnh/system011/julyConfig/v1")
 public class JulyConfigController {

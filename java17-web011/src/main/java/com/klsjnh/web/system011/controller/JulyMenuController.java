@@ -52,7 +52,7 @@ import java.util.List;
  * selectUserMenuTree.
  */
 
-@Tag(name = "菜单管理")
+@Tag(name = "系统管理 - 菜单管理")
 @RestController
 @RequestMapping("/klsjnh/system011/julyMenu/v1")
 public class JulyMenuController {

@@ -24,4 +24,4 @@ CREATE TABLE IF NOT EXISTS july_menu (
     PRIMARY KEY (id),
     UNIQUE KEY uk_menu_code (menu_code),
     KEY idx_parent_id (parent_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理-菜单';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 菜单管理';

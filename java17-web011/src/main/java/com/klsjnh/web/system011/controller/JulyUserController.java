@@ -57,7 +57,7 @@ import java.util.List;
  * two login kinds (password / passwordless).
  */
 
-@Tag(name = "用户管理")
+@Tag(name = "系统管理 - 用户管理")
 @RestController
 @RequestMapping("/klsjnh/system011/julyUser/v1")
 public class JulyUserController {
