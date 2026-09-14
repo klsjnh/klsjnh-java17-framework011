@@ -47,7 +47,7 @@ import java.util.List;
  * move / delete constraints.
  */
 
-@Tag(name = "组织管理")
+@Tag(name = "系统管理 - 组织机构")
 @RestController
 @RequestMapping("/klsjnh/system011/julyOrganization/v1")
 public class JulyOrganizationController {

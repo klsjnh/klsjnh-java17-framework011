@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS july_config (
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
     PRIMARY KEY (id),
     UNIQUE KEY uk_code (code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理-配置管理';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 配置管理';

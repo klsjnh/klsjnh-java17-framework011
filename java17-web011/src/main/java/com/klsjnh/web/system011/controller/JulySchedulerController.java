@@ -49,7 +49,7 @@ import java.util.List;
  * converter, orchestration in the use case.
  */
 
-@Tag(name = "定时任务管理")
+@Tag(name = "系统管理 - 定时任务")
 @RestController
 @RequestMapping("/klsjnh/system011/julyScheduler/v1")
 public class JulySchedulerController {

@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
  * JulyRole HTTP adapter: role management endpoints (built-in roles protected).
  */
 
-@Tag(name = "角色管理")
+@Tag(name = "系统管理 - 角色管理")
 @RestController
 @RequestMapping("/klsjnh/system011/julyRole/v1")
 public class JulyRoleController {
