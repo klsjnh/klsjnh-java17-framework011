@@ -2,7 +2,7 @@
  * klsjnh coding-standards check helpers (regex tier).
  *
  * The script CHECKS ONLY — fixing is done by AI / developers based on the
- * check output (file:line, rule, fix hint). Rules source: docs/015.coding-standards.md.
+ * check output (file:line, rule, fix hint). Rules source: docs/016.coding-standards.md.
  */
 
 import { readdir, readFile } from 'node:fs/promises';

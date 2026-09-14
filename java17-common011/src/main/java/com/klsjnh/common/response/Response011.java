@@ -26,7 +26,7 @@ import java.io.Serializable;
  * Unified API response envelope returned by every endpoint.
  * <p>
  * The serialized shape is a stable contract, fixed by
- * {@code docs/016.api-contract.md}: {@code statusCode} / {@code message} /
+ * {@code docs/013.api-contract.md}: {@code statusCode} / {@code message} /
  * {@code errorMessage} / {@code timestamp} / {@code traceId} / {@code data}.
  * Every key is camelCase and MUST NOT be renamed, dropped or reordered.
  * </p>

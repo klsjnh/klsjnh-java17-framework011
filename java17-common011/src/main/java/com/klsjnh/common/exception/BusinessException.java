@@ -20,7 +20,7 @@ import com.klsjnh.common.enums.HttpCodeEnum011;
  * Business exception carrying a contract status code and a client-safe message.
  * <p>
  * The global exception handler maps {@link #getCode()} onto the response
- * envelope (see docs/016.api-contract.md). The message is a safe hint and
+ * envelope (see docs/013.api-contract.md). The message is a safe hint and
  * never carries internal detail.
  * </p>
  */
