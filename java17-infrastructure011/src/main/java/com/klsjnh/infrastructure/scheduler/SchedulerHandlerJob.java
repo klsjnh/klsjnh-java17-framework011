@@ -18,15 +18,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.klsjnh.domain.system011.scheduler.JobHandler;
+
 import com.klsjnh.infrastructure.system011.entity.JulySchedulerPo;
 import com.klsjnh.infrastructure.system011.mapper.JulySchedulerMapper;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 
 /**
  * Quartz job: invokes the handler bean and increments the execute counter.

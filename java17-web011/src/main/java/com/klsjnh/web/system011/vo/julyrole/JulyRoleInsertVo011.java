@@ -14,8 +14,9 @@ package com.klsjnh.web.system011.vo.julyrole;
  *
  */
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Insert request VO for a role (custom roles only; built-in roles are seeded

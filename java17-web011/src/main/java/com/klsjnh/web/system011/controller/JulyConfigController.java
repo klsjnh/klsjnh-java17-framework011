@@ -14,29 +14,32 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import lombok.Data;
+
+import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
-import com.klsjnh.common.vo.IdVo011;
 
-import com.klsjnh.application.config.JulyConfigUseCase;
 import com.klsjnh.domain.system011.config.JulyConfig;
+import com.klsjnh.application.config.JulyConfigUseCase;
+
 import com.klsjnh.web.system011.converter.JulyConfigConverter;
+
+import com.klsjnh.web.system011.vo.julyconfig.JulyConfigVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigQueryVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigUpdateVo011;
-import com.klsjnh.web.system011.vo.julyconfig.JulyConfigVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Data;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * JulyConfig HTTP adapter: admin CRUD over runtime key-value parameters.
@@ -117,17 +120,17 @@ public class JulyConfigController {
     }
 
     /**
-     * Find a config entry by primary key.
+     * Find a config entry by primary key (safe + idempotent, hence GET).
      *
-     * @param idVo request with the config id
+     * @param id config id, passed as a query parameter
      * @return config detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<JulyConfigVo011> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<JulyConfigVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
     }
 
     /**

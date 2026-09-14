@@ -14,11 +14,11 @@ package com.klsjnh.common.response;
  *
  */
 
-import com.klsjnh.common.enums.HttpCodeEnum011;
-import com.klsjnh.common.vo.IdVo011;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import com.klsjnh.common.enums.HttpCodeEnum011;
+import com.klsjnh.common.vo.IdVo011;
 
 import java.io.Serializable;
 

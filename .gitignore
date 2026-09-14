@@ -30,6 +30,10 @@ logs/
 tmp/
 *.tmp
 
+# ---- runtime pid / tool state ----
+*.pid
+.workbuddy/
+
 # ---- 本地私有配置（application.yml 公共结构正常提交）----
 # 通配忽略所有环境 yml，仅 application-development.yml（开发共享）入库；
 # application-local.yml（本机私有覆盖）与 application-production.yml 均被下面的通配规则忽略

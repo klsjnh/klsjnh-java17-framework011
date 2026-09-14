@@ -134,6 +134,45 @@ public class SqlRoutingExecutor implements SqlRoutingPort {
     }
 
     /**
+     * Scalar string read: first column of the first row.
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored scalar select
+     * @return first column value or null
+     */
+    @Override
+    public String selectStr(String dsCode, String sql) {
+        Map<String, Object> row = selectOne(dsCode, sql);
+
+        if (row == null || row.isEmpty()) {
+            return null;
+        }
+
+        Object value = row.values().iterator().next();
+
+        return value == null ? null : String.valueOf(value);
+    }
+
+    /**
+     * Scalar integer read: first column of the first row, parsed via
+     * BigDecimal ("5" / "5.0" both fine; blank → null).
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored scalar select
+     * @return first column value or null
+     */
+    @Override
+    public Integer selectInt(String dsCode, String sql) {
+        String value = selectStr(dsCode, sql);
+
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return new java.math.BigDecimal(value).intValue();
+    }
+
+    /**
      * Paged select with database dialect and a page size clamped to
      * [10, 500] in code.
      *

@@ -55,6 +55,27 @@ public interface SqlRoutingPort {
     int execute(String dsCode, String sql);
 
     /**
+     * Scalar string read: the FIRST COLUMN of the first row as a string
+     * (no alias convention needed — SELECT COUNT(*) works as-is). Null when
+     * no rows or the value is null.
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored scalar select
+     * @return first column value or null
+     */
+    String selectStr(String dsCode, String sql);
+
+    /**
+     * Scalar integer read: the FIRST COLUMN of the first row as an integer
+     * (blank → null; "5" / "5.0" both parse via BigDecimal).
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored scalar select
+     * @return first column value or null
+     */
+    Integer selectInt(String dsCode, String sql);
+
+    /**
      * Paged select with database dialect and a page size clamped to
      * [10, 500] in code (product decision).
      *

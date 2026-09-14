@@ -21,10 +21,13 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
+import com.klsjnh.common.vo.IdsVo011;
 
 import com.klsjnh.application.menu.JulyMenuUseCase;
 import com.klsjnh.domain.system011.menu.JulyMenu;
+
 import com.klsjnh.web.system011.converter.JulyMenuConverter;
+
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuInsertVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuQueryVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuUpdateVo011;
@@ -32,11 +35,15 @@ import com.klsjnh.web.system011.vo.julymenu.JulyMenuVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -105,31 +112,45 @@ public class JulyMenuController {
     }
 
     /**
-     * Logic delete menus (batch; children reject).
+     * Logic delete a single menu; menus with alive children are rejected.
      *
-     * @param ids menu id list
-     * @return per-id success/failure summary
+     * @param idVo request with the menu id
+     * @return envelope with the deleted menu id
      */
     @PostMapping("/logicDelete")
-    @Operation(summary = "逻辑删除（批量，有子菜单拒绝）")
-    public Response011<BatchDeleteResultVo011> logicDelete(@RequestBody List<String> ids) {
+    @Operation(summary = "逻辑删除（单个，有子菜单拒绝）")
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        return Response011.success(funcName, useCase.logicDelete(ids));
+        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
     }
 
     /**
-     * Find a menu by primary key.
+     * Logic delete menus in batch; per-id failure is reported, not thrown.
      *
-     * @param idVo request with the menu id
+     * @param idsVo request with the menu id list
+     * @return per-id success/failure summary
+     */
+    @PostMapping("/logicDeleteBatch")
+    @Operation(summary = "逻辑删除（批量，有子菜单拒绝的逐条回报）")
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+        String funcName = "logic delete batch";
+
+        return Response011.success(funcName, useCase.logicDelete(idsVo.getIds()));
+    }
+
+    /**
+     * Find a menu by primary key (safe + idempotent, hence GET).
+     *
+     * @param id menu id, passed as a query parameter
      * @return menu detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<JulyMenuVo011> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<JulyMenuVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
     }
 
     /**
@@ -150,12 +171,12 @@ public class JulyMenuController {
     }
 
     /**
-     * Load the full alive menu tree.
+     * Load the full alive menu tree (read-only, hence GET).
      *
      * @return root nodes with nested children
      */
-    @PostMapping("/selectTree")
-    @Operation(summary = "全量菜单树")
+    @GetMapping("/selectTree")
+    @Operation(summary = "全量菜单树（GET）")
     public Response011<List<JulyMenuVo011>> selectTree() {
         String funcName = "select tree";
 
@@ -163,13 +184,14 @@ public class JulyMenuController {
     }
 
     /**
-     * Navigation menu tree of the current operator (login linked).
+     * Navigation menu tree of the current operator (login linked, read-only
+     * hence GET; the operator comes from the auth filter, not the body).
      *
      * @param request http request (operator id from the auth filter)
      * @return root nodes with nested children
      */
-    @PostMapping("/selectUserMenuTree")
-    @Operation(summary = "当前登录人的菜单树（内置角色全量旁路）")
+    @GetMapping("/selectUserMenuTree")
+    @Operation(summary = "当前登录人的菜单树（内置角色全量旁路，GET）")
     public Response011<List<JulyMenuVo011>> selectUserMenuTree(HttpServletRequest request) {
         String funcName = "select user menu tree";
 

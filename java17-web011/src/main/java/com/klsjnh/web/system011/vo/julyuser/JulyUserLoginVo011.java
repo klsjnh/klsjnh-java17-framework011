@@ -14,8 +14,9 @@ package com.klsjnh.web.system011.vo.julyuser;
  *
  */
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Login request VO. Two kinds: account + password (any environment), or

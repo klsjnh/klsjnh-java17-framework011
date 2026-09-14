@@ -38,7 +38,15 @@ export async function walkJavaFiles(dir, out) {
   for (const entry of entries) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'target') {
+      // Only src/main/java and src/test/java are source. Everything else has to
+      // be excluded here rather than in collectJavaSources' path filter, because
+      // tooling directories mirror the original src/main/java layout:
+      //   .backup011/  snapshot copies      .workbuddy/  agent memory
+      //   .vscode/     editor state         .git/        history
+      // So: skip build output, dependencies, and every dot-directory.
+      if (entry.name === 'target'
+        || entry.name === 'node_modules'
+        || entry.name.startsWith('.')) {
         continue;
       }
       await walkJavaFiles(full, out);
@@ -317,33 +325,71 @@ export function testNestedControlBlankLines(path, content, violations) {
 }
 
 /**
- * Import group for a line: 0 org.slf4j, 1 com.klsjnh.common, 2 other klsjnh,
- * 3 third-party, 4 JDK (java / javax).
+ * Import group for a line (015 §9, canonical order):
+ *   1 org.slf4j        (logging, highest priority)
+ *   2 lombok
+ *   3 com.klsjnh.common
+ *   4 com.klsjnh.domain + com.klsjnh.application
+ *   5 com.klsjnh.web.*.converter
+ *   6 com.klsjnh.web.*.vo
+ *   7 io.swagger
+ *   8 org.springframework
+ *   9 jakarta / javax / java
+ *  10 other third-party (com.baomidou / cn.hutool / ...)
+ * A file only needs the groups it actually uses; group numbers must be
+ * non-decreasing across the import block.
  */
 function importGroup(line) {
-  const m = line.match(/^import\s+((?:static\s+)?[\w.]+)\./);
+  // Take the full import path, minus the trailing semicolon. Matching the whole
+  // path matters: a lazy regex would drop the last segment and lose the
+  // "converter" marker.
+  const m = line.match(/^import\s+(?:static\s+)?([\w.]+?)\s*;/);
   if (!m) {
-    return 3;
+    return 10;
   }
-  const p = m[1].replace(/^static\s+/, '');
+  const p = m[1];
   if (p.startsWith('org.slf4j')) {
-    return 0;
-  }
-  if (p === 'com.klsjnh.common' || p.startsWith('com.klsjnh.common.')) {
     return 1;
   }
-  if (p === 'com.klsjnh' || p.startsWith('com.klsjnh.')) {
+  if (p === 'lombok' || p.startsWith('lombok.')) {
     return 2;
   }
-  if (p.startsWith('java.') || p.startsWith('javax.')) {
+  if (p === 'com.klsjnh.common' || p.startsWith('com.klsjnh.common.')) {
+    return 3;
+  }
+  if (p === 'com.klsjnh.domain' || p.startsWith('com.klsjnh.domain.')
+    || p === 'com.klsjnh.application' || p.startsWith('com.klsjnh.application.')) {
     return 4;
   }
-  return 3;
+  if (p.startsWith('com.klsjnh.web.')) {
+    return /\.converter\./.test(p) ? 5 : 6;
+  }
+  if (p === 'com.klsjnh' || p.startsWith('com.klsjnh.')) {
+    return 6;
+  }
+  if (p === 'io.swagger' || p.startsWith('io.swagger.')) {
+    return 7;
+  }
+  if (p === 'org.springframework' || p.startsWith('org.springframework.')) {
+    return 8;
+  }
+  if (p.startsWith('java.') || p.startsWith('javax.')) {
+    return 10;
+  }
+  return 9;
 }
 
 /**
- * Import order rule (015 §9): groups in canonical order, blank line between
- * groups, no blank lines inside a group.
+ * Same grouping as importGroup, exported for the rewriter so that the gate and
+ * the auto-fix can never disagree about what the canonical order is.
+ */
+export function importGroupForRewrite(line) {
+  return importGroup(line);
+}
+
+/**
+ * Import order rule (015 §9): groups in canonical order, exactly one blank
+ * line between groups, no blank lines inside a group.
  */
 export function testImportOrder(path, content, violations) {
   const lines = content.split(/\r?\n/);
@@ -370,7 +416,7 @@ export function testImportOrder(path, content, violations) {
         line: cur.line + 1,
         rule: 'import-order',
         detail: `import group out of order (group ${prev.group} -> ${cur.group})`,
-        fix: 'regroup imports: org.slf4j, com.klsjnh.common, other com.klsjnh, third-party, java/javax — blank line between groups (015 §9)',
+        fix: 'regroup imports: org.slf4j, lombok, com.klsjnh.common, com.klsjnh.domain/application, com.klsjnh.web.converter, com.klsjnh.web.vo, third-party, java/javax (015 §9)',
       });
     } else if (cur.group === prev.group && gap > 1) {
       violations.push({
@@ -387,6 +433,14 @@ export function testImportOrder(path, content, violations) {
         rule: 'import-order',
         detail: 'need blank line between import groups',
         fix: 'insert one blank line before the new import group',
+      });
+    } else if (cur.group > prev.group && gap > 2) {
+      violations.push({
+        file: path,
+        line: cur.line + 1,
+        rule: 'import-order',
+        detail: 'need exactly one blank line between import groups',
+        fix: 'collapse to a single blank line before the new import group',
       });
     }
   }
@@ -579,14 +633,92 @@ export function testJavadocEnglish(path, content, violations) {
   }
 }
 
+/**
+ * Point-read actions (015 §6.2): a single row is addressed by a key, so the
+ * request is trivially expressible as a query string. These MUST be
+ * @GetMapping — safe + idempotent per RFC 9110.
+ *
+ * Naming rule: "getByXxx" is a point read (getById / getByCode / getByName...).
+ */
+const POINT_READ_ACTIONS = new Set(['getById']);
+
+/**
+ * Conditional-read actions (015 §6.2): a list / page / tree query carries a
+ * filter object whose shape is open-ended (nested lists, date ranges, dynamic
+ * criteria) and does not fit a query string. These are safe + idempotent in
+ * semantics but are deliberately mapped with @PostMapping and the filter VO in
+ * the JSON body — the same trade-off Elasticsearch makes with POST _search.
+ * The gate therefore accepts either GET or POST here.
+ *
+ * "getBy..." is point read; "select..." is conditional read.
+ */
+const SELECT_READ_ACTIONS = new Set([
+  'selectListByPage', 'selectTree', 'selectUserMenuTree', 'selectList', 'select',
+]);
+
+/** Match getBy<Something> point reads (getById is listed explicitly). */
+const POINT_READ_PATTERN = /^getBy[A-Z]\w*$/;
+
+/**
+ * Write-purpose action names: unsafe, so the handler MUST be mapped with
+ * @PostMapping.
+ */
+const WRITE_ACTIONS = new Set([
+  'insert', 'update', 'upsert', 'logicDelete', 'logicDeleteBatch', 'delete', 'deleteBatch',
+  'assignRoles', 'assignMenus', 'resetPassword', 'changePassword', 'login', 'loginByUserName',
+  'logout', 'start', 'stop', 'runOnce', 'export',
+]);
+
+/**
+ * Single-target delete actions: they MUST take a single id (IdVo011), not a
+ * list. A list parameter means the endpoint IS a batch one and must be named
+ * "logicDeleteBatch" instead (rule: api-delete-arity).
+ */
+const SINGLE_DELETE_ACTIONS = new Set(['logicDelete', 'delete']);
+
+/**
+ * Batch delete actions: they MUST take a collection parameter.
+ */
+const BATCH_DELETE_ACTIONS = new Set(['logicDeleteBatch', 'deleteBatch']);
+
+/**
+ * Resolve the action segment of a mapping path, i.e. the trailing literal
+ * segment of the URL (e.g. "/klsjnh/system011/julyUser/v1/getById" -> getById).
+ *
+ * @param mappingText raw mapping annotation text
+ * @returns action name, or null when not resolvable
+ */
+function extractAction(mappingText) {
+  const urlMatch = /["']([^"']*)["']/.exec(mappingText);
+  if (!urlMatch) {
+    return null;
+  }
+  const segments = urlMatch[1].split('/').filter(Boolean);
+  return segments.length > 0 ? segments[segments.length - 1] : null;
+}
+
+/**
+ * Extract the HTTP method annotation from a mapping annotation text.
+ *
+ * @param mappingText raw mapping annotation text
+ * @returns 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'Request'
+ */
+function extractHttpMethod(mappingText) {
+  const m = /@(Get|Post|Put|Delete|Patch|Request)Mapping/.exec(mappingText);
+  return m ? m[1].toUpperCase() : 'UNKNOWN';
+}
+
 export function testApiUrlStandards(path, content, violations) {
   const norm = path.replace(/\\/g, '/');
   if (!norm.includes('/controller/') && !norm.endsWith('Controller.java')) {
     return;
   }
-  const pattern = /@(?:Get|Post|Put|Delete|Patch|Request)Mapping\s*\([^)]*["'][^"']*\{[a-zA-Z_][\w]*\}/g;
+
+  // Rule A (unchanged): path variables are forbidden — parameters go to the
+  // query string or the JSON body.
+  const pathVarPattern = /@(?:Get|Post|Put|Delete|Patch|Request)Mapping\s*\([^)]*["'][^"']*\{[a-zA-Z_][\w]*\}/g;
   let match;
-  while ((match = pattern.exec(content)) !== null) {
+  while ((match = pathVarPattern.exec(content)) !== null) {
     violations.push({
       file: path,
       line: lineOf(content, match.index),
@@ -595,4 +727,103 @@ export function testApiUrlStandards(path, content, violations) {
       fix: 'move the path parameter to a Query parameter or JSON Body',
     });
   }
+
+  // Rule B: HTTP method must match the action semantics (RFC 9110).
+  //   point read (getByXxx)  -> @GetMapping, id via query string
+  //   conditional read (selectXxx) -> GET or POST; POST carries a filter VO
+  //   write (insert/update/...)    -> @PostMapping
+  const mappingPattern = /@(?:Get|Post|Put|Delete|Patch)Mapping\s*\(([^)]*)\)/g;
+  while ((match = mappingPattern.exec(content)) !== null) {
+    const action = extractAction(match[1]);
+    if (!action) {
+      continue;
+    }
+    const httpMethod = extractHttpMethod(match[0]);
+    const isPointRead = POINT_READ_ACTIONS.has(action) || POINT_READ_PATTERN.test(action);
+    const isSelectRead = SELECT_READ_ACTIONS.has(action);
+    const isWrite = WRITE_ACTIONS.has(action);
+
+    if (isPointRead && httpMethod !== 'GET') {
+      violations.push({
+        file: path,
+        line: lineOf(content, match.index),
+        rule: 'api-method',
+        detail: `point read "${action}" must be @GetMapping, found @${httpMethod}Mapping`,
+        fix: 'a key-addressed read is safe + idempotent — map it with @GetMapping and pass the key via the query string',
+      });
+    } else if (isWrite && httpMethod !== 'POST') {
+      violations.push({
+        file: path,
+        line: lineOf(content, match.index),
+        rule: 'api-method',
+        detail: `write action "${action}" must be @PostMapping, found @${httpMethod}Mapping`,
+        fix: 'write actions are unsafe — map them with @PostMapping and pass parameters via the JSON body',
+      });
+    }
+    // isSelectRead: deliberately unconstrained. A filter object does not fit a
+    // query string; POST with a *Vo011 body is the accepted form (015 §6.2).
+
+    // Rule C: delete arity must match the action name. "logicDelete" takes a
+    // single id (IdVo011); "logicDeleteBatch" takes an id-list VO (IdsVo011).
+    // A bare collection in the request body is forbidden — request payloads
+    // are always named *Vo011 types (rule: api-vo-payload).
+    if (SINGLE_DELETE_ACTIONS.has(action) || BATCH_DELETE_ACTIONS.has(action)) {
+      const signature = methodSignatureAfter(content, match.index + match[0].length);
+      if (signature) {
+        const takesBareCollection = /@RequestBody\s+List\s*</.test(signature)
+          || /@RequestBody\s+\w+\s*\[\s*\]/.test(signature);
+        // A plural id VO (IdsVo011) carries a list just as much as a bare
+        // List<String> does — both satisfy "batch shape".
+        const takesCollectionOfAnyKind = /\bList\s*</.test(signature)
+          || /\[\s*\]/.test(signature)
+          || /\bIds\w*Vo\d+\b/.test(signature);
+        const expectsCollection = BATCH_DELETE_ACTIONS.has(action);
+
+        if (takesBareCollection) {
+          violations.push({
+            file: path,
+            line: lineOf(content, match.index),
+            rule: 'api-vo-payload',
+            detail: `request body must not be a bare collection: ${signature.trim().slice(0, 60)}`,
+            fix: 'wrap it in a named VO — batch id lists go into IdsVo011 and are read via idsVo.getIds()',
+          });
+        } else if (expectsCollection && !takesCollectionOfAnyKind) {
+          violations.push({
+            file: path,
+            line: lineOf(content, match.index),
+            rule: 'api-delete-arity',
+            detail: `batch action "${action}" should take an id-list VO (IdsVo011), found a single value`,
+            fix: 'batch delete takes IdsVo011 and returns BatchDeleteResultVo011',
+          });
+        } else if (!expectsCollection && takesCollectionOfAnyKind) {
+          violations.push({
+            file: path,
+            line: lineOf(content, match.index),
+            rule: 'api-delete-arity',
+            detail: `single action "${action}" should take one id (IdVo011), found a collection`,
+            fix: 'rename this endpoint to "logicDeleteBatch" for list deletes, or take IdVo011 for a single id',
+          });
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Grab the Java method signature that follows a mapping annotation, up to the
+ * opening brace of the body. Used to inspect what a handler actually accepts.
+ *
+ * @param content full file content
+ * @param fromIndex index just after the mapping annotation
+ * @returns signature text, or null when not resolvable
+ */
+function methodSignatureAfter(content, fromIndex) {
+  const rest = content.slice(fromIndex, fromIndex + 600);
+  const braceIndex = rest.indexOf('{');
+  if (braceIndex === -1) {
+    return null;
+  }
+  const head = rest.slice(0, braceIndex);
+  const parenIndex = head.lastIndexOf('(');
+  return parenIndex === -1 ? null : head.slice(parenIndex);
 }

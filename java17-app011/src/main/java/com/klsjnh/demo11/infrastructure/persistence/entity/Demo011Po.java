@@ -14,11 +14,12 @@ package com.klsjnh.demo11.infrastructure.persistence.entity;
  *
  */
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import com.klsjnh.infrastructure.persistence.entity.BasePo;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Demo persistence PO mapped to july_demo011 — the reference PO for third

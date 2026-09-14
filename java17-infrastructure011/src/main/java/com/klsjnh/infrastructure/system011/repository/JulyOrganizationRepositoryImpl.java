@@ -18,15 +18,17 @@ import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.system011.organization.JulyOrganization;
 import com.klsjnh.domain.system011.organization.JulyOrganizationRepository;
+
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseTreeRepository011;
 import com.klsjnh.infrastructure.system011.entity.JulyOrganizationPo;
 import com.klsjnh.infrastructure.system011.mapper.JulyOrganizationMapper;
 
+import org.springframework.stereotype.Repository;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;

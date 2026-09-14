@@ -80,6 +80,7 @@ BaseRepository                 ← BasePo      基础 CRUD/分页/逻辑删/批�
 ./script011.sh gate    # 仅门禁：规范检查 + mvn 离线编译
 ./script011.sh         # 默认：gate → .vf 版本号自增 → commit（ver 0.0.N）→ push
 ./script011.sh build011  # mvn clean package install
+./start011.sh          # 应用启动（debug 模式；stop/restart/status/log）
 ```
 
 **前置**：git 仓库已 init 且配置 remote。

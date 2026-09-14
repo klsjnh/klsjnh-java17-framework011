@@ -124,13 +124,33 @@ public class JulySchedulerUseCase {
     }
 
     /**
-     * Logic delete (batch); running tasks are removed from the engine first.
+     * Logic delete a single task; a running task is removed from the engine
+     * first.
+     *
+     * @param id task id
+     * @return deleted task id
+     */
+    @Transactional
+    public String logicDelete(String id) {
+        if (repository.findById(id) == null) {
+            throw BusinessException.recordNotFound(id);
+        }
+
+        schedulerPort.remove(id);
+        repository.logicDeleteById(id);
+
+        return id;
+    }
+
+    /**
+     * Logic delete tasks in batch; running tasks are removed from the engine
+     * first. Per-id failure is reported, not thrown.
      *
      * @param ids task ids
      * @return per-id success/failure summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDelete(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
         BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
         List<String> normalized = ids == null ? List.of()
                 : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();

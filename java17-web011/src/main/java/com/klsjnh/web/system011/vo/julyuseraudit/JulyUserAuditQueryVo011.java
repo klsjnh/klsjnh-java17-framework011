@@ -14,8 +14,9 @@ package com.klsjnh.web.system011.vo.julyuseraudit;
  *
  */
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Page query request VO for the user audit trail.

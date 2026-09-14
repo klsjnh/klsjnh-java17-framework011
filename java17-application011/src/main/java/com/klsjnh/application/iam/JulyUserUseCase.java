@@ -148,16 +148,34 @@ public class JulyUserUseCase {
     }
 
     /**
-     * Logic delete (batch): toggles the user_role children, then the user.
+     * Logic delete a single user.
+     *
+     * @param id user id
+     * @return deleted user id
+     */
+    @Transactional
+    public String logicDelete(String id) {
+        if (!repository.logicDeleteById(id)) {
+            throw BusinessException.recordNotFound(id);
+        }
+
+        return id;
+    }
+
+    /**
+     * Logic delete users (batch), reporting per-id success and failure.
+     *
+     * <p>Note: the user_role junction rows are NOT cascaded here — role
+     * assignment is a separate aggregate and the relation is inactive as soon
+     * as the user is deleted.</p>
      *
      * @param ids user ids
      * @return per-id success/failure summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDelete(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
         BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
-        List<String> normalized = ids == null ? List.of()
-                : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
+        List<String> normalized = normalizeIds(ids);
         result.setTotal(normalized.size());
 
         for (String id : normalized) {
@@ -175,6 +193,17 @@ public class JulyUserUseCase {
         }
 
         return result;
+    }
+
+    /**
+     * Normalize an id list: drop null / blank entries, trim and de-duplicate.
+     *
+     * @param ids raw id list, nullable
+     * @return normalized list, never null
+     */
+    private List<String> normalizeIds(List<String> ids) {
+        return ids == null ? List.of()
+                : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
     }
 
     /**

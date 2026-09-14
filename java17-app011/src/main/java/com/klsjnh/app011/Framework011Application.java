@@ -14,9 +14,10 @@ package com.klsjnh.app011;
  *
  */
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import org.mybatis.spring.annotation.MapperScan;
 
 /**
  * klsjnh Java17 framework boot entry, the only main of the whole project.
