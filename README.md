@@ -2,7 +2,7 @@
 
 Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方业务系统依赖引用。全新项目、无历史技术债；对外契约（响应信封 / 状态码 / 路由风格 / 公共表结构）保持稳定。
 
-> AI 助手与新成员入口：[Agent.md](Agent.md) · 架构选型：[docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md) · 目录结构：[docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)
+> AI 协作入口（门牌，先读）：[Agent.md](Agent.md) · 协议全集：[docs/011.agreements.md](docs/011.agreements.md) · 架构选型：[docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md) · 目录结构：[docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md)
 
 ## 技术栈
 
@@ -64,7 +64,7 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 
 - `statusCode` 与 HTTP 传输状态码保持一致；`errorMessage` **仅 debug 态填充**
 - 状态码常量：SUCCESS(200) / BAD_REQUEST(400) / UNAUTHORIZED(401) / FORBIDDEN(403) / NOT_FOUND(404) / ERROR(500)
-- 完整契约（含新增常量的流程）：[docs/016.api-contract.md](docs/016.api-contract.md)
+- 完整契约（含新增常量的流程）：[docs/013.api-contract.md](docs/013.api-contract.md)
 
 ## 编码规范要点
 
@@ -73,7 +73,7 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 - domain 层零依赖（纯 Java + record）；`@Transactional` 只出现在 application；PO 只活在 infrastructure
 - 逻辑删除统一走 `dr`（'0' 正常 / '1' 已删除）；主键由用例显式调 `EntityId.generate()`（32 位无连字符 UUID，列宽 33）
 
-完整编码规则（含门禁映射）：[docs/015.coding-standards.md](docs/015.coding-standards.md)
+完整编码规则（含门禁映射）：[docs/016.coding-standards.md](docs/016.coding-standards.md)
 
 ## 状态与路线
 
@@ -97,7 +97,7 @@ node tools/check-klsjnh-standards.mjs .   # 注释规范门禁（只读）
 | ✅ | JWT 鉴权过滤器（GlobalAuthFilter，Authorization: Bearer，401 统一） |
 | ✅ | 动态数据源（yaml ci011 懒加载 + SqlRoutingPort 读写/方言分页 clamp[10,500]） |
 | ✅ | 存储中心（对象 + 桶 CRUD + stat 元数据，local011/minio011 双适配器 E2E，厂商适配器分期） |
-| 🔜 | production 数据源注入与部署验证 |
+| ✅ | production 数据源注入与部署验证 |
 
 ## 版本
 
