@@ -21,7 +21,9 @@ import com.klsjnh.common.vo.IdVo011;
 
 import com.klsjnh.application.iam.JulyRoleUseCase;
 import com.klsjnh.domain.iam.JulyRole;
+
 import com.klsjnh.web.system011.converter.JulyRoleConverter;
+
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleAssignMenusVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleInsertVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleQueryVo011;
@@ -30,9 +32,12 @@ import com.klsjnh.web.system011.vo.julyrole.JulyRoleVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -129,17 +134,17 @@ public class JulyRoleController {
     }
 
     /**
-     * Find a role by primary key.
+     * Find a role by primary key (safe + idempotent, hence GET).
      *
-     * @param idVo request with the role id
+     * @param id role id, passed as a query parameter
      * @return role detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<JulyRoleVo011> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<JulyRoleVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
     }
 
     /**

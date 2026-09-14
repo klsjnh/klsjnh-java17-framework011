@@ -22,7 +22,9 @@ import com.klsjnh.common.vo.IdVo011;
 
 import com.klsjnh.application.organization.JulyOrganizationUseCase;
 import com.klsjnh.domain.system011.organization.JulyOrganization;
+
 import com.klsjnh.web.system011.converter.JulyOrganizationConverter;
+
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationInsertVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationQueryVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationUpdateVo011;
@@ -30,9 +32,12 @@ import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -116,26 +121,27 @@ public class JulyOrganizationController {
     }
 
     /**
-     * Find an organization by primary key.
+     * Find an organization by primary key (safe + idempotent, hence GET).
      *
-     * @param idVo request with the org id
+     * @param id org id, passed as a query parameter
      * @return org detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<JulyOrganizationVo011> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<JulyOrganizationVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
     }
 
     /**
-     * Load the full alive organization tree with member-count badges.
+     * Load the full alive organization tree with member-count badges
+     * (read-only, hence GET).
      *
      * @return root nodes with nested children
      */
-    @PostMapping("/selectTree")
-    @Operation(summary = "组织树（含人数角标）")
+    @GetMapping("/selectTree")
+    @Operation(summary = "组织树（含人数角标，GET）")
     public Response011<List<JulyOrganizationVo011>> selectTree() {
         String funcName = "select tree";
 

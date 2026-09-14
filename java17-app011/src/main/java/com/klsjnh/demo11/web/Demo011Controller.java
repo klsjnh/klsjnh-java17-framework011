@@ -14,6 +14,8 @@ package com.klsjnh.demo11.web;
  *
  */
 
+import lombok.Data;
+
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -25,10 +27,12 @@ import com.klsjnh.demo11.domain.Demo011;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Data;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -105,17 +109,17 @@ public class Demo011Controller {
     }
 
     /**
-     * Find a demo row by primary key.
+     * Find a demo row by primary key (safe + idempotent, hence GET).
      *
-     * @param idVo request with the id
+     * @param id demo id, passed as a query parameter
      * @return demo detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<Demo011Vo> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<Demo011Vo> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, toVo(useCase.getById(id)));
     }
 
     /**

@@ -15,9 +15,10 @@ package com.klsjnh.infrastructure.persistence.entity;
  *
  */
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.util.ArrayList;
 import java.util.List;

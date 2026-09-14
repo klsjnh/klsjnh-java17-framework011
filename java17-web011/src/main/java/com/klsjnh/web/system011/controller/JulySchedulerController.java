@@ -19,10 +19,13 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
+import com.klsjnh.common.vo.IdsVo011;
 
 import com.klsjnh.application.scheduler.JulySchedulerUseCase;
 import com.klsjnh.domain.system011.scheduler.JulyScheduler;
+
 import com.klsjnh.web.system011.converter.JulySchedulerConverter;
+
 import com.klsjnh.web.system011.vo.JulySchedulerInsertVo011;
 import com.klsjnh.web.system011.vo.JulySchedulerQueryVo011;
 import com.klsjnh.web.system011.vo.JulySchedulerUpdateVo011;
@@ -30,9 +33,12 @@ import com.klsjnh.web.system011.vo.JulySchedulerVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -103,31 +109,46 @@ public class JulySchedulerController {
     }
 
     /**
-     * Logic delete tasks (batch).
+     * Logic delete a single task; a running task is removed from the engine
+     * first.
      *
-     * @param ids task id list
-     * @return per-id success/failure summary
+     * @param idVo request with the task id
+     * @return envelope with the deleted task id
      */
     @PostMapping("/logicDelete")
-    @Operation(summary = "逻辑删除（批量，运行中任务先摘出调度引擎）")
-    public Response011<BatchDeleteResultVo011> logicDelete(@RequestBody List<String> ids) {
+    @Operation(summary = "逻辑删除（单个，运行中任务先摘出调度引擎）")
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        return Response011.success(funcName, useCase.logicDelete(ids));
+        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
     }
 
     /**
-     * Find a task by primary key.
+     * Logic delete tasks in batch; per-id failure is reported, not thrown.
      *
-     * @param idVo request with the task id
+     * @param idsVo request with the task id list
+     * @return per-id success/failure summary
+     */
+    @PostMapping("/logicDeleteBatch")
+    @Operation(summary = "逻辑删除（批量，运行中任务先摘出调度引擎）")
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+        String funcName = "logic delete batch";
+
+        return Response011.success(funcName, useCase.logicDeleteBatch(idsVo.getIds()));
+    }
+
+    /**
+     * Find a task by primary key (safe + idempotent, hence GET).
+     *
+     * @param id task id, passed as a query parameter
      * @return task detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<JulySchedulerVo011> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<JulySchedulerVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
     }
 
     /**

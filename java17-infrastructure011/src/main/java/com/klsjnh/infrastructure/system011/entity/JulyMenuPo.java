@@ -14,11 +14,12 @@ package com.klsjnh.infrastructure.system011.entity;
  *
  */
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import com.klsjnh.infrastructure.persistence.entity.TreePo011;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Menu persistence PO mapped to july_menu (tree + sibling order + permission

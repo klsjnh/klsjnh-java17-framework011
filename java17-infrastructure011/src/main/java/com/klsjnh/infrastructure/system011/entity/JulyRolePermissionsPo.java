@@ -14,12 +14,13 @@ package com.klsjnh.infrastructure.system011.entity;
  *
  */
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import com.klsjnh.infrastructure.persistence.entity.BasePo;
 import com.klsjnh.infrastructure.persistence.entity.MasterLinked;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Role-permission junction PO mapped to july_role_permissions (pk_mt = role

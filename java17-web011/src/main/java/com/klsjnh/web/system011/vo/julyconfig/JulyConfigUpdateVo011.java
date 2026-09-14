@@ -14,8 +14,9 @@ package com.klsjnh.web.system011.vo.julyconfig;
  *
  */
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Update request VO for a config entry (code immutable).

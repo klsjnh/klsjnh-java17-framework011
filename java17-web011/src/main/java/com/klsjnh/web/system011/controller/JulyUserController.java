@@ -20,11 +20,14 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
+import com.klsjnh.common.vo.IdsVo011;
 
+import com.klsjnh.domain.iam.JulyUser;
 import com.klsjnh.application.iam.JulyUserUseCase;
 import com.klsjnh.application.iam.LoginResult;
-import com.klsjnh.domain.iam.JulyUser;
+
 import com.klsjnh.web.system011.converter.JulyUserConverter;
+
 import com.klsjnh.web.system011.vo.julyuser.JulyUserAssignRolesVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserChangePasswordVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserInsertVo011;
@@ -37,11 +40,15 @@ import com.klsjnh.web.system011.vo.julyuser.JulyUserVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -109,31 +116,45 @@ public class JulyUserController {
     }
 
     /**
-     * Logic delete users (batch, cascades to the user_role children).
+     * Logic delete a single user.
      *
-     * @param ids user id list
-     * @return per-id success/failure summary
+     * @param idVo request with the user id
+     * @return envelope with the deleted user id
      */
     @PostMapping("/logicDelete")
-    @Operation(summary = "逻辑删除（批量，级联停用用户角色关联）")
-    public Response011<BatchDeleteResultVo011> logicDelete(@RequestBody List<String> ids) {
+    @Operation(summary = "逻辑删除（单个）")
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        return Response011.success(funcName, useCase.logicDelete(ids));
+        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
     }
 
     /**
-     * Find a user by primary key.
+     * Logic delete users in batch.
      *
-     * @param idVo request with the user id
+     * @param idsVo request with the user id list
+     * @return per-id success/failure summary
+     */
+    @PostMapping("/logicDeleteBatch")
+    @Operation(summary = "逻辑删除（批量）")
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+        String funcName = "logic delete batch";
+
+        return Response011.success(funcName, useCase.logicDeleteBatch(idsVo.getIds()));
+    }
+
+    /**
+     * Find a user by primary key (safe + idempotent, hence GET).
+     *
+     * @param id user id, passed as a query parameter
      * @return user detail
      */
-    @PostMapping("/getById")
-    @Operation(summary = "主键查询")
-    public Response011<JulyUserVo011> getById(@RequestBody IdVo011 idVo) {
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<JulyUserVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(idVo.getId())));
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
     }
 
     /**

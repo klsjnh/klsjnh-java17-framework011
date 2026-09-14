@@ -14,11 +14,12 @@ package com.klsjnh.infrastructure.system011.entity;
  *
  */
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import com.klsjnh.infrastructure.persistence.entity.BasePo;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Config persistence PO mapped to july_config (runtime key-value parameter).
