@@ -5,12 +5,13 @@ package com.klsjnh.infrastructure.datasource;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.13
- *      @modifydate
+ *      @modifydate 2026.09.15
  *
  *===========================================
  *          modify history
  *
  *      2026.09.13  dynamic data source registry impl class
+ *      2026.09.15  table-driven reloadAll with pool retention
  *
  */
 
@@ -20,20 +21,23 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.domain.datasource.ConnectionInfo;
 import com.klsjnh.domain.datasource.DynamicDataSourceRegistryPort;
+import com.klsjnh.domain.datasource.ReloadResult;
 
 import com.klsjnh.infrastructure.config.KrtConfig011;
 
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Registry implementation: declares datasource configs at startup (yaml
- * ci011 — declaration only, zero connections) and builds pools lazily via
- * ensurePool on the first routing call for a dsCode.
+ * Registry implementation: declares datasource configs (yaml ci011 bootstrap
+ * baseline, replaced by the table-driven snapshot on reload) with pools that
+ * connect lazily via ensurePool on the first routing call for a dsCode.
  */
-
+ 
 @Slf4j
 @Component
 public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryPort {
@@ -78,6 +82,97 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
     }
 
     /**
+     * Replace the whole declared set in one shot and reconcile the built pools
+     * against it (table-driven reload entry).
+     * <p>
+     * The incoming snapshot is built into a fresh map first, so a failure
+     * while enumerating it never leaves the registry half-updated. Pools of
+     * configs whose physical target is unchanged are kept; pools of vanished,
+     * disabled or retargeted configs are closed. New configs are declared but
+     * never pre-connected — the reload itself opens zero connections.
+     * </p>
+     *
+     * @param infos the complete new declared set, never null
+     * @return reconciliation summary, never null
+     */
+    @Override
+    public ReloadResult reloadAll(List<ConnectionInfo> infos) {
+        String funcName = "reload all";
+
+        if (infos == null) {
+            throw BusinessException.badRequest(funcName + ": infos is required");
+        }
+
+        Map<String, ConnectionInfo> next = new HashMap<>();
+
+        for (ConnectionInfo info : infos) {
+            if (info == null || info.dsCode() == null || info.dsCode().isBlank()) {
+                log.warn("{} skip invalid config ...", funcName);
+                continue;
+            }
+
+            next.put(info.dsCode(), info);
+        }
+
+        int reused = 0;
+        int closed = 0;
+        int failed = 0;
+
+        // Pass 1 — configs in the incoming snapshot: keep unchanged pools,
+        // close the pool of a retargeted config before its new config lands.
+        for (Map.Entry<String, ConnectionInfo> entry : next.entrySet()) {
+            String dsCode = entry.getKey();
+            ConnectionInfo before = configs.get(dsCode);
+            ConnectionInfo after = entry.getValue();
+
+            if (before != null && after.sameTarget(before)) {
+                reused++;
+                continue;
+            }
+
+            if (!pools.isBuilt(dsCode)) {
+                continue;
+            }
+
+            try {
+                DynamicDataSource011.remove(dsCode);
+                pools.close(dsCode);
+                closed++;
+            } catch (Exception ex) {
+                failed++;
+                log.warn("{} close retargeted pool {} failed {} ...", funcName, dsCode, ex.getMessage());
+            }
+        }
+
+        // Pass 2 — declared configs missing from the snapshot (deleted or
+        // disabled): their pools must disappear from the routing table.
+        for (String dsCode : configs.keySet()) {
+            if (next.containsKey(dsCode)) {
+                continue;
+            }
+
+            try {
+                DynamicDataSource011.remove(dsCode);
+                pools.close(dsCode);
+                closed++;
+            } catch (Exception ex) {
+                failed++;
+                log.warn("{} close removed pool {} failed {} ...", funcName, dsCode, ex.getMessage());
+            }
+        }
+
+        configs.clear();
+        configs.putAll(next);
+
+        ReloadResult result = new ReloadResult(next.size(), configs.size(), reused, closed, failed);
+
+        log.info("{} enabled {} registered {} reused {} closed {} failed {} ...",
+                funcName, result.enabled(), result.registered(), reused, closed, failed);
+
+        return result;
+    }
+
+    /**
      * Remove a datasource and close its pool if one was built.
      *
      * @param dsCode datasource code
@@ -88,6 +183,7 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
 
         configs.remove(dsCode);
         DynamicDataSource011.remove(dsCode);
+        pools.close(dsCode);
         log.info("{} {} done ...", funcName, dsCode);
     }
 

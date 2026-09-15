@@ -11,10 +11,12 @@ package com.klsjnh.infrastructure.persistence.handler;
  *          modify history
  *
  *      2026.09.12  audit meta object handler class
+ *      2026.09.15  clock from date util 011
  *
  */
 
 import com.klsjnh.common.constant.FrameConst011;
+import com.klsjnh.common.util.DateUtil011;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
@@ -43,7 +45,7 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
      */
     @Override
     public void insertFill(MetaObject metaObject) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = DateUtil011.now();
         strictInsertFill(metaObject, "createTime", LocalDateTime.class, now);
         strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now);
 
@@ -62,7 +64,7 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
      */
     @Override
     public void updateFill(MetaObject metaObject) {
-        strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
+        strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, DateUtil011.now());
 
         String operatorId = currentOperatorId();
 

@@ -21,6 +21,7 @@ import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.domain.iam.AuthTokenPort;
+import com.klsjnh.domain.iam.AuthTokenPort.OperatorIdentity;
 import com.klsjnh.domain.iam.RuntimeStatusPort;
 
 import org.springframework.http.HttpHeaders;
@@ -40,8 +41,8 @@ import java.util.List;
 
 /**
  * JWT authentication filter. Verifies the {@code Authorization: Bearer} token
- * and records the authenticated operator id as a request attribute for the
- * audit auto-fill.
+ * and records the authenticated operator identity (id + account) as request
+ * attributes for the audit fill.
  * <p>
  * In debug mode a valid token is still parsed when present (so the audit works
  * locally) but a missing token never rejects. In every other mode a request
@@ -135,13 +136,14 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String operatorId = resolveOperatorId(request);
+        OperatorIdentity identity = resolveIdentity(request);
 
-        if (operatorId != null) {
-            request.setAttribute(FrameConst011.OPERATOR_ID, operatorId);
+        if (identity != null) {
+            request.setAttribute(FrameConst011.OPERATOR_ID, identity.id());
+            request.setAttribute(FrameConst011.OPERATOR_ACCOUNT, identity.userAccount());
         }
 
-        if (operatorId == null && !runtimeStatusPort.isDebug()) {
+        if (identity == null && !runtimeStatusPort.isDebug()) {
             writeUnauthorized(request, response);
             return;
         }
@@ -150,12 +152,13 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Resolve the operator id from a bearer token, best effort.
+     * Resolve the operator identity (id + account) from a bearer token, best
+     * effort.
      *
      * @param request http request
-     * @return operator id, or null when the header is missing / invalid
+     * @return operator identity, or null when the header is missing / invalid
      */
-    private String resolveOperatorId(HttpServletRequest request) {
+    private OperatorIdentity resolveIdentity(HttpServletRequest request) {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (header == null || !header.startsWith(BEARER_PREFIX)) {
@@ -164,7 +167,7 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
 
         String token = header.substring(BEARER_PREFIX.length()).trim();
 
-        return token.isEmpty() ? null : authTokenPort.verifyAndGetId(token);
+        return token.isEmpty() ? null : authTokenPort.verify(token);
     }
 
     /**

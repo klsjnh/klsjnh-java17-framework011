@@ -1,0 +1,35 @@
+package com.klsjnh.web.system011.vo.julyconfig;
+
+/*                JulyConfigInsertVo011 class
+ *
+ *      @author     xiangrkrs@163.com
+ *      @version    ver 0.0.1
+ *      @createdate 2026.09.15
+ *      @modifydate
+ *
+ *===========================================
+ *          modify history
+ *
+ *      2026.09.15  july config insert vo 011 class
+ *
+ */
+
+import lombok.Data;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * Insert request VO for a config entry (code immutable after create).
+ */
+
+@Data
+public class JulyConfigInsertVo011 {
+
+    /** Config key, unique, max 60, immutable after create. */
+    @Schema(description = "配置项（唯一，最长 60，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String code;
+
+    /** Config value, max 300. */
+    @Schema(description = "配置值（最长 300）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String data;
+}

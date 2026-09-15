@@ -11,24 +11,29 @@ package com.klsjnh.web.system011.controller;
  *          modify history
  *
  *      2026.09.13  july config controller class
+ *      2026.09.15  insert VO extracted to the julyconfig sub-package
  *
  */
 
-import lombok.Data;
-
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.domain.system011.config.JulyConfig;
-import com.klsjnh.application.config.JulyConfigUseCase;
+import com.klsjnh.domain.platform011.export.ExportResult;
+import com.klsjnh.application.system011.config.JulyConfigUseCase;
+import com.klsjnh.application.platform011.backup.BackupUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyConfigConverter;
 
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigVo011;
+import com.klsjnh.web.system011.vo.julyconfig.JulyConfigInsertVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigQueryVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigUpdateVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,6 +45,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * JulyConfig HTTP adapter: admin CRUD over runtime key-value parameters.
@@ -53,6 +60,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class JulyConfigController {
 
     /**
+     * Object code this controller exports and backs up under.
+     */
+    private static final String OBJECT_CODE = "julyConfig";
+
+    /**
      * JulyConfig use case.
      */
     private final JulyConfigUseCase useCase;
@@ -63,14 +75,29 @@ public class JulyConfigController {
     private final JulyConfigConverter converter;
 
     /**
+     * Export use case (platform capability).
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Backup use case (platform capability).
+     */
+    private final BackupUseCase backupUseCase;
+
+    /**
      * Create the controller.
      *
-     * @param useCase   july config use case
-     * @param converter response converter
+     * @param useCase       july config use case
+     * @param converter     response converter
+     * @param exportUseCase export use case
+     * @param backupUseCase backup use case
      */
-    public JulyConfigController(JulyConfigUseCase useCase, JulyConfigConverter converter) {
+    public JulyConfigController(JulyConfigUseCase useCase, JulyConfigConverter converter,
+            ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
         this.useCase = useCase;
         this.converter = converter;
+        this.exportUseCase = exportUseCase;
+        this.backupUseCase = backupUseCase;
     }
 
     /**
@@ -81,7 +108,7 @@ public class JulyConfigController {
      */
     @PostMapping("/insert")
     @Operation(summary = "新增配置（code 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyConfigUpsertVo vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo) {
         String funcName = "insert";
 
         return Response011.successId(funcName, useCase.insert(vo.getCode(), vo.getData()));
@@ -151,18 +178,39 @@ public class JulyConfigController {
     }
 
     /**
-     * Config upsert request VO (insert shares it; update uses UpdateVo011
-     * with the id).
+     * Export every config row in batches and return the whole result in the
+     * JSON envelope (batching bounds the database load, not the payload).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the export result
      */
-    @Data
-    public static class JulyConfigUpsertVo {
+    @PostMapping("/export")
+    @Operation(summary = "导出全部配置（分批取数，写 EXPORT 审计）")
+    public Response011<ExportResult> export(HttpServletRequest request) {
+        String funcName = "export";
 
-        /** Config key, unique, max 60, immutable after create. */
-        @Schema(description = "配置项（唯一，最长 60，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
-        private String code;
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        /** Config value, max 300. */
-        @Schema(description = "配置值（最长 300）", requiredMode = Schema.RequiredMode.REQUIRED)
-        private String data;
+        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
+     * Back every config row up into the storage center, keyed by timestamp.
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the stored object key
+     */
+    @PostMapping("/backup011")
+    @Operation(summary = "备份全部配置到存储中心（写 BACKUP 审计）")
+    public Response011<String> backup011(HttpServletRequest request) {
+        String funcName = "backup";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        String key = backupUseCase.backup(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, key);
     }
 }

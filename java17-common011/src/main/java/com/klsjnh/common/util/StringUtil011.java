@@ -58,4 +58,19 @@ public final class StringUtil011 {
     public static boolean isMissing(String value, int max) {
         return isBlank(value) || value.length() > max;
     }
+
+    /**
+     * Compare two nullable strings after trimming, treating null and blank as
+     * the same value.
+     *
+     * @param left  left value
+     * @param right right value
+     * @return true when both are blank or both hold the same trimmed text
+     */
+    public static boolean equalsTrimmed(String left, String right) {
+        String normalizedLeft = isBlank(left) ? null : left.trim();
+        String normalizedRight = isBlank(right) ? null : right.trim();
+
+        return normalizedLeft == null ? normalizedRight == null : normalizedLeft.equals(normalizedRight);
+    }
 }

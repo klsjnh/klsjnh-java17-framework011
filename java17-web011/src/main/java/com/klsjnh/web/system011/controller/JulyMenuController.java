@@ -11,11 +11,13 @@ package com.klsjnh.web.system011.controller;
  *          modify history
  *
  *      2026.09.13  july menu controller class
+ *      2026.09.15  tree endpoints renamed to get
  *
  */
 
 import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -23,8 +25,11 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.vo.IdsVo011;
 
-import com.klsjnh.application.menu.JulyMenuUseCase;
+import com.klsjnh.application.system011.menu.JulyMenuUseCase;
 import com.klsjnh.domain.system011.menu.JulyMenu;
+import com.klsjnh.domain.platform011.export.ExportResult;
+import com.klsjnh.application.platform011.backup.BackupUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyMenuConverter;
 
@@ -32,6 +37,7 @@ import com.klsjnh.web.system011.vo.julymenu.JulyMenuInsertVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuQueryVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuUpdateVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,13 +55,18 @@ import java.util.List;
 
 /**
  * JulyMenu HTTP adapter: menu CRUD / tree plus the login-linked
- * selectUserMenuTree.
+ * getUserMenuTree.
  */
 
 @Tag(name = "系统管理 - 菜单管理")
 @RestController
 @RequestMapping("/klsjnh/system011/julyMenu/v1")
 public class JulyMenuController {
+
+    /**
+     * Object code this controller exports and backs up under.
+     */
+    private static final String OBJECT_CODE = "julyMenu";
 
     /**
      * JulyMenu use case.
@@ -68,14 +79,29 @@ public class JulyMenuController {
     private final JulyMenuConverter converter;
 
     /**
+     * Export use case (platform capability).
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Backup use case (platform capability).
+     */
+    private final BackupUseCase backupUseCase;
+
+    /**
      * Create the controller.
      *
-     * @param useCase   july menu use case
-     * @param converter response converter
+     * @param useCase       july menu use case
+     * @param converter     response converter
+     * @param exportUseCase export use case
+     * @param backupUseCase backup use case
      */
-    public JulyMenuController(JulyMenuUseCase useCase, JulyMenuConverter converter) {
+    public JulyMenuController(JulyMenuUseCase useCase, JulyMenuConverter converter,
+            ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
         this.useCase = useCase;
         this.converter = converter;
+        this.exportUseCase = exportUseCase;
+        this.backupUseCase = backupUseCase;
     }
 
     /**
@@ -175,12 +201,12 @@ public class JulyMenuController {
      *
      * @return root nodes with nested children
      */
-    @GetMapping("/selectTree")
+    @GetMapping("/getTree")
     @Operation(summary = "全量菜单树（GET）")
-    public Response011<List<JulyMenuVo011>> selectTree() {
-        String funcName = "select tree";
+    public Response011<List<JulyMenuVo011>> getTree() {
+        String funcName = "get tree";
 
-        return Response011.success(funcName, converter.toVoList(useCase.selectTree()));
+        return Response011.success(funcName, converter.toVoList(useCase.getTree()));
     }
 
     /**
@@ -190,10 +216,10 @@ public class JulyMenuController {
      * @param request http request (operator id from the auth filter)
      * @return root nodes with nested children
      */
-    @GetMapping("/selectUserMenuTree")
+    @GetMapping("/getUserMenuTree")
     @Operation(summary = "当前登录人的菜单树（内置角色全量旁路，GET）")
-    public Response011<List<JulyMenuVo011>> selectUserMenuTree(HttpServletRequest request) {
-        String funcName = "select user menu tree";
+    public Response011<List<JulyMenuVo011>> getUserMenuTree(HttpServletRequest request) {
+        String funcName = "get user menu tree";
 
         String operatorId = (String) request.getAttribute(FrameConst011.OPERATOR_ID);
 
@@ -201,6 +227,43 @@ public class JulyMenuController {
             throw BusinessException.unauthorized(funcName + ": not authenticated");
         }
 
-        return Response011.success(funcName, converter.toVoList(useCase.selectUserMenuTree(operatorId)));
+        return Response011.success(funcName, converter.toVoList(useCase.getUserMenuTree(operatorId)));
+    }
+
+    /**
+     * Export every menu row in batches and return the whole result in the
+     * JSON envelope (batching bounds the database load, not the payload).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the export result
+     */
+    @PostMapping("/export")
+    @Operation(summary = "导出全部菜单（分批取数，写 EXPORT 审计）")
+    public Response011<ExportResult> export(HttpServletRequest request) {
+        String funcName = "export";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
+     * Back every menu row up into the storage center, keyed by timestamp.
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the stored object key
+     */
+    @PostMapping("/backup011")
+    @Operation(summary = "备份全部菜单到存储中心（写 BACKUP 审计）")
+    public Response011<String> backup011(HttpServletRequest request) {
+        String funcName = "backup";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        String key = backupUseCase.backup(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, key);
     }
 }

@@ -47,10 +47,32 @@ public class SqlDialect011 {
         return switch (type) {
             case MYSQL, POSTGRESQL ->
                     "SELECT * FROM ( " + sql + " ) klsjnh_page LIMIT " + pageSize + " OFFSET " + offset;
-            case ORACLE, SQLSERVER ->
+            case ORACLE -> oraclePageSql(sql, offset, pageSize);
+            case SQLSERVER ->
                     "SELECT * FROM ( " + sql + " ) klsjnh_page OFFSET " + offset + " ROWS FETCH NEXT "
                             + pageSize + " ROWS ONLY";
         };
+    }
+
+    /**
+     * Oracle page query built on the double nested rownum form. The 12c
+     * OFFSET / FETCH NEXT syntax is rejected by 11g, so the rownum form is used
+     * for every Oracle version (11g through 21c). The two rownum aliases must
+     * not be named rn in the inner query, otherwise the developer SQL that
+     * already exposes a column named rn would collide.
+     *
+     * @param sql      developer select statement
+     * @param offset   zero-based row offset
+     * @param pageSize clamped page size
+     * @return page sql
+     */
+    private String oraclePageSql(String sql, long offset, int pageSize) {
+        long lowerBound = offset + 1;
+        long upperBound = offset + pageSize;
+
+        return "SELECT * FROM ( SELECT klsjnh_inner.*, ROWNUM klsjnh_rn FROM ( " + sql
+                + " ) klsjnh_inner WHERE ROWNUM <= " + upperBound
+                + " ) WHERE klsjnh_rn >= " + lowerBound;
     }
 
     /**

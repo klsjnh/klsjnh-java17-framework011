@@ -14,7 +14,8 @@ package com.klsjnh.application.system011.organization;
  *
  */
 
-import com.klsjnh.application.export.ExportProvider;
+import com.klsjnh.domain.platform011.export.ExportColumn;
+import com.klsjnh.domain.platform011.export.ExportProvider;
 import com.klsjnh.domain.system011.organization.JulyOrganization;
 import com.klsjnh.domain.system011.organization.JulyOrganizationRepository;
 
@@ -31,6 +32,20 @@ import java.util.Map;
 
 @Component
 public class JulyOrganizationExportProvider implements ExportProvider {
+
+    /**
+     * Ordered column definitions, matching the row keys of {@link #toRow}.
+     */
+    private static final List<ExportColumn> COLUMNS = List.of(
+            new ExportColumn("id", "主键"),
+            new ExportColumn("parentId", "上级组织"),
+            new ExportColumn("orgCode", "组织编码"),
+            new ExportColumn("orgName", "组织名称"),
+            new ExportColumn("pkUser", "负责人"),
+            new ExportColumn("orgLevel", "组织层级"),
+            new ExportColumn("sortOrder", "排序号"),
+            new ExportColumn("status", "状态"),
+            new ExportColumn("createTime", "创建时间"));
 
     /**
      * JulyOrganization repository.
@@ -57,13 +72,26 @@ public class JulyOrganizationExportProvider implements ExportProvider {
     }
 
     /**
-     * Export all alive organizations (flat; parent_id preserves the tree).
+     * Get the ordered column definitions of julyOrganization.
      *
+     * @return column definitions
+     */
+    @Override
+    public List<ExportColumn> columns() {
+        return COLUMNS;
+    }
+
+    /**
+     * Fetch one batch of alive organizations (flat; parent_id preserves the
+     * tree).
+     *
+     * @param offset row offset, 0 based
+     * @param limit  max rows to return
      * @return rows
      */
     @Override
-    public List<Map<String, Object>> exportRows() {
-        return repository.findPage(0, 500, null).stream()
+    public List<Map<String, Object>> exportRows(int offset, int limit) {
+        return repository.findPage(offset, limit, null).stream()
                 .map(this::toRow)
                 .toList();
     }

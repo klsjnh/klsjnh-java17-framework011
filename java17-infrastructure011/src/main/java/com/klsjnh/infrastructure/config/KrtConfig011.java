@@ -72,6 +72,11 @@ public class KrtConfig011 {
     private JwtConfig jwt = new JwtConfig();
 
     /**
+     * Web layer settings (client IP resolution).
+     */
+    private WebConfig web = new WebConfig();
+
+    /**
      * Dynamic datasource connection list (krt.ci011) — declared at startup,
      * pools connect lazily on first routing call.
      */
@@ -118,6 +123,26 @@ public class KrtConfig011 {
          * Token expire minutes, int, default 480.
          */
         private int expireMinutes = 480;
+    }
+
+    /**
+     * Web layer settings.
+     */
+    @Data
+    public static class WebConfig {
+
+        /**
+         * Trusted proxy addresses / CIDRs in front of the app. When set, the
+         * client IP resolver walks the X-Forwarded-For chain from the right and
+         * returns the first untrusted hop, which defeats a forged left-most
+         * entry. Empty (the default) keeps the lenient mode: the left-most
+         * entry is taken as-is.
+         * <p>
+         * Reserved: the resolver reads it lazily, so tightening the policy
+         * later needs config only, never a code change.
+         * </p>
+         */
+        private List<String> trustedProxies = new ArrayList<>();
     }
 
     /**

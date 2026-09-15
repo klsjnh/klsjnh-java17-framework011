@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  */
 
 import com.klsjnh.common.constant.FrameConst011;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -23,8 +24,11 @@ import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.vo.IdsVo011;
 
 import com.klsjnh.domain.iam.JulyUser;
+import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.application.iam.JulyUserUseCase;
 import com.klsjnh.application.iam.LoginResult;
+import com.klsjnh.application.platform011.backup.BackupUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyUserConverter;
 
@@ -37,6 +41,8 @@ import com.klsjnh.web.system011.vo.julyuser.JulyUserResetPasswordVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserSessionVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserUpdateVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserVo011;
+import com.klsjnh.web.util.ClientIp011Resolver;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,8 +56,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.List;
-
 /**
  * JulyUser HTTP adapter: user CRUD, role assignment, password reset and the
  * two login kinds (password / passwordless).
@@ -61,6 +65,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/klsjnh/system011/julyUser/v1")
 public class JulyUserController {
+
+    /**
+     * Object code this controller exports and backs up under.
+     */
+    private static final String OBJECT_CODE = "julyUser";
 
     /**
      * JulyUser use case.
@@ -73,14 +82,29 @@ public class JulyUserController {
     private final JulyUserConverter converter;
 
     /**
+     * Export use case (platform capability).
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Backup use case (platform capability).
+     */
+    private final BackupUseCase backupUseCase;
+
+    /**
      * Create the controller.
      *
-     * @param useCase   july user use case
-     * @param converter response converter
+     * @param useCase       july user use case
+     * @param converter     response converter
+     * @param exportUseCase export use case
+     * @param backupUseCase backup use case
      */
-    public JulyUserController(JulyUserUseCase useCase, JulyUserConverter converter) {
+    public JulyUserController(JulyUserUseCase useCase, JulyUserConverter converter,
+            ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
         this.useCase = useCase;
         this.converter = converter;
+        this.exportUseCase = exportUseCase;
+        this.backupUseCase = backupUseCase;
     }
 
     /**
@@ -219,7 +243,8 @@ public class JulyUserController {
     public Response011<JulyUserSessionVo011> login(@RequestBody JulyUserLoginVo011 vo, HttpServletRequest request) {
         String funcName = "login";
 
-        LoginResult result = useCase.login(vo.getUserAccount(), vo.getPassword(), request.getRemoteAddr());
+        LoginResult result = useCase.login(vo.getUserAccount(), vo.getPassword(),
+                ClientIp011Resolver.resolve(request));
 
         return Response011.success(funcName, toSession(result));
     }
@@ -237,7 +262,7 @@ public class JulyUserController {
             HttpServletRequest request) {
         String funcName = "login by user name";
 
-        LoginResult result = useCase.loginByUserName(vo.getUserAccount(), request.getRemoteAddr());
+        LoginResult result = useCase.loginByUserName(vo.getUserAccount(), ClientIp011Resolver.resolve(request));
 
         return Response011.success(funcName, toSession(result));
     }
@@ -273,10 +298,47 @@ public class JulyUserController {
     public Response011<Void> logout(HttpServletRequest request) {
         String funcName = "logout";
 
-        String operatorId = (String) request.getAttribute(FrameConst011.OPERATOR_ID);
-        useCase.logout(operatorId, null, request.getRemoteAddr());
+        Operator011 operator = Operator011Resolver.resolve(request);
+        useCase.logout(operator.id(), operator.userAccount(), operator.ip());
 
         return Response011.success(funcName, null);
+    }
+
+    /**
+     * Export every user row in batches and return the whole result in the
+     * JSON envelope (batching bounds the database load, not the payload).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the export result
+     */
+    @PostMapping("/export")
+    @Operation(summary = "导出全部用户（分批取数，写 EXPORT 审计）")
+    public Response011<ExportResult> export(HttpServletRequest request) {
+        String funcName = "export";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
+     * Back every user row up into the storage center, keyed by timestamp.
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the stored object key
+     */
+    @PostMapping("/backup011")
+    @Operation(summary = "备份全部用户到存储中心（写 BACKUP 审计）")
+    public Response011<String> backup011(HttpServletRequest request) {
+        String funcName = "backup";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        String key = backupUseCase.backup(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, key);
     }
 
     /**

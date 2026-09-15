@@ -16,6 +16,7 @@ package com.klsjnh.infrastructure.persistence.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
@@ -38,4 +39,18 @@ public interface CommonMapper {
      */
     @Update("${sql}")
     int execute(@Param("sql") String sql);
+
+    /**
+     * Run a single-cell count statement and return its value.
+     * <p>
+     * Used by existence checks that must bypass the logic-delete interceptor
+     * (the mapper has no entity, so MyBatis-Plus never appends {@code dr='0'}).
+     * Same injection guard as {@link #execute}: never splice user input.
+     * </p>
+     *
+     * @param sql count statement
+     * @return the counted value, null when the statement returns no row
+     */
+    @Select("${sql}")
+    Long countBy(@Param("sql") String sql);
 }

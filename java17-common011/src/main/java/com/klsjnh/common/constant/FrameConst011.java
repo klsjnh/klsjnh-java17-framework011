@@ -46,6 +46,13 @@ public final class FrameConst011 {
     public static final String OPERATOR_ID = "krt.operatorId";
 
     /**
+     * Servlet request attribute holding the authenticated operator login
+     * account, set by GlobalAuthFilter (web) alongside {@link #OPERATOR_ID} so
+     * the audit rows carry a real operator instead of an empty account.
+     */
+    public static final String OPERATOR_ACCOUNT = "krt.operatorAccount";
+
+    /**
      * Constant holder, no instances.
      */
     private FrameConst011() {

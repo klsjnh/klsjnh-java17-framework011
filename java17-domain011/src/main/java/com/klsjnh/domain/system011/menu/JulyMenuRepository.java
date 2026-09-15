@@ -11,6 +11,7 @@ package com.klsjnh.domain.system011.menu;
  *          modify history
  *
  *      2026.09.13  july menu repository interface
+ *      2026.09.15  tree method javadoc aligned to getTree
  *
  */
 
@@ -71,12 +72,12 @@ public interface JulyMenuRepository {
 
     /**
      * Load the full alive menu tree as aggregates (children assembled,
-     * ordered by sort_order / id). Named selectMenuTree to stay distinct from
-     * the Po-level base selectTree.
+     * ordered by sort_order / id). Named getTree to stay distinct from the
+     * Po-level base selectTree.
      *
      * @return root nodes with nested children
      */
-    List<JulyMenu> selectMenuTree();
+    List<JulyMenu> getTree();
 
     /**
      * Find aggregates by a id list (flat, no children assembly).

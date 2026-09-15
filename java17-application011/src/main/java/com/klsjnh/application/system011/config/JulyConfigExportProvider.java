@@ -14,7 +14,8 @@ package com.klsjnh.application.system011.config;
  *
  */
 
-import com.klsjnh.application.export.ExportProvider;
+import com.klsjnh.domain.platform011.export.ExportColumn;
+import com.klsjnh.domain.platform011.export.ExportProvider;
 import com.klsjnh.domain.system011.config.JulyConfig;
 import com.klsjnh.domain.system011.config.JulyConfigRepository;
 
@@ -30,6 +31,16 @@ import java.util.Map;
 
 @Component
 public class JulyConfigExportProvider implements ExportProvider {
+
+    /**
+     * Ordered column definitions, matching the row keys of {@link #toRow}.
+     */
+    private static final List<ExportColumn> COLUMNS = List.of(
+            new ExportColumn("id", "主键"),
+            new ExportColumn("code", "配置项"),
+            new ExportColumn("data", "配置值"),
+            new ExportColumn("status", "状态"),
+            new ExportColumn("createTime", "创建时间"));
 
     /**
      * JulyConfig repository.
@@ -56,13 +67,25 @@ public class JulyConfigExportProvider implements ExportProvider {
     }
 
     /**
-     * Export all alive config entries.
+     * Get the ordered column definitions of julyConfig.
      *
+     * @return column definitions
+     */
+    @Override
+    public List<ExportColumn> columns() {
+        return COLUMNS;
+    }
+
+    /**
+     * Fetch one batch of alive config entries.
+     *
+     * @param offset row offset, 0 based
+     * @param limit  max rows to return
      * @return rows
      */
     @Override
-    public List<Map<String, Object>> exportRows() {
-        return repository.findPage(0, 500, null).stream()
+    public List<Map<String, Object>> exportRows(int offset, int limit) {
+        return repository.findPage(offset, limit, null).stream()
                 .map(this::toRow)
                 .toList();
     }
