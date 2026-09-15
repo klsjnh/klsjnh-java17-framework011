@@ -5,12 +5,13 @@ package com.klsjnh.web.system011.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.15
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july role controller class
+ *      2026.09.15  update forwards status
  *
  */
 
@@ -22,13 +23,17 @@ import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.application.iam.JulyRoleUseCase;
 import com.klsjnh.domain.iam.JulyRole;
 
+import com.klsjnh.web.system011.converter.JulyMenuConverter;
 import com.klsjnh.web.system011.converter.JulyRoleConverter;
+import com.klsjnh.web.system011.converter.JulyUserConverter;
 
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleAssignMenusVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleInsertVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleQueryVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleUpdateVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleVo011;
+import com.klsjnh.web.system011.vo.julymenu.JulyMenuVo011;
+import com.klsjnh.web.system011.vo.julyuser.JulyUserVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +44,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * JulyRole HTTP adapter: role management endpoints (built-in roles protected).
@@ -60,14 +67,29 @@ public class JulyRoleController {
     private final JulyRoleConverter converter;
 
     /**
+     * Menu response converter.
+     */
+    private final JulyMenuConverter menuConverter;
+
+    /**
+     * User response converter.
+     */
+    private final JulyUserConverter userConverter;
+
+    /**
      * Create the controller.
      *
-     * @param useCase   july role use case
-     * @param converter response converter
+     * @param useCase       july role use case
+     * @param converter     response converter
+     * @param menuConverter menu response converter
+     * @param userConverter user response converter
      */
-    public JulyRoleController(JulyRoleUseCase useCase, JulyRoleConverter converter) {
+    public JulyRoleController(JulyRoleUseCase useCase, JulyRoleConverter converter, JulyMenuConverter menuConverter,
+            JulyUserConverter userConverter) {
         this.useCase = useCase;
         this.converter = converter;
+        this.menuConverter = menuConverter;
+        this.userConverter = userConverter;
     }
 
     /**
@@ -92,11 +114,11 @@ public class JulyRoleController {
      * @return envelope with the role id
      */
     @PostMapping("/update")
-    @Operation(summary = "修改角色（编码不可改）")
+    @Operation(summary = "修改角色（编码不可改，状态可改）")
     public Response011<IdVo011> update(@RequestBody JulyRoleUpdateVo011 vo) {
         String funcName = "update";
 
-        useCase.update(vo.getId(), vo.getRoleName(), vo.getRemark());
+        useCase.update(vo.getId(), vo.getRoleName(), vo.getRemark(), vo.getStatus());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -145,6 +167,36 @@ public class JulyRoleController {
         String funcName = "get by id";
 
         return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+    }
+
+    /**
+     * Menus granted to a role (flat list, no children assembly — the caller
+     * diffs it against the menu tree by id). Safe + idempotent, hence GET.
+     *
+     * @param id role id, passed as a query parameter
+     * @return granted menu list
+     */
+    @GetMapping("/getMenusByRole")
+    @Operation(summary = "角色已授权菜单（平铺列表，id 走 query）")
+    public Response011<List<JulyMenuVo011>> getMenusByRole(@RequestParam("id") String id) {
+        String funcName = "select menus by role";
+
+        return Response011.success(funcName, menuConverter.toVoList(useCase.getMenusByRole(id)));
+    }
+
+    /**
+     * Users holding a role (full aggregates, so the caller can re-submit the
+     * complete role set to assignRoles). Safe + idempotent, hence GET.
+     *
+     * @param id role id, passed as a query parameter
+     * @return holding user list
+     */
+    @GetMapping("/getUsersByRole")
+    @Operation(summary = "角色关联用户（全量用户列表，id 走 query）")
+    public Response011<List<JulyUserVo011>> getUsersByRole(@RequestParam("id") String id) {
+        String funcName = "select users by role";
+
+        return Response011.success(funcName, userConverter.toVoList(useCase.getUsersByRole(id)));
     }
 
     /**

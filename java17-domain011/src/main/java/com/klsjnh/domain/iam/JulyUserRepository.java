@@ -54,6 +54,15 @@ public interface JulyUserRepository {
     JulyUser findByAccount(String userAccount);
 
     /**
+     * Find aggregates by an id list (the reverse lookup of a junction query,
+     * e.g. resolving the user ids holding one role into full aggregates).
+     *
+     * @param ids user ids
+     * @return aggregates present in the store, empty when ids is null / empty
+     */
+    List<JulyUser> findByIds(List<String> ids);
+
+    /**
      * Cascade logic delete: toggle the user_role children, then the user.
      *
      * @param id primary key
