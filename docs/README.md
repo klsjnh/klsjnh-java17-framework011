@@ -19,9 +19,8 @@
 | 目录 | 内容 |
 |------|------|
 | [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · 019 存储中心 |
-| [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板） |
-| requirement011/ | 业务设计：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 021 julyScheduler（已编码）· 029 配置管理 · 030 数据导出——总设计 infrastructure011/018 |
-| requirement013/ | 技术方案（021 julyScheduler 已编码完成；IAM 各主题按 011→013→编码 推进） |
+| [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） || requirement011/ | 业务设计：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 021 julyScheduler（已编码）· 029 配置管理 · 030 数据导出 · 031 数据源管理（新域 dataservice011，已编码）· 033 业务建模（方案态） |
+| requirement013/ | 技术方案（021 julyScheduler 已编码完成；029 配置管理已编码；031 dataservice011 已编码；**033 业务建模方案态**；IAM 各主题按 011→013→编码 推进） |
 | archive011/ | 历史工作日志归档 |
 
 ## 编号分配台账（现状）
@@ -37,7 +36,7 @@
 | 014 | 禁用（含 4） | — |
 | 015 | 在用 | **project-info 已落**（2026-09-14 自 `013.project-info` 迁入，号不释放、不复用）；原「编码标准」已迁出至 016；infrastructure011/015 配置体系；requirement011/015 july-user（requirement015 已撤销，号不回收） |
 | 016 | 在用 | **coding-standards 已落**（2026-09-14 自 `015.coding-standards` 迁入）；原「API 契约」已迁出至 013；infrastructure011/016 持久化体系；requirement011/016 july-role（自 022 迁入） |
-| 017 | 在用 | **顶层** `017.tech-debt-redlines.md`（技术债红线，2026-09-14 落盘）；**专题目录** infrastructure011/017 动态数据源；julyScheduler 主题对已迁移至 021 |
+| 017 | 在用 | **顶层** `017.tech-debt-redlines.md`（技术债红线，2026-09-14 落盘）；**专题目录** infrastructure011/017 动态数据源（2026-09-15 修订：表驱动为运行时真源）；julyScheduler 主题对已迁移至 021 |
 | 018 | 在用 | infrastructure011/018 IAM 总设计；july-menu 主题已迁移至 011 |
 | 019 | 在用 | **顶层** `019.backend-api-review.md`（后端接口质量评审，待落盘）；**专题目录** infrastructure011/019 存储中心；july-user 主题已迁移至 015 |
 | 020 / 021 | 已分配后撤销 | 原独立主题已并入 019（号不回收，永不复用） |
@@ -49,8 +48,10 @@
 | 027 / 028 | 已分配后撤销 | 原 requirement011 主题，内容移入 infrastructure011/017、019（号不回收） |
 | 029 | 在用 | july-config（requirement011/013，配置管理） |
 | 030 | 在用 | export（requirement011/013，平台导出功能） |
+| 031 | 在用 | **dataservice011 新域**（requirement011/013 数据源管理，2026-09-15 落盘；DDL `sql/july_datasource.sql`）。本期范围：`july_datasource` 表驱动 + CRUD + 测试连接（**已落码：编译 SUCCESS / 门禁 0 违规 / 9 端点**）；`july_sql`/`july_model` 由 033 取代 |
+| 033 | 在用 | **业务建模**（requirement011/013，2026-09-15 落盘为**方案态**；DDL `sql/july_business_modeling.sql`）。表 `july_business_modeling`（合并老项目 `july_sql` + `july_model`），归属 `dataservice011`；**产物 = `MetaData011` + `List<FieldInfo011>` 的一份 JSON（`metaData` + `fieldData` 两键，没有别的）**，除公共列 + `object_name` + `sql_text` 外整体存 `model_data` 一列；**一期 = CRUD + SQL 探针推断 + 执行 SQL + 分页执行 SQL**（11 端点）；后期做「抽取同步数据到本地库」。机制：`july_datasource` → `july_business_modeling` → **lowcode011 域** → 低代码操作表。**9 项待定已全部定案**，**未编码**，可按 §021 路线图推进 |
 
-**下一可用编号：031。**
+**下一可用编号：035。**
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ⚠️ 未办：② `019.backend-api-review.md` 仍未落盘（`017.tech-debt-redlines.md` 已于 2026-09-14 落盘并登记）；落盘后需在本台账登记（行已预置用途）。

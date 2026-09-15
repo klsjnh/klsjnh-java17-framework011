@@ -75,15 +75,30 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
                 .build();
 
         try {
-            boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(minio.getDefaultBucket()).build());
+            boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(defaultBucket()).build());
 
             if (!exists) {
-                client.makeBucket(MakeBucketArgs.builder().bucket(minio.getDefaultBucket()).build());
-                log.info("minio011 bucket {} created ...", minio.getDefaultBucket());
+                client.makeBucket(MakeBucketArgs.builder().bucket(defaultBucket()).build());
+                log.info("minio011 bucket {} created ...", defaultBucket());
             }
         } catch (Exception ex) {
             log.warn("minio011 bucket ensure failed {} ...", ex.getMessage());
         }
+    }
+
+    /**
+     * The storage center's default bucket: the adapter-level value when set,
+     * otherwise the shared top-level one.
+     *
+     * @return default bucket name
+     */
+    @Override
+    public String defaultBucket() {
+        String adapterBucket = properties.getMinio011().getDefaultBucket();
+
+        return adapterBucket == null || adapterBucket.isBlank()
+                ? properties.getDefaultBucket()
+                : adapterBucket;
     }
 
     /**
@@ -320,8 +335,6 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
      * @return effective bucket name
      */
     private String bucketOf(String bucket) {
-        return bucket == null || bucket.isBlank()
-                ? properties.getMinio011().getDefaultBucket()
-                : bucket;
+        return bucket == null || bucket.isBlank() ? defaultBucket() : bucket;
     }
 }

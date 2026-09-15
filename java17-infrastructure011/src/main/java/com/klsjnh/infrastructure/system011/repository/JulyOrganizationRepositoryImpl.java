@@ -11,6 +11,7 @@ package com.klsjnh.infrastructure.system011.repository;
  *          modify history
  *
  *      2026.09.13  july organization repository impl class
+ *      2026.09.15  tree method renamed to getTree
  *
  */
 
@@ -184,7 +185,7 @@ public class JulyOrganizationRepositoryImpl
      * @return root nodes with nested children
      */
     @Override
-    public List<JulyOrganization> selectOrgTree() {
+    public List<JulyOrganization> getTree() {
         return toAggregateTree(super.selectTree());
     }
 

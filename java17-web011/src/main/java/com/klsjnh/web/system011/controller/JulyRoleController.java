@@ -12,16 +12,21 @@ package com.klsjnh.web.system011.controller;
  *
  *      2026.09.12  july role controller class
  *      2026.09.15  update forwards status
+ *      2026.09.15  get endpoints func name aligned
  *
  */
 
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.IdVo011;
 
-import com.klsjnh.application.iam.JulyRoleUseCase;
 import com.klsjnh.domain.iam.JulyRole;
+import com.klsjnh.domain.platform011.export.ExportResult;
+import com.klsjnh.application.iam.JulyRoleUseCase;
+import com.klsjnh.application.platform011.backup.BackupUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyMenuConverter;
 import com.klsjnh.web.system011.converter.JulyRoleConverter;
@@ -34,6 +39,7 @@ import com.klsjnh.web.system011.vo.julyrole.JulyRoleUpdateVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +51,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
 
 /**
@@ -55,6 +63,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/klsjnh/system011/julyRole/v1")
 public class JulyRoleController {
+
+    /**
+     * Object code this controller exports and backs up under.
+     */
+    private static final String OBJECT_CODE = "julyRole";
 
     /**
      * JulyRole use case.
@@ -77,19 +90,33 @@ public class JulyRoleController {
     private final JulyUserConverter userConverter;
 
     /**
+     * Export use case (platform capability).
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Backup use case (platform capability).
+     */
+    private final BackupUseCase backupUseCase;
+
+    /**
      * Create the controller.
      *
      * @param useCase       july role use case
      * @param converter     response converter
      * @param menuConverter menu response converter
      * @param userConverter user response converter
+     * @param exportUseCase export use case
+     * @param backupUseCase backup use case
      */
     public JulyRoleController(JulyRoleUseCase useCase, JulyRoleConverter converter, JulyMenuConverter menuConverter,
-            JulyUserConverter userConverter) {
+            JulyUserConverter userConverter, ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
         this.useCase = useCase;
         this.converter = converter;
         this.menuConverter = menuConverter;
         this.userConverter = userConverter;
+        this.exportUseCase = exportUseCase;
+        this.backupUseCase = backupUseCase;
     }
 
     /**
@@ -179,7 +206,7 @@ public class JulyRoleController {
     @GetMapping("/getMenusByRole")
     @Operation(summary = "角色已授权菜单（平铺列表，id 走 query）")
     public Response011<List<JulyMenuVo011>> getMenusByRole(@RequestParam("id") String id) {
-        String funcName = "select menus by role";
+        String funcName = "get menus by role";
 
         return Response011.success(funcName, menuConverter.toVoList(useCase.getMenusByRole(id)));
     }
@@ -194,7 +221,7 @@ public class JulyRoleController {
     @GetMapping("/getUsersByRole")
     @Operation(summary = "角色关联用户（全量用户列表，id 走 query）")
     public Response011<List<JulyUserVo011>> getUsersByRole(@RequestParam("id") String id) {
-        String funcName = "select users by role";
+        String funcName = "get users by role";
 
         return Response011.success(funcName, userConverter.toVoList(useCase.getUsersByRole(id)));
     }
@@ -214,5 +241,42 @@ public class JulyRoleController {
         PageResult011<JulyRole> page = useCase.selectListByPage(pageQuery, query.getKeyword());
 
         return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+    }
+
+    /**
+     * Export every role row in batches and return the whole result in the
+     * JSON envelope (batching bounds the database load, not the payload).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the export result
+     */
+    @PostMapping("/export")
+    @Operation(summary = "导出全部角色（分批取数，写 EXPORT 审计）")
+    public Response011<ExportResult> export(HttpServletRequest request) {
+        String funcName = "export";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
+     * Back every role row up into the storage center, keyed by timestamp.
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the stored object key
+     */
+    @PostMapping("/backup011")
+    @Operation(summary = "备份全部角色到存储中心（写 BACKUP 审计）")
+    public Response011<String> backup011(HttpServletRequest request) {
+        String funcName = "backup";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        String key = backupUseCase.backup(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, key);
     }
 }

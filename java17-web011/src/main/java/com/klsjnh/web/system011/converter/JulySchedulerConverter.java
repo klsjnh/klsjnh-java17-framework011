@@ -11,12 +11,13 @@ package com.klsjnh.web.system011.converter;
  *          modify history
  *
  *      2026.09.12  july scheduler converter class
+ *      2026.09.15  scheduler VO moved into the julyscheduler sub-package
  *
  */
 
 import com.klsjnh.domain.system011.scheduler.JulyScheduler;
 
-import com.klsjnh.web.system011.vo.JulySchedulerVo011;
+import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerVo011;
 
 import org.springframework.stereotype.Component;
 

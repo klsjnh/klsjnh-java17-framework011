@@ -26,7 +26,7 @@ public interface UserAuditPort {
      *
      * @param pkMt        operator user id, nullable
      * @param userAccount operator account, nullable
-     * @param auditType   event type (LOGIN / LOGIN_FAILED / LOGOUT / INSERT / UPDATE / DELETE / EXPORT)
+     * @param auditType   event type (LOGIN / LOGIN_FAILED / LOGOUT / INSERT / UPDATE / DELETE / EXPORT / BACKUP)
      * @param objectCode  object code, nullable
      * @param content     event description, nullable
      * @param ip          client IP, nullable

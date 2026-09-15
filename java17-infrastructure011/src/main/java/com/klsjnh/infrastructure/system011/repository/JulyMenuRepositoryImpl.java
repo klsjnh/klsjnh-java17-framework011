@@ -11,6 +11,7 @@ package com.klsjnh.infrastructure.system011.repository;
  *          modify history
  *
  *      2026.09.13  july menu repository impl class
+ *      2026.09.15  tree method renamed to getTree
  *
  */
 
@@ -169,7 +170,7 @@ public class JulyMenuRepositoryImpl
      * @return root nodes with nested children
      */
     @Override
-    public List<JulyMenu> selectMenuTree() {
+    public List<JulyMenu> getTree() {
         return toAggregateTree(super.selectTree());
     }
 

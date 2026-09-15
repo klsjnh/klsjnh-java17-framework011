@@ -11,6 +11,7 @@ package com.klsjnh.common.response;
  *          modify history
  *
  *      2026.09.12  response 011 class
+ *      2026.09.15  timestamp from date util 011
  *
  */
 
@@ -18,6 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.klsjnh.common.enums.HttpCodeEnum011;
+import com.klsjnh.common.util.DateUtil011;
 import com.klsjnh.common.vo.IdVo011;
 
 import java.io.Serializable;
@@ -31,8 +33,9 @@ import java.io.Serializable;
  * Every key is camelCase and MUST NOT be renamed, dropped or reordered.
  * </p>
  * <p>
- * {@code timestamp} is the server time in epoch milliseconds, taken when the
- * envelope is created. {@code traceId} is filled by the global response advice
+ * {@code timestamp} is the server time in epoch milliseconds, taken from
+ * {@code DateUtil011.nowMillis()} when the envelope is created. {@code traceId}
+ * is filled by the global response advice
  * from the MDC value injected by {@code GlobalAuthFilter}. {@code errorMessage}
  * carries internal detail ONLY in debug mode and stays {@code ""} in every
  * other environment, so internal state never leaks to callers.
@@ -66,9 +69,10 @@ public class Response011<T> implements Serializable {
     private String errorMessage = "";
 
     /**
-     * Server timestamp in epoch milliseconds.
+     * Server timestamp in epoch milliseconds, taken from
+     * {@link DateUtil011#nowMillis()}.
      */
-    private Long timestamp = System.currentTimeMillis();
+    private Long timestamp = DateUtil011.nowMillis();
 
     /**
      * Trace id injected from MDC by {@code GlobalAuthFilter}; null when

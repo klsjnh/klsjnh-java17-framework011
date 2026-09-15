@@ -295,17 +295,30 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
     }
 
     /**
-     * Sanitize a bucket name to a single safe path segment.
+     * The storage center's default bucket: the shared top-level value.
      *
-     * @param bucket bucket name
-     * @return safe segment
+     * @return default bucket name
+     */
+    @Override
+    public String defaultBucket() {
+        return properties.getDefaultBucket();
+    }
+
+    /**
+     * Normalize a bucket argument: blank falls back to the default bucket,
+     * then the name must be a single safe path segment.
+     *
+     * @param bucket bucket argument, nullable
+     * @return safe bucket name
      */
     private String safe(String bucket) {
-        if (bucket == null || bucket.isBlank() || bucket.contains("..") || bucket.contains("/")
-                || bucket.contains("\\")) {
+        String name = bucket == null || bucket.isBlank() ? defaultBucket() : bucket;
+
+        if (name == null || name.isBlank()
+                || name.contains("..") || name.contains("/") || name.contains("\\")) {
             throw new IllegalStateException("invalid bucket name");
         }
 
-        return bucket;
+        return name;
     }
 }

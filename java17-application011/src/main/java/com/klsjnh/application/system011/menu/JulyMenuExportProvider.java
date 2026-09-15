@@ -14,7 +14,8 @@ package com.klsjnh.application.system011.menu;
  *
  */
 
-import com.klsjnh.application.export.ExportProvider;
+import com.klsjnh.domain.platform011.export.ExportColumn;
+import com.klsjnh.domain.platform011.export.ExportProvider;
 import com.klsjnh.domain.system011.menu.JulyMenu;
 import com.klsjnh.domain.system011.menu.JulyMenuRepository;
 
@@ -30,6 +31,22 @@ import java.util.Map;
 
 @Component
 public class JulyMenuExportProvider implements ExportProvider {
+
+    /**
+     * Ordered column definitions, matching the row keys of {@link #toRow}.
+     */
+    private static final List<ExportColumn> COLUMNS = List.of(
+            new ExportColumn("id", "主键"),
+            new ExportColumn("parentId", "上级菜单"),
+            new ExportColumn("menuCode", "菜单编码"),
+            new ExportColumn("menuName", "菜单名称"),
+            new ExportColumn("menuType", "菜单类型"),
+            new ExportColumn("menuIcon", "菜单图标"),
+            new ExportColumn("menuRoute", "菜单路由"),
+            new ExportColumn("permissionCode", "权限编码"),
+            new ExportColumn("sortOrder", "排序号"),
+            new ExportColumn("status", "状态"),
+            new ExportColumn("createTime", "创建时间"));
 
     /**
      * JulyMenu repository.
@@ -56,13 +73,25 @@ public class JulyMenuExportProvider implements ExportProvider {
     }
 
     /**
-     * Export all alive menus (flat; parent_id preserves the tree).
+     * Get the ordered column definitions of julyMenu.
      *
+     * @return column definitions
+     */
+    @Override
+    public List<ExportColumn> columns() {
+        return COLUMNS;
+    }
+
+    /**
+     * Fetch one batch of alive menus (flat; parent_id preserves the tree).
+     *
+     * @param offset row offset, 0 based
+     * @param limit  max rows to return
      * @return rows
      */
     @Override
-    public List<Map<String, Object>> exportRows() {
-        return repository.findPage(0, 500, null).stream()
+    public List<Map<String, Object>> exportRows(int offset, int limit) {
+        return repository.findPage(offset, limit, null).stream()
                 .map(this::toRow)
                 .toList();
     }

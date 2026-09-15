@@ -32,9 +32,22 @@ import java.util.List;
 public interface ObjectStoragePort {
 
     /**
+     * The storage center's default bucket, read from configuration
+     * ({@code krt.storage-center.default-bucket}).
+     * <p>
+     * Also the target of a blank bucket argument: callers that have no
+     * bucket preference pass null/blank and land here.
+     * </p>
+     *
+     * @return default bucket name, never blank
+     */
+    String defaultBucket();
+
+    /**
      * Store an object.
      *
-     * @param bucket      bucket (folder for the local adapter)
+     * @param bucket      bucket (folder for the local adapter), blank falls
+     *                    back to {@link #defaultBucket()}
      * @param key         object key, unique inside the bucket
      * @param content     object bytes
      * @param contentType mime type, nullable

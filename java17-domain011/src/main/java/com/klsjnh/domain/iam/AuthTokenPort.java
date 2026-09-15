@@ -22,6 +22,15 @@ package com.klsjnh.domain.iam;
 public interface AuthTokenPort {
 
     /**
+     * Verified operator identity carried by a signed token.
+     *
+     * @param id          user id
+     * @param userAccount login account (the token subject)
+     */
+    record OperatorIdentity(String id, String userAccount) {
+    }
+
+    /**
      * Issue a signed token for a user.
      *
      * @param id          user id
@@ -29,6 +38,16 @@ public interface AuthTokenPort {
      * @return signed JWT string
      */
     String issue(String id, String userAccount);
+
+    /**
+     * Verify a signed token and return the full operator identity (id +
+     * account) — what the auth filter needs to fill both audit columns.
+     *
+     * @param token signed JWT
+     * @return operator identity, or null when missing / malformed / expired /
+     *         signature-invalid
+     */
+    OperatorIdentity verify(String token);
 
     /**
      * Verify a signed token and return its operator user id.

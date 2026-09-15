@@ -18,13 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.klsjnh.domain.iam.AuthTokenPort;
+import com.klsjnh.domain.iam.AuthTokenPort.OperatorIdentity;
 
 import com.klsjnh.infrastructure.config.KrtConfig011;
 
 import org.springframework.stereotype.Component;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -102,6 +101,31 @@ public class JwtAuthTokenService implements AuthTokenPort {
     }
 
     /**
+     * Verify a signed token and return the full operator identity (id +
+     * account) — what the auth filter needs to fill both audit columns.
+     *
+     * @param token signed JWT
+     * @return operator identity, or null when missing / malformed / expired /
+     *         signature-invalid
+     */
+    @Override
+    public OperatorIdentity verify(String token) {
+        Claims claims = parse(token);
+
+        if (claims == null) {
+            return null;
+        }
+
+        Object id = claims.get(CLAIM_ID);
+
+        if (id == null) {
+            return null;
+        }
+
+        return new OperatorIdentity(id.toString(), claims.getSubject());
+    }
+
+    /**
      * Verify a signed token and return its operator user id.
      *
      * @param token signed JWT
@@ -110,6 +134,18 @@ public class JwtAuthTokenService implements AuthTokenPort {
      */
     @Override
     public String verifyAndGetId(String token) {
+        OperatorIdentity identity = verify(token);
+
+        return identity == null ? null : identity.id();
+    }
+
+    /**
+     * Parse and verify the token, returning its claims.
+     *
+     * @param token signed JWT
+     * @return claims, null when missing / malformed / expired / invalid
+     */
+    private Claims parse(String token) {
         if (token == null || token.isBlank()) {
             return null;
         }
@@ -122,15 +158,12 @@ public class JwtAuthTokenService implements AuthTokenPort {
 
         try {
             SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            Claims claims = Jwts.parser()
+
+            return Jwts.parser()
                     .verifyWith(key)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-
-            Object id = claims.get(CLAIM_ID);
-
-            return id == null ? null : id.toString();
         } catch (JwtException | IllegalArgumentException ex) {
             logger.debug("jwt verify failed {} ...", ex.getClass().getSimpleName());
             return null;

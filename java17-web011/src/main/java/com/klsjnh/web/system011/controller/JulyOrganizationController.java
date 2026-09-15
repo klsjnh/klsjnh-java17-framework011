@@ -11,17 +11,22 @@ package com.klsjnh.web.system011.controller;
  *          modify history
  *
  *      2026.09.13  july organization controller class
+ *      2026.09.15  tree endpoint renamed to get
  *
  */
 
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
 
-import com.klsjnh.application.organization.JulyOrganizationUseCase;
+import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.domain.system011.organization.JulyOrganization;
+import com.klsjnh.application.platform011.backup.BackupUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
+import com.klsjnh.application.system011.organization.JulyOrganizationUseCase;
 
 import com.klsjnh.web.system011.converter.JulyOrganizationConverter;
 
@@ -29,6 +34,7 @@ import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationInsertVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationQueryVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationUpdateVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +45,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -53,6 +61,11 @@ import java.util.List;
 public class JulyOrganizationController {
 
     /**
+     * Object code this controller exports and backs up under.
+     */
+    private static final String OBJECT_CODE = "julyOrganization";
+
+    /**
      * JulyOrganization use case.
      */
     private final JulyOrganizationUseCase useCase;
@@ -63,14 +76,29 @@ public class JulyOrganizationController {
     private final JulyOrganizationConverter converter;
 
     /**
+     * Export use case (platform capability).
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Backup use case (platform capability).
+     */
+    private final BackupUseCase backupUseCase;
+
+    /**
      * Create the controller.
      *
-     * @param useCase   july organization use case
-     * @param converter response converter
+     * @param useCase       july organization use case
+     * @param converter     response converter
+     * @param exportUseCase export use case
+     * @param backupUseCase backup use case
      */
-    public JulyOrganizationController(JulyOrganizationUseCase useCase, JulyOrganizationConverter converter) {
+    public JulyOrganizationController(JulyOrganizationUseCase useCase, JulyOrganizationConverter converter,
+            ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
         this.useCase = useCase;
         this.converter = converter;
+        this.exportUseCase = exportUseCase;
+        this.backupUseCase = backupUseCase;
     }
 
     /**
@@ -140,12 +168,12 @@ public class JulyOrganizationController {
      *
      * @return root nodes with nested children
      */
-    @GetMapping("/selectTree")
+    @GetMapping("/getTree")
     @Operation(summary = "组织树（含人数角标，GET）")
-    public Response011<List<JulyOrganizationVo011>> selectTree() {
-        String funcName = "select tree";
+    public Response011<List<JulyOrganizationVo011>> getTree() {
+        String funcName = "get tree";
 
-        JulyOrganizationUseCase.TreeWithCounts tree = useCase.selectTree();
+        JulyOrganizationUseCase.TreeWithCounts tree = useCase.getTree();
 
         return Response011.success(funcName, converter.toVoList(tree.tree(), tree.counts()));
     }
@@ -166,5 +194,43 @@ public class JulyOrganizationController {
         PageResult011<JulyOrganization> page = useCase.selectListByPage(pageQuery, query.getKeyword());
 
         return Response011.success(funcName, page.withRows(converter.toVoList(page.rows(), null)));
+    }
+
+    /**
+     * Export every organization row in batches and return the whole result in
+     * the JSON envelope (batching bounds the database load, not the payload).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the export result
+     */
+    @PostMapping("/export")
+    @Operation(summary = "导出全部组织（分批取数，写 EXPORT 审计）")
+    public Response011<ExportResult> export(HttpServletRequest request) {
+        String funcName = "export";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
+     * Back every organization row up into the storage center, keyed by
+     * timestamp.
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the stored object key
+     */
+    @PostMapping("/backup011")
+    @Operation(summary = "备份全部组织到存储中心（写 BACKUP 审计）")
+    public Response011<String> backup011(HttpServletRequest request) {
+        String funcName = "backup";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        String key = backupUseCase.backup(OBJECT_CODE, operator);
+
+        return Response011.success(funcName, key);
     }
 }

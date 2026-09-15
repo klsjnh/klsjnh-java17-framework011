@@ -11,12 +11,14 @@ package com.klsjnh.web.system011.controller;
  *          modify history
  *
  *      2026.09.13  july user audit controller class
+ *      2026.09.15  time parsing moved to date util 011
  *
  */
 
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
+import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.application.iam.JulyUserAuditUseCase;
 import com.klsjnh.domain.iam.JulyUserAuditRow;
@@ -33,9 +35,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 
 /**
  * JulyUserAudit HTTP adapter: read-only query over the append-only audit
@@ -82,26 +81,9 @@ public class JulyUserAuditController {
 
         PageQuery011 pageQuery = new PageQuery011(query.getPageIndex(), query.getPageSize());
         PageResult011<JulyUserAuditRow> page = useCase.selectListByPage(pageQuery, query.getUserAccount(),
-                query.getAuditType(), parseTime(query.getBeginTime()), parseTime(query.getEndTime()));
+                query.getAuditType(), DateUtil011.parseIso(query.getBeginTime()),
+                DateUtil011.parseIso(query.getEndTime()));
 
         return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
-    }
-
-    /**
-     * Parse an ISO date-time string; null passes through.
-     *
-     * @param value ISO date-time or null
-     * @return parsed time or null
-     */
-    private LocalDateTime parseTime(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-
-        try {
-            return LocalDateTime.parse(value);
-        } catch (DateTimeParseException ex) {
-            return null;
-        }
     }
 }

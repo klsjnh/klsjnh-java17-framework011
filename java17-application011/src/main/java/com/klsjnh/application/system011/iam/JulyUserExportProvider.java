@@ -14,9 +14,10 @@ package com.klsjnh.application.system011.iam;
  *
  */
 
-import com.klsjnh.application.export.ExportProvider;
 import com.klsjnh.domain.iam.JulyUser;
 import com.klsjnh.domain.iam.JulyUserRepository;
+import com.klsjnh.domain.platform011.export.ExportColumn;
+import com.klsjnh.domain.platform011.export.ExportProvider;
 
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,21 @@ import java.util.Map;
 
 @Component
 public class JulyUserExportProvider implements ExportProvider {
+
+    /**
+     * Ordered column definitions, matching the row keys of {@link #toRow}.
+     */
+    private static final List<ExportColumn> COLUMNS = List.of(
+            new ExportColumn("id", "主键"),
+            new ExportColumn("userAccount", "用户账号"),
+            new ExportColumn("userName", "用户姓名"),
+            new ExportColumn("mobile", "手机号"),
+            new ExportColumn("email", "邮箱"),
+            new ExportColumn("pkOrg", "所属组织"),
+            new ExportColumn("lastLoginTime", "最后登录时间"),
+            new ExportColumn("status", "状态"),
+            new ExportColumn("createBy", "创建人"),
+            new ExportColumn("createTime", "创建时间"));
 
     /**
      * JulyUser repository.
@@ -56,13 +72,25 @@ public class JulyUserExportProvider implements ExportProvider {
     }
 
     /**
-     * Export all alive users (password hash excluded by design).
+     * Get the ordered column definitions of julyUser.
      *
+     * @return column definitions
+     */
+    @Override
+    public List<ExportColumn> columns() {
+        return COLUMNS;
+    }
+
+    /**
+     * Fetch one batch of alive users (password hash excluded by design).
+     *
+     * @param offset row offset, 0 based
+     * @param limit  max rows to return
      * @return rows
      */
     @Override
-    public List<Map<String, Object>> exportRows() {
-        return repository.findPage(0, 500, null, null).stream()
+    public List<Map<String, Object>> exportRows(int offset, int limit) {
+        return repository.findPage(offset, limit, null, null).stream()
                 .map(this::toRow)
                 .toList();
     }

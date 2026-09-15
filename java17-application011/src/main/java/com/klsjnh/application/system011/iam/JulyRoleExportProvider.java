@@ -14,9 +14,10 @@ package com.klsjnh.application.system011.iam;
  *
  */
 
-import com.klsjnh.application.export.ExportProvider;
 import com.klsjnh.domain.iam.JulyRole;
 import com.klsjnh.domain.iam.JulyRoleRepository;
+import com.klsjnh.domain.platform011.export.ExportColumn;
+import com.klsjnh.domain.platform011.export.ExportProvider;
 
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,19 @@ import java.util.Map;
 
 @Component
 public class JulyRoleExportProvider implements ExportProvider {
+
+    /**
+     * Ordered column definitions, matching the row keys of {@link #toRow}.
+     */
+    private static final List<ExportColumn> COLUMNS = List.of(
+            new ExportColumn("id", "主键"),
+            new ExportColumn("roleCode", "角色编码"),
+            new ExportColumn("roleName", "角色名称"),
+            new ExportColumn("isBuiltin", "是否内置"),
+            new ExportColumn("remark", "备注"),
+            new ExportColumn("status", "状态"),
+            new ExportColumn("createBy", "创建人"),
+            new ExportColumn("createTime", "创建时间"));
 
     /**
      * JulyRole repository.
@@ -56,13 +70,25 @@ public class JulyRoleExportProvider implements ExportProvider {
     }
 
     /**
-     * Export all alive roles.
+     * Get the ordered column definitions of julyRole.
      *
+     * @return column definitions
+     */
+    @Override
+    public List<ExportColumn> columns() {
+        return COLUMNS;
+    }
+
+    /**
+     * Fetch one batch of alive roles.
+     *
+     * @param offset row offset, 0 based
+     * @param limit  max rows to return
      * @return rows
      */
     @Override
-    public List<Map<String, Object>> exportRows() {
-        return repository.findPage(0, 500, null).stream()
+    public List<Map<String, Object>> exportRows(int offset, int limit) {
+        return repository.findPage(offset, limit, null).stream()
                 .map(this::toRow)
                 .toList();
     }

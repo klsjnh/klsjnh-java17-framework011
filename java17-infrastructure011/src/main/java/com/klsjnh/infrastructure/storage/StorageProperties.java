@@ -36,6 +36,13 @@ public class StorageProperties {
     private String defaultType = "local011";
 
     /**
+     * Default bucket shared by every adapter: a blank bucket argument falls
+     * back to it, and {@code ObjectStoragePort.defaultBucket()} reports it.
+     * Adapter-level {@code defaultBucket} overrides this one.
+     */
+    private String defaultBucket = "klsjnh011";
+
+    /**
      * Local011 adapter settings.
      */
     private Local011 local011 = new Local011();
@@ -79,8 +86,9 @@ public class StorageProperties {
         private String secretKey;
 
         /**
-         * Default bucket, auto-created when missing.
+         * Adapter-level default bucket; blank falls back to the top-level
+         * {@code default-bucket}, auto-created when missing.
          */
-        private String defaultBucket = "klsjnh011";
+        private String defaultBucket;
     }
 }

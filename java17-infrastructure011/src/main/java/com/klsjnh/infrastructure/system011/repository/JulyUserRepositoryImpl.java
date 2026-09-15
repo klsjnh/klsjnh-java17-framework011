@@ -11,8 +11,11 @@ package com.klsjnh.infrastructure.system011.repository;
  *          modify history
  *
  *      2026.09.12  july user repository impl class
+ *      2026.09.15  clock from date util 011
  *
  */
+
+import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.domain.iam.JulyUser;
 import com.klsjnh.domain.iam.JulyUserRepository;
@@ -240,7 +243,7 @@ public class JulyUserRepositoryImpl
     @Override
     public void touchLastLoginTime(String id) {
         LambdaUpdateWrapper<JulyUserPo> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.set(JulyUserPo::getLastLoginTime, java.time.LocalDateTime.now()).eq(JulyUserPo::getId, id);
+        wrapper.set(JulyUserPo::getLastLoginTime, DateUtil011.now()).eq(JulyUserPo::getId, id);
         mapper.update(null, wrapper);
     }
 

@@ -11,6 +11,7 @@ package com.klsjnh.web.system011.controller;
  *          modify history
  *
  *      2026.09.12  july scheduler controller class
+ *      2026.09.15  scheduler VO moved into the julyscheduler sub-package
  *
  */
 
@@ -21,15 +22,15 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.vo.IdsVo011;
 
-import com.klsjnh.application.scheduler.JulySchedulerUseCase;
+import com.klsjnh.application.system011.scheduler.JulySchedulerUseCase;
 import com.klsjnh.domain.system011.scheduler.JulyScheduler;
 
 import com.klsjnh.web.system011.converter.JulySchedulerConverter;
 
-import com.klsjnh.web.system011.vo.JulySchedulerInsertVo011;
-import com.klsjnh.web.system011.vo.JulySchedulerQueryVo011;
-import com.klsjnh.web.system011.vo.JulySchedulerUpdateVo011;
-import com.klsjnh.web.system011.vo.JulySchedulerVo011;
+import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerInsertVo011;
+import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerQueryVo011;
+import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerUpdateVo011;
+import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

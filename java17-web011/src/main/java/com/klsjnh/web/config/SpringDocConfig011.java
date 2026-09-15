@@ -41,8 +41,9 @@ import java.util.List;
  * excluding the /klsjnh/** framework paths).
  * <p>
  * Groups: system011 (system management) / storage011 (storage center,
- * endpoints land with the feature) / app (optional, yml driven). Doc meta
- * (title / version / description) is driven by {@code krt.springdoc}.
+ * endpoints land with the feature) / dataservice011 (data service, datasource
+ * management) / app (optional, yml driven). Doc meta (title / version /
+ * description) is driven by {@code krt.springdoc}.
  * </p>
  */
 
@@ -96,6 +97,22 @@ public class SpringDocConfig011 {
                 .group("storage011")
                 .displayName("存储中心")
                 .pathsToMatch("/klsjnh/storage011/**")
+                .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
+                .build();
+    }
+
+    /**
+     * Data service group (datasource management; sql / model land in phase
+     * two).
+     *
+     * @return grouped open api
+     */
+    @Bean
+    public GroupedOpenApi dataservice011GroupedOpenApi() {
+        return GroupedOpenApi.builder()
+                .group("dataservice011")
+                .displayName("数据服务011")
+                .pathsToMatch("/klsjnh/dataservice011/**")
                 .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
                 .build();
     }

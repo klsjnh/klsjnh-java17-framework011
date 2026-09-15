@@ -11,6 +11,7 @@ package com.klsjnh.domain.system011.organization;
  *          modify history
  *
  *      2026.09.13  july organization repository interface
+ *      2026.09.15  tree method renamed to getTree
  *
  */
 
@@ -79,12 +80,12 @@ public interface JulyOrganizationRepository {
 
     /**
      * Load the full alive organization tree as aggregates (children
-     * assembled, ordered by sort_order / id). Named selectOrgTree to stay
+     * assembled, ordered by sort_order / id). Named getTree to stay
      * distinct from the Po-level base selectTree.
      *
      * @return root nodes with nested children
      */
-    List<JulyOrganization> selectOrgTree();
+    List<JulyOrganization> getTree();
 
     /**
      * Offset based page query with an optional keyword filter.
