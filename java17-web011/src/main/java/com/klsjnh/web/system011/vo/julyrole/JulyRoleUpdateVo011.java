@@ -5,12 +5,13 @@ package com.klsjnh.web.system011.vo.julyrole;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.15
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july role update vo 011 class
+ *      2026.09.15  add status field
  *
  */
 
@@ -36,4 +37,8 @@ public class JulyRoleUpdateVo011 {
     /** Remark, max 200. */
     @Schema(description = "备注（最长 200）")
     private String remark;
+
+    /** Role status, '1' enabled / '0' disabled; null means keep current. */
+    @Schema(description = "角色状态（1 启用 / 0 停用，可空=不修改）")
+    private String status;
 }

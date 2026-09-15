@@ -31,6 +31,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -146,6 +147,21 @@ public class JulyUserRepositoryImpl
         JulyUserPo po = getByBusinessValue(userAccount);
 
         return po == null ? null : toAggregate(po);
+    }
+
+    /**
+     * Find aggregates by an id list (flat, no junction assembly).
+     *
+     * @param ids user ids
+     * @return aggregates present in the store, empty when ids is null / empty
+     */
+    @Override
+    public List<JulyUser> findByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return mapper.selectByIds(ids).stream().map(this::toAggregate).toList();
     }
 
     /**

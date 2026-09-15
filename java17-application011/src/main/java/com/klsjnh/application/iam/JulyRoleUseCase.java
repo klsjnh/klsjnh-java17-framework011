@@ -5,12 +5,13 @@ package com.klsjnh.application.iam;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.15
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july role use case class
+ *      2026.09.15  update accepts status
  *
  */
 
@@ -21,6 +22,9 @@ import com.klsjnh.common.page.PageResult011;
 
 import com.klsjnh.domain.iam.JulyRole;
 import com.klsjnh.domain.iam.JulyRoleRepository;
+import com.klsjnh.domain.iam.JulyUser;
+import com.klsjnh.domain.iam.JulyUserRepository;
+import com.klsjnh.domain.iam.JulyUserRoleRepository;
 import com.klsjnh.domain.system011.menu.JulyMenu;
 import com.klsjnh.domain.system011.menu.JulyMenuRepository;
 import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
@@ -55,17 +59,32 @@ public class JulyRoleUseCase {
     private final JulyRolePermissionsRepository rolePermissionsRepository;
 
     /**
+     * User role junction repository (reverse lookup: role → holding users).
+     */
+    private final JulyUserRoleRepository userRoleRepository;
+
+    /**
+     * JulyUser repository (user id → full aggregate).
+     */
+    private final JulyUserRepository userRepository;
+
+    /**
      * Create the use case.
      *
-     * @param repository                 july role repository
-     * @param menuRepository             july menu repository
-     * @param rolePermissionsRepository  role permissions junction repository
+     * @param repository                july role repository
+     * @param menuRepository            july menu repository
+     * @param rolePermissionsRepository role permissions junction repository
+     * @param userRoleRepository        user role junction repository
+     * @param userRepository            july user repository
      */
     public JulyRoleUseCase(JulyRoleRepository repository, JulyMenuRepository menuRepository,
-            JulyRolePermissionsRepository rolePermissionsRepository) {
+            JulyRolePermissionsRepository rolePermissionsRepository, JulyUserRoleRepository userRoleRepository,
+            JulyUserRepository userRepository) {
         this.repository = repository;
         this.menuRepository = menuRepository;
         this.rolePermissionsRepository = rolePermissionsRepository;
+        this.userRoleRepository = userRoleRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -124,17 +143,24 @@ public class JulyRoleUseCase {
     }
 
     /**
-     * Update a role (built-in roles allow name / remark changes).
+     * Update a role (built-in roles allow name / remark changes). Status is
+     * optional: a null / blank value leaves the current status untouched.
      *
      * @param id       role id
      * @param roleName role name
      * @param remark   remark
+     * @param status   role status ("1" / "0"), nullable
      * @return role id
      */
     @Transactional
-    public String update(String id, String roleName, String remark) {
+    public String update(String id, String roleName, String remark, String status) {
         JulyRole role = require(id);
         role.updateBasics(roleName, remark);
+
+        if (status != null && !status.isBlank()) {
+            role.changeStatus(status);
+        }
+
         repository.update(role);
 
         return role.id().value();
@@ -167,6 +193,33 @@ public class JulyRoleUseCase {
      */
     public JulyRole getById(String id) {
         return require(id);
+    }
+
+    /**
+     * Menus currently granted to a role, returned as a flat list (no children
+     * assembly) so the caller can diff it against the menu tree by id.
+     *
+     * @param id role id
+     * @return granted menu aggregates, empty when nothing is granted
+     */
+    public List<JulyMenu> getMenusByRole(String id) {
+        require(id);
+
+        return menuRepository.findByIds(rolePermissionsRepository.findMenuIds(id));
+    }
+
+    /**
+     * Users currently holding a role, returned as full aggregates so the
+     * caller can re-submit the complete role set to {@code assignRoles}
+     * without losing the roles granted elsewhere.
+     *
+     * @param id role id
+     * @return user aggregates, empty when the role is held by nobody
+     */
+    public List<JulyUser> getUsersByRole(String id) {
+        require(id);
+
+        return userRepository.findByIds(userRoleRepository.findUserIds(id));
     }
 
     /**

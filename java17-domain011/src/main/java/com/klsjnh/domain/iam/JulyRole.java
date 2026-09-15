@@ -5,12 +5,13 @@ package com.klsjnh.domain.iam;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.15
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july role class
+ *      2026.09.15  add changeStatus (status editable via update)
  *
  */
 
@@ -127,6 +128,27 @@ public class JulyRole {
      */
     public void disable() {
         this.status = Status011.DISABLED.getCode();
+    }
+
+    /**
+     * Apply an explicit status value (used by the update path). Resolves the
+     * raw column value and delegates to {@link #enable()} / {@link #disable()}.
+     * Rejects unknown values instead of silently keeping the current status.
+     *
+     * @param status raw status column value ("1" / "0")
+     */
+    public void changeStatus(String status) {
+        Status011 next = Status011.of(status);
+
+        if (next == null) {
+            throw new IllegalArgumentException("invalid role status: " + status);
+        }
+
+        if (next == Status011.ENABLED) {
+            enable();
+        } else {
+            disable();
+        }
     }
 
     /**
