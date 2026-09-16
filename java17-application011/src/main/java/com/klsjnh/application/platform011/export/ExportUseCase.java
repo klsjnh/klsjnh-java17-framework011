@@ -18,6 +18,7 @@ package com.klsjnh.application.platform011.export;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 
@@ -119,7 +120,7 @@ public class ExportUseCase {
         List<ExportColumn> columns = List.copyOf(provider.columns());
         List<Map<String, Object>> rows = collect(provider);
 
-        userAuditPort.record(operator.id(), operator.userAccount(), "EXPORT", objectCode,
+        userAuditPort.record(operator.id(), operator.userAccount(), AuditType011.EXPORT, objectCode,
                 "export " + rows.size() + " rows", operator.ip());
 
         logger.info("{} {} collected {} rows", funcName, objectCode, rows.size());

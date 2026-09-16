@@ -14,6 +14,7 @@ package com.klsjnh.web.ai011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -29,6 +30,7 @@ import com.klsjnh.domain.platform011.export.ExportResult;
 
 import com.klsjnh.web.ai011.converter.AiModelProviderConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiInsertVo011;
 import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiQueryVo011;
 import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiUpdateVo011;
@@ -105,6 +107,7 @@ public class AiModelProviderController {
      * @param vo insert request
      * @return envelope with the new provider id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyAiModelProvider")
     @PostMapping("/insert")
     @Operation(summary = "新增提供商（providerCode 查重）")
     public Response011<IdVo011> insert(@RequestBody AiModelProviderInsertVo011 vo) {
@@ -120,6 +123,7 @@ public class AiModelProviderController {
      * @param vo update request
      * @return envelope with the provider id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyAiModelProvider")
     @PostMapping("/update")
     @Operation(summary = "修改提供商（providerCode 不可变）")
     public Response011<IdVo011> update(@RequestBody AiModelProviderUpdateVo011 vo) {
@@ -135,6 +139,7 @@ public class AiModelProviderController {
      * @param idVo request with the provider id
      * @return envelope with the deleted provider id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyAiModelProvider")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除提供商（仍有密钥则拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -182,6 +187,7 @@ public class AiModelProviderController {
      * @param vo insert request
      * @return envelope with the new api key id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyAiModelProvider")
     @PostMapping("/insertApi")
     @Operation(summary = "新增密钥（同提供商内 apiCode 查重）")
     public Response011<IdVo011> insertApi(@RequestBody AiModelProviderApiInsertVo011 vo) {
@@ -197,6 +203,7 @@ public class AiModelProviderController {
      * @param vo update request
      * @return envelope with the api key id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyAiModelProvider")
     @PostMapping("/updateApi")
     @Operation(summary = "修改密钥（apiCode 不可变；apiKey 留空保持原值）")
     public Response011<IdVo011> updateApi(@RequestBody AiModelProviderApiUpdateVo011 vo) {
@@ -212,6 +219,7 @@ public class AiModelProviderController {
      * @param idVo request with the api key id
      * @return envelope with the deleted api key id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyAiModelProvider")
     @PostMapping("/logicDeleteApi")
     @Operation(summary = "逻辑删除密钥（单个）")
     public Response011<IdVo011> logicDeleteApi(@RequestBody IdVo011 idVo) {

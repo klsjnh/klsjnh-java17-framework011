@@ -1,0 +1,34 @@
+# =========================================================
+# 基镜像 klsjnh/java17:v0.0.1 —— ubuntu:26.04 + JDK17 介质
+# 构建上下文需含 jdk-17.0.12_linux-x64_bin.tar.gz（build-base.sh 自动打包）
+# 通用底座：不 COPY 项目 jar，入口点由项目 compose 覆盖
+# =========================================================
+FROM ubuntu:26.04
+
+ENV JAVA_HOME=/environment/java17
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib:${LD_LIBRARY_PATH}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bash tzdata ca-certificates \
+    && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY jdk-17.0.12_linux-x64_bin.tar.gz /tmp/jdk.tar.gz
+RUN mkdir -p ${JAVA_HOME} \
+    && tar -zxf /tmp/jdk.tar.gz -C ${JAVA_HOME} --strip-components=1 \
+    && rm -f /tmp/jdk.tar.gz
+
+RUN groupadd -r klsjnh && useradd -r -g klsjnh -d /klsjnh -m klsjnh \
+    && mkdir -p /klsjnh/app /klsjnh/volume/config /klsjnh/volume/logs /klsjnh/volume/data \
+    && chown -R klsjnh:klsjnh /klsjnh ${JAVA_HOME}
+
+WORKDIR /klsjnh/app
+VOLUME ["/klsjnh/volume"]
+EXPOSE 8080
+
+USER klsjnh
+
+ENV JAVA_OPTS="-XX:+UseG1GC -XX:+UseContainerSupport -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai"
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.location=/klsjnh/volume/config/application.yml"]

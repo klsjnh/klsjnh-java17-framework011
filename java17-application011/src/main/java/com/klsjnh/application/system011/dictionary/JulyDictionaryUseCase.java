@@ -147,6 +147,19 @@ public class JulyDictionaryUseCase {
     }
 
     /**
+     * Find a dictionary by code together with all its items (management read
+     * entry; disabled rows included).
+     *
+     * @param dictionaryCode dictionary code
+     * @return bundle
+     */
+    public JulyDictionaryBundle getByCodeWithItems(String dictionaryCode) {
+        JulyDictionary dictionary = requireByCode(dictionaryCode);
+
+        return new JulyDictionaryBundle(dictionary, itemRepository.findAllByMaster(dictionary.id().value(), null));
+    }
+
+    /**
      * Page query on the management view.
      *
      * @param pageQuery page query, null falls back to page 1 / size 10

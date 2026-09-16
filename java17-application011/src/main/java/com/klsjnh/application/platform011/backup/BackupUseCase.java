@@ -19,6 +19,7 @@ package com.klsjnh.application.platform011.backup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.util.DateUtil011;
@@ -129,7 +130,7 @@ public class BackupUseCase {
 
         storagePort.put(bucket, key, toJsonBytes(result), "application/json");
 
-        userAuditPort.record(operator.id(), operator.userAccount(), "BACKUP", objectCode,
+        userAuditPort.record(operator.id(), operator.userAccount(), AuditType011.BACKUP, objectCode,
                 "backup " + result.metaInfo().rowCount() + " rows to " + bucket + "/" + key, operator.ip());
 
         logger.info("{} {} stored {} rows at {}/{}", funcName, objectCode, result.metaInfo().rowCount(), bucket, key);

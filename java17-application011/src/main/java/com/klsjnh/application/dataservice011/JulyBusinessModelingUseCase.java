@@ -313,12 +313,12 @@ public class JulyBusinessModelingUseCase {
      * @param sqlContent        read-only sql
      * @return rows, never null
      */
-    public List<Map<String, Object>> executeSql(String dataSourceCode, String sqlContent) {
-        requireEnabledDatasource(dataSourceCode);
-        guardSql(sqlContent);
+    public List<Map<String, Object>> executeSql(BusinessModelingExecuteCommand command) {
+        Resolved resolved = resolve(command);
+        guardSql(resolved.sql());
 
-        PageResult011<Map<String, Object>> page = sqlRoutingPort.selectListByPage(dataSourceCode, sqlContent, 1,
-                EXECUTE_ROW_CAP);
+        PageResult011<Map<String, Object>> page = sqlRoutingPort.selectListByPage(resolved.dsCode(),
+                resolved.sql(), 1, EXECUTE_ROW_CAP);
 
         if (page.total() > EXECUTE_ROW_CAP) {
             throw BusinessException.badRequest("result exceeds " + EXECUTE_ROW_CAP
@@ -338,12 +338,105 @@ public class JulyBusinessModelingUseCase {
      * @param pageSize       page size, clamped by the routing port to [10, 500]
      * @return page result
      */
-    public PageResult011<Map<String, Object>> executeSqlByPage(String dataSourceCode, String sqlContent,
+    public PageResult011<Map<String, Object>> executeSqlByPage(BusinessModelingExecuteCommand command,
             Integer pageIndex, Integer pageSize) {
-        requireEnabledDatasource(dataSourceCode);
-        guardSql(sqlContent);
+        Resolved resolved = resolve(command);
+        guardSql(resolved.sql());
 
-        return sqlRoutingPort.selectListByPage(dataSourceCode, sqlContent, pageIndex, pageSize);
+        return sqlRoutingPort.selectListByPage(resolved.dsCode(), resolved.sql(), pageIndex, pageSize);
+    }
+
+    /**
+     * Resolve the polymorphic execute input to a concrete (sql, datasource code)
+     * pair: exactly one SQL source, at most one datasource selector, and the
+     * datasource derived from the modeling when none is given.
+     *
+     * @param command execute command
+     * @return resolved sql + datasource code
+     */
+    private Resolved resolve(BusinessModelingExecuteCommand command) {
+        boolean byModelId = isPresent(command.modelId());
+        boolean byModelCode = isPresent(command.modelCode());
+        boolean bySql = isPresent(command.sqlContent());
+
+        if ((byModelId ? 1 : 0) + (byModelCode ? 1 : 0) + (bySql ? 1 : 0) != 1) {
+            throw BusinessException.badRequest("exactly one of modelId / modelCode / sqlContent is required");
+        }
+
+        JulyBusinessModeling model = null;
+        String sql;
+
+        if (byModelId) {
+            model = require(command.modelId());
+            sql = modelSql(model);
+        } else if (byModelCode) {
+            model = repository.findByCode(command.modelCode());
+            if (model == null) {
+                throw BusinessException.recordNotFound(command.modelCode());
+            }
+            sql = modelSql(model);
+        } else {
+            sql = command.sqlContent().trim();
+        }
+
+        if (isPresent(command.dataSourceId()) && isPresent(command.dataSourceCode())) {
+            throw BusinessException.badRequest("only one of dataSourceId / dataSourceCode is allowed");
+        }
+
+        String dsCode = null;
+
+        if (isPresent(command.dataSourceId())) {
+            JulyDatasource datasource = datasourceRepository.findById(command.dataSourceId());
+            if (datasource == null) {
+                throw BusinessException.recordNotFound(command.dataSourceId());
+            }
+            dsCode = datasource.dsCode();
+        } else if (isPresent(command.dataSourceCode())) {
+            dsCode = command.dataSourceCode().trim();
+        } else if (model != null) {
+            dsCode = model.dataSourceCode();
+        }
+
+        if (!isPresent(dsCode)) {
+            throw BusinessException.badRequest("dataSourceId / dataSourceCode is required");
+        }
+
+        requireEnabledDatasource(dsCode);
+
+        return new Resolved(sql, dsCode);
+    }
+
+    /**
+     * Read the SQL of a modeling, rejecting a modeling that carries none.
+     *
+     * @param model modeling aggregate
+     * @return sql content
+     */
+    private String modelSql(JulyBusinessModeling model) {
+        if (!isPresent(model.sqlContent())) {
+            throw BusinessException.badRequest("modeling has no sql: " + model.modelCode());
+        }
+
+        return model.sqlContent();
+    }
+
+    /**
+     * Whether a selector carries a value.
+     *
+     * @param value raw selector
+     * @return true when non-blank
+     */
+    private boolean isPresent(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    /**
+     * A resolved (sql, datasource code) pair.
+     *
+     * @param sql    read-only sql
+     * @param dsCode datasource code
+     */
+    private record Resolved(String sql, String dsCode) {
     }
 
     /**

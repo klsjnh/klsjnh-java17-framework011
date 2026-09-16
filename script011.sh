@@ -101,7 +101,7 @@ do_push() {
   vf="$PROJECT_ROOT/.vf"
   [ -f "$vf" ] || echo 0 > "$vf"
   HAS_CHANGES=$(git status --porcelain | wc -l)
-  HAS_UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null | wc -l)
+  HAS_UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null | wc -l || echo 0)
 
   if [ "$HAS_CHANGES" -eq 0 ] && [ "$HAS_UNPUSHED" -eq 0 ]; then
     echo "[$(NOW)] nothing to change ..."

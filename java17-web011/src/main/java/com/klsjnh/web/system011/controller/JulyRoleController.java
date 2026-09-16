@@ -16,6 +16,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -32,6 +33,7 @@ import com.klsjnh.web.system011.converter.JulyMenuConverter;
 import com.klsjnh.web.system011.converter.JulyRoleConverter;
 import com.klsjnh.web.system011.converter.JulyUserConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleAssignMenusVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleInsertVo011;
 import com.klsjnh.web.system011.vo.julyrole.JulyRoleQueryVo011;
@@ -125,6 +127,7 @@ public class JulyRoleController {
      * @param vo insert request
      * @return envelope with the new role id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyRole")
     @PostMapping("/insert")
     @Operation(summary = "新增角色")
     public Response011<IdVo011> insert(@RequestBody JulyRoleInsertVo011 vo) {
@@ -140,6 +143,7 @@ public class JulyRoleController {
      * @param vo update request
      * @return envelope with the role id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyRole")
     @PostMapping("/update")
     @Operation(summary = "修改角色（编码不可改，状态可改）")
     public Response011<IdVo011> update(@RequestBody JulyRoleUpdateVo011 vo) {
@@ -156,6 +160,7 @@ public class JulyRoleController {
      * @param idVo request with the role id
      * @return envelope with the role id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyRole")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（内置角色拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -172,6 +177,7 @@ public class JulyRoleController {
      * @param vo assign request
      * @return envelope with the role id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyRole")
     @PostMapping("/assignMenus")
     @Operation(summary = "角色授权菜单（整存替换）")
     public Response011<IdVo011> assignMenus(@RequestBody JulyRoleAssignMenusVo011 vo) {

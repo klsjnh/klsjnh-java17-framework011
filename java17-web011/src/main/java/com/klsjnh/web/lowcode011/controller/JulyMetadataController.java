@@ -14,6 +14,7 @@ package com.klsjnh.web.lowcode011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -27,6 +28,7 @@ import com.klsjnh.domain.lowcode011.JulyMetadataQuerySpec;
 
 import com.klsjnh.web.lowcode011.converter.JulyMetadataConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.lowcode011.vo.JulyMetadataQueryVo011;
 import com.klsjnh.web.lowcode011.vo.JulyMetadataSaveVo011;
 import com.klsjnh.web.lowcode011.vo.JulyMetadataVo011;
@@ -78,6 +80,7 @@ public class JulyMetadataController {
      * @param vo save request
      * @return envelope with the new object id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyMetadata")
     @PostMapping("/insert")
     @Operation(summary = "新增对象元数据（一主三子，整体提交）")
     public Response011<IdVo011> insert(@RequestBody JulyMetadataSaveVo011 vo) {
@@ -95,6 +98,7 @@ public class JulyMetadataController {
      * @param vo save request
      * @return envelope with the object id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyMetadata")
     @PostMapping("/update")
     @Operation(summary = "修改对象元数据（对象名不可变；三子整体替换）")
     public Response011<IdVo011> update(@RequestBody JulyMetadataSaveVo011 vo) {
@@ -112,6 +116,7 @@ public class JulyMetadataController {
      * @param idVo request with the object id
      * @return envelope with the deleted object id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyMetadata")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（级联三子，单个）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -126,6 +131,7 @@ public class JulyMetadataController {
      * @param idsVo request with the object ids
      * @return per-id summary
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyMetadata")
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（级联三子，批量）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {

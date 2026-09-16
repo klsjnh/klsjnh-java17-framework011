@@ -14,6 +14,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -29,6 +30,7 @@ import com.klsjnh.domain.system011.dictionary.JulyDictionaryQuerySpec;
 
 import com.klsjnh.web.system011.converter.JulyDictionaryConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.system011.vo.julydictionary.JulyDictionaryInsertVo011;
 import com.klsjnh.web.system011.vo.julydictionary.JulyDictionaryItemInsertVo011;
 import com.klsjnh.web.system011.vo.julydictionary.JulyDictionaryItemQueryVo011;
@@ -104,6 +106,7 @@ public class JulyDictionaryController {
      * @param vo insert request
      * @return envelope with the new dictionary id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyDictionary")
     @PostMapping("/insert")
     @Operation(summary = "新增字典（dictionaryCode 查重）")
     public Response011<IdVo011> insert(@RequestBody JulyDictionaryInsertVo011 vo) {
@@ -119,6 +122,7 @@ public class JulyDictionaryController {
      * @param vo update request
      * @return envelope with the dictionary id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDictionary")
     @PostMapping("/update")
     @Operation(summary = "修改字典（dictionaryCode 不可变）")
     public Response011<IdVo011> update(@RequestBody JulyDictionaryUpdateVo011 vo) {
@@ -134,6 +138,7 @@ public class JulyDictionaryController {
      * @param idVo request with the dictionary id
      * @return envelope with the deleted dictionary id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDictionary")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除字典（仍有字典项则拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -154,6 +159,20 @@ public class JulyDictionaryController {
         String funcName = "get by id";
 
         return Response011.success(funcName, converter.toVo(useCase.getByIdWithItems(id)));
+    }
+
+    /**
+     * Find a dictionary by code together with its items (GET).
+     *
+     * @param code dictionary code, passed as a query parameter
+     * @return dictionary detail with items
+     */
+    @GetMapping("/getByCode")
+    @Operation(summary = "按 dictionaryCode 点查（code 走 query，含字典项）")
+    public Response011<JulyDictionaryVo011> getByCode(@RequestParam("code") String code) {
+        String funcName = "get by code";
+
+        return Response011.success(funcName, converter.toVo(useCase.getByCodeWithItems(code)));
     }
 
     /**
@@ -181,6 +200,7 @@ public class JulyDictionaryController {
      * @param vo insert request
      * @return envelope with the new item id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyDictionary")
     @PostMapping("/insertItem")
     @Operation(summary = "新增字典项（同字典内 itemCode 查重）")
     public Response011<IdVo011> insertItem(@RequestBody JulyDictionaryItemInsertVo011 vo) {
@@ -196,6 +216,7 @@ public class JulyDictionaryController {
      * @param vo update request
      * @return envelope with the item id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDictionary")
     @PostMapping("/updateItem")
     @Operation(summary = "修改字典项（itemCode 不可变）")
     public Response011<IdVo011> updateItem(@RequestBody JulyDictionaryItemUpdateVo011 vo) {
@@ -211,6 +232,7 @@ public class JulyDictionaryController {
      * @param idVo request with the item id
      * @return envelope with the deleted item id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDictionary")
     @PostMapping("/logicDeleteItem")
     @Operation(summary = "逻辑删除字典项（单个）")
     public Response011<IdVo011> logicDeleteItem(@RequestBody IdVo011 idVo) {

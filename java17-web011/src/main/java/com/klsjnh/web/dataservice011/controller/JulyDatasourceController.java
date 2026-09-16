@@ -14,6 +14,7 @@ package com.klsjnh.web.dataservice011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.vo.IdsVo011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
@@ -30,6 +31,7 @@ import com.klsjnh.domain.datasource.ReloadResult;
 
 import com.klsjnh.web.dataservice011.converter.JulyDatasourceConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.dataservice011.vo.julydatasource.JulyDatasourceVo011;
 import com.klsjnh.web.dataservice011.vo.julydatasource.JulyDatasourceTestVo011;
 import com.klsjnh.web.dataservice011.vo.julydatasource.JulyDatasourceQueryVo011;
@@ -90,6 +92,7 @@ public class JulyDatasourceController {
      * @param vo insert request
      * @return envelope with the new datasource id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyDatasource")
     @PostMapping("/insert")
     @Operation(summary = "新增数据源（dsCode 查重；落库后刷新注册表）")
     public Response011<IdVo011> insert(@RequestBody JulyDatasourceInsertVo011 vo) {
@@ -108,6 +111,7 @@ public class JulyDatasourceController {
      * @param vo update request
      * @return envelope with the datasource id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDatasource")
     @PostMapping("/update")
     @Operation(summary = "修改数据源（dsCode 不可变；密码留空保持原值；落库后刷新注册表）")
     public Response011<IdVo011> update(@RequestBody JulyDatasourceUpdateVo011 vo) {
@@ -125,6 +129,7 @@ public class JulyDatasourceController {
      * @param idVo request with the datasource id
      * @return envelope with the datasource id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDatasource")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（落库后刷新注册表，运行时应立即摘除该数据源）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -141,6 +146,7 @@ public class JulyDatasourceController {
      * @param idsVo request with the datasource ids
      * @return per-id summary
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDatasource")
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "批量逻辑删除（逐条判定，整批只刷新一次注册表）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
@@ -212,6 +218,7 @@ public class JulyDatasourceController {
      *
      * @return reconciliation summary
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDatasource")
     @PostMapping("/reloadRegistry")
     @Operation(summary = "重载注册表（按 july_datasource 启用行重建声明集，复用未变动的连接池）")
     public Response011<ReloadResult> reloadRegistry() {

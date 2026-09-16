@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
@@ -33,6 +34,7 @@ import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyMenuConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuInsertVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuQueryVo011;
 import com.klsjnh.web.system011.vo.julymenu.JulyMenuUpdateVo011;
@@ -110,6 +112,7 @@ public class JulyMenuController {
      * @param vo insert request
      * @return envelope with the new menu id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyMenu")
     @PostMapping("/insert")
     @Operation(summary = "新增菜单")
     public Response011<IdVo011> insert(@RequestBody JulyMenuInsertVo011 vo) {
@@ -126,6 +129,7 @@ public class JulyMenuController {
      * @param vo update request
      * @return envelope with the menu id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyMenu")
     @PostMapping("/update")
     @Operation(summary = "修改菜单（编码不可改，可移动上级）")
     public Response011<IdVo011> update(@RequestBody JulyMenuUpdateVo011 vo) {
@@ -143,6 +147,7 @@ public class JulyMenuController {
      * @param idVo request with the menu id
      * @return envelope with the deleted menu id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyMenu")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个，有子菜单拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -157,6 +162,7 @@ public class JulyMenuController {
      * @param idsVo request with the menu id list
      * @return per-id success/failure summary
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyMenu")
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量，有子菜单拒绝的逐条回报）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {

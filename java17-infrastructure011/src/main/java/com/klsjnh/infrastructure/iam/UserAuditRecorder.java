@@ -17,6 +17,8 @@ package com.klsjnh.infrastructure.iam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.klsjnh.common.enums.AuditType011;
+
 import com.klsjnh.domain.iam.UserAuditPort;
 
 import com.klsjnh.infrastructure.system011.entity.JulyUserAuditPo;
@@ -67,7 +69,7 @@ public class UserAuditRecorder implements UserAuditPort {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
-    public void record(String pkMt, String userAccount, String auditType, String objectCode, String content,
+    public void record(String pkMt, String userAccount, AuditType011 auditType, String objectCode, String content,
             String ip) {
         String funcName = "audit write";
 
@@ -75,13 +77,14 @@ public class UserAuditRecorder implements UserAuditPort {
             JulyUserAuditPo po = new JulyUserAuditPo();
             po.setPkMt(pkMt);
             po.setUserAccount(userAccount);
-            po.setAuditType(auditType);
+            po.setAuditType(auditType.getCode());
             po.setObjectCode(objectCode);
             po.setAuditContent(content);
             po.setAuditIp(ip);
             mapper.insert(po);
         } catch (Exception ex) {
-            logger.warn("{} type {} account {} failed {} ...", funcName, auditType, userAccount, ex.getMessage());
+            logger.warn("{} type {} account {} failed {} ...", funcName, auditType.getCode(), userAccount,
+                    ex.getMessage());
         }
     }
 }

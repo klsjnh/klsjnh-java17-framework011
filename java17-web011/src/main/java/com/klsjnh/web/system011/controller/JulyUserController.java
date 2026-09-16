@@ -14,6 +14,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
@@ -32,6 +33,7 @@ import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyUserConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserAssignRolesVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserChangePasswordVo011;
 import com.klsjnh.web.system011.vo.julyuser.JulyUserInsertVo011;
@@ -113,6 +115,7 @@ public class JulyUserController {
      * @param vo insert request
      * @return envelope with the new user id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyUser")
     @PostMapping("/insert")
     @Operation(summary = "新增用户")
     public Response011<IdVo011> insert(@RequestBody JulyUserInsertVo011 vo) {
@@ -129,6 +132,7 @@ public class JulyUserController {
      * @param vo update request
      * @return envelope with the user id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyUser")
     @PostMapping("/update")
     @Operation(summary = "修改用户资料（不含账号与密码）")
     public Response011<IdVo011> update(@RequestBody JulyUserUpdateVo011 vo) {
@@ -145,6 +149,7 @@ public class JulyUserController {
      * @param idVo request with the user id
      * @return envelope with the deleted user id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyUser")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -159,6 +164,7 @@ public class JulyUserController {
      * @param idsVo request with the user id list
      * @return per-id success/failure summary
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyUser")
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
@@ -205,6 +211,7 @@ public class JulyUserController {
      * @param vo assign request
      * @return envelope with the user id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyUser")
     @PostMapping("/assignRoles")
     @Operation(summary = "分配角色（整存替换）")
     public Response011<IdVo011> assignRoles(@RequestBody JulyUserAssignRolesVo011 vo) {
@@ -221,6 +228,7 @@ public class JulyUserController {
      * @param vo reset request
      * @return envelope with the user id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyUser")
     @PostMapping("/resetPassword")
     @Operation(summary = "重置密码（管理员动作）")
     public Response011<IdVo011> resetPassword(@RequestBody JulyUserResetPasswordVo011 vo) {

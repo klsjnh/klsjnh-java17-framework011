@@ -1,0 +1,21 @@
+# ============================================================
+# deploy/docker-compose.bake.yml — 项目内编排（方案一：依赖拷贝进镜像 bake）
+# 用法：bash deploy/deploy.sh bake   （脚本会构建镜像并 export APP_IMAGE）
+#       或  APP_IMAGE=klsjnh-java17-framework011:v<ver> docker compose -f deploy/docker-compose.bake.yml up -d
+# ============================================================
+services:
+  app:
+    image: ${APP_IMAGE:?set APP_IMAGE (run: bash deploy/deploy.sh bake)}
+    container_name: klsjnh-java17-framework011
+    network_mode: host
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+      - SERVER_PORT=23333
+      - LOGGING_FILE_PATH=/klsjnh/volume/logs
+    entrypoint: ["sh", "-c", "exec java $$JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.additional-location=/klsjnh/volume/config/"]
+    volumes:
+      - ../java17-app011/src/main/resources:/klsjnh/volume/config:ro
+      - ./runtime/logs:/klsjnh/volume/logs
+      - ./runtime/data:/klsjnh/volume/data
+      - ./runtime/storage011:/klsjnh/app/storage011
+    restart: unless-stopped

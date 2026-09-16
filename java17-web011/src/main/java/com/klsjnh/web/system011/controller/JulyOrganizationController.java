@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -30,6 +31,7 @@ import com.klsjnh.application.system011.organization.JulyOrganizationUseCase;
 
 import com.klsjnh.web.system011.converter.JulyOrganizationConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationInsertVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationQueryVo011;
 import com.klsjnh.web.system011.vo.julyorganization.JulyOrganizationUpdateVo011;
@@ -107,6 +109,7 @@ public class JulyOrganizationController {
      * @param vo insert request
      * @return envelope with the new org id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyOrganization")
     @PostMapping("/insert")
     @Operation(summary = "新增组织（层级由上级推导）")
     public Response011<IdVo011> insert(@RequestBody JulyOrganizationInsertVo011 vo) {
@@ -122,6 +125,7 @@ public class JulyOrganizationController {
      * @param vo update request
      * @return envelope with the org id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyOrganization")
     @PostMapping("/update")
     @Operation(summary = "修改组织（编码不可改，可移动上级并重排层级）")
     public Response011<IdVo011> update(@RequestBody JulyOrganizationUpdateVo011 vo) {
@@ -138,6 +142,7 @@ public class JulyOrganizationController {
      * @param idVo request with the org id
      * @return envelope with the org id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyOrganization")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（有子组织或挂有用户拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {

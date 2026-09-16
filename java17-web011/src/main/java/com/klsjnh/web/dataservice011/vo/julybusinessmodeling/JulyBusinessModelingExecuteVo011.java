@@ -25,11 +25,23 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Data
 public class JulyBusinessModelingExecuteVo011 {
 
-    /** Datasource code, must be enabled. */
-    @Schema(description = "数据源编码（须存在且启用）", requiredMode = Schema.RequiredMode.REQUIRED)
+    /** Datasource id selector; at most one of id / code. */
+    @Schema(description = "数据源 id（与 dataSourceCode 二选一；均不传则取建模的数据源）")
+    private String dataSourceId;
+
+    /** Datasource code selector; at most one of id / code. */
+    @Schema(description = "数据源编码（与 dataSourceId 二选一；均不传则取建模的数据源）")
     private String dataSourceCode;
 
-    /** Read-only SQL. */
-    @Schema(description = "只读 SELECT 语句", requiredMode = Schema.RequiredMode.REQUIRED)
+    /** Modeling id selector (SQL source). */
+    @Schema(description = "建模 id（与 modelCode / sqlContent 三选一，取其 SQL）")
+    private String modelId;
+
+    /** Modeling code selector (SQL source). */
+    @Schema(description = "建模编码（与 modelId / sqlContent 三选一，取其 SQL）")
+    private String modelCode;
+
+    /** Raw read-only SQL (SQL source). */
+    @Schema(description = "只读 SELECT 语句（与 modelId / modelCode 三选一）")
     private String sqlContent;
 }

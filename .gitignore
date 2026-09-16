@@ -47,3 +47,6 @@ node_modules/
 
 # ---- 本地备份（不入库）----
 .backup011/
+
+# ---- deploy runtime (logs/data/storage) ----
+deploy/runtime/

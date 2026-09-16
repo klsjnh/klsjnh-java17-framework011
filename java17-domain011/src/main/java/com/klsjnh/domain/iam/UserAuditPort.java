@@ -14,6 +14,8 @@ package com.klsjnh.domain.iam;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
+
 /**
  * User audit port: the append-only recorder lives in infrastructure. A failed
  * audit write must never affect the business transaction.
@@ -26,10 +28,10 @@ public interface UserAuditPort {
      *
      * @param pkMt        operator user id, nullable
      * @param userAccount operator account, nullable
-     * @param auditType   event type (LOGIN / LOGIN_FAILED / LOGOUT / INSERT / UPDATE / DELETE / EXPORT / BACKUP)
+     * @param auditType   event type (AuditType011)
      * @param objectCode  object code, nullable
      * @param content     event description, nullable
      * @param ip          client IP, nullable
      */
-    void record(String pkMt, String userAccount, String auditType, String objectCode, String content, String ip);
+    void record(String pkMt, String userAccount, AuditType011 auditType, String objectCode, String content, String ip);
 }

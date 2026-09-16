@@ -14,6 +14,7 @@ package com.klsjnh.application.iam;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.page.PageQuery011;
@@ -298,7 +299,7 @@ public class JulyUserUseCase {
 
         String token = authTokenPort.issue(user.id().value(), user.userAccount());
         repository.touchLastLoginTime(user.id().value());
-        userAuditPort.record(user.id().value(), user.userAccount(), "LOGIN", "july_user", "login success", ip);
+        userAuditPort.record(user.id().value(), user.userAccount(), AuditType011.LOGIN, "july_user", "login success", ip);
 
         return new LoginResult(token, user.userAccount(), user.userName(), currentRoleCodes(user.id().value()));
     }
@@ -331,7 +332,7 @@ public class JulyUserUseCase {
 
         String token = authTokenPort.issue(user.id().value(), user.userAccount());
         repository.touchLastLoginTime(user.id().value());
-        userAuditPort.record(user.id().value(), user.userAccount(), "LOGIN", "july_user", "passwordless login", ip);
+        userAuditPort.record(user.id().value(), user.userAccount(), AuditType011.LOGIN, "july_user", "passwordless login", ip);
 
         return new LoginResult(token, user.userAccount(), user.userName(), currentRoleCodes(user.id().value()));
     }
@@ -363,7 +364,7 @@ public class JulyUserUseCase {
 
         user.resetPassword(passwordPort.encode(newPassword));
         repository.update(user);
-        userAuditPort.record(operatorId, user.userAccount(), "CHANGE_PASSWORD", "july_user", "password changed",
+        userAuditPort.record(operatorId, user.userAccount(), AuditType011.CHANGE_PASSWORD, "july_user", "password changed",
                 null);
     }
 
@@ -375,7 +376,7 @@ public class JulyUserUseCase {
      * @param ip          client IP
      */
     private void recordFailed(String userAccount, String reason, String ip) {
-        userAuditPort.record(null, userAccount, "LOGIN_FAILED", "july_user", reason, ip);
+        userAuditPort.record(null, userAccount, AuditType011.LOGIN_FAILED, "july_user", reason, ip);
     }
 
     /**
@@ -390,7 +391,7 @@ public class JulyUserUseCase {
     @Transactional
     public void logout(String operatorId, String userAccount, String ip) {
         if (operatorId != null && !operatorId.isBlank()) {
-            userAuditPort.record(operatorId, userAccount, "LOGOUT", "july_user", "logout", ip);
+            userAuditPort.record(operatorId, userAccount, AuditType011.LOGOUT, "july_user", "logout", ip);
         }
     }
 

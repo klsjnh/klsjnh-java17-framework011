@@ -21,6 +21,7 @@ import com.klsjnh.common.vo.BatchDeleteResultVo011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.vo.IdsVo011;
 
+import com.klsjnh.application.dataservice011.BusinessModelingExecuteCommand;
 import com.klsjnh.application.dataservice011.JulyBusinessModelingUseCase;
 import com.klsjnh.domain.dataservice011.JulyBusinessModeling;
 import com.klsjnh.domain.dataservice011.JulyBusinessModelingQuerySpec;
@@ -231,7 +232,8 @@ public class JulyBusinessModelingController {
     public Response011<JulyBusinessModelingResultVo011> executeSql(@RequestBody JulyBusinessModelingExecuteVo011 vo) {
         String funcName = "execute sql";
 
-        List<Map<String, Object>> rows = useCase.executeSql(vo.getDataSourceCode(), vo.getSqlContent());
+        List<Map<String, Object>> rows = useCase.executeSql(new BusinessModelingExecuteCommand(vo.getDataSourceId(),
+                vo.getDataSourceCode(), vo.getModelId(), vo.getModelCode(), vo.getSqlContent()));
 
         return Response011.success(funcName, converter.toResultVo(rows));
     }
@@ -249,7 +251,8 @@ public class JulyBusinessModelingController {
             @RequestBody JulyBusinessModelingPageExecuteVo011 vo) {
         String funcName = "execute sql by page";
 
-        return Response011.success(funcName, useCase.executeSqlByPage(vo.getDataSourceCode(), vo.getSqlContent(),
+        return Response011.success(funcName, useCase.executeSqlByPage(new BusinessModelingExecuteCommand(
+                vo.getDataSourceId(), vo.getDataSourceCode(), vo.getModelId(), vo.getModelCode(), vo.getSqlContent()),
                 vo.getPageIndex(), vo.getPageSize()));
     }
 }

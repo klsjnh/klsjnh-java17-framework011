@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.page.PageQuery011;
@@ -33,6 +34,7 @@ import com.klsjnh.web.system011.vo.julyconfig.JulyConfigVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigInsertVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigQueryVo011;
 import com.klsjnh.web.system011.vo.julyconfig.JulyConfigUpdateVo011;
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -106,6 +108,7 @@ public class JulyConfigController {
      * @param vo insert request
      * @return envelope with the new config id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyConfig")
     @PostMapping("/insert")
     @Operation(summary = "新增配置（code 查重）")
     public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo) {
@@ -120,6 +123,7 @@ public class JulyConfigController {
      * @param vo update request
      * @return envelope with the config id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyConfig")
     @PostMapping("/update")
     @Operation(summary = "修改配置值（code 不可变）")
     public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo) {
@@ -136,6 +140,7 @@ public class JulyConfigController {
      * @param idVo request with the config id
      * @return envelope with the config id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyConfig")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {

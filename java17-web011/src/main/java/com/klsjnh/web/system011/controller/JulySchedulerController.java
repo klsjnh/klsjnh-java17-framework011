@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -27,6 +28,7 @@ import com.klsjnh.domain.system011.scheduler.JulyScheduler;
 
 import com.klsjnh.web.system011.converter.JulySchedulerConverter;
 
+import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerInsertVo011;
 import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerQueryVo011;
 import com.klsjnh.web.system011.vo.julyscheduler.JulySchedulerUpdateVo011;
@@ -82,6 +84,7 @@ public class JulySchedulerController {
      * @param vo insert request
      * @return envelope with the new task id
      */
+    @AuditLog(type = AuditType011.INSERT, objectCode = "julyScheduler")
     @PostMapping("/insert")
     @Operation(summary = "新增定时任务（默认停止态）")
     public Response011<IdVo011> insert(@RequestBody JulySchedulerInsertVo011 vo) {
@@ -98,6 +101,7 @@ public class JulySchedulerController {
      * @param vo update request
      * @return envelope with the updated task id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyScheduler")
     @PostMapping("/update")
     @Operation(summary = "修改定时任务（含启停状态，变更触发调度引擎联动）")
     public Response011<IdVo011> update(@RequestBody JulySchedulerUpdateVo011 vo) {
@@ -114,6 +118,7 @@ public class JulySchedulerController {
      * @param idVo request with the task id
      * @return envelope with the deleted task id
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyScheduler")
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个，运行中任务先摘出调度引擎）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
@@ -128,6 +133,7 @@ public class JulySchedulerController {
      * @param idsVo request with the task id list
      * @return per-id success/failure summary
      */
+    @AuditLog(type = AuditType011.DELETE, objectCode = "julyScheduler")
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量，运行中任务先摘出调度引擎）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
@@ -175,6 +181,7 @@ public class JulySchedulerController {
      * @param idVo request with the task id
      * @return envelope with the started task id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyScheduler")
     @PostMapping("/start")
     @Operation(summary = "启动任务（注册调度引擎）")
     public Response011<IdVo011> start(@RequestBody IdVo011 idVo) {
@@ -189,6 +196,7 @@ public class JulySchedulerController {
      * @param idVo request with the task id
      * @return envelope with the stopped task id
      */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyScheduler")
     @PostMapping("/stop")
     @Operation(summary = "停止任务（摘出调度引擎）")
     public Response011<IdVo011> stop(@RequestBody IdVo011 idVo) {
