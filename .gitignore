@@ -21,8 +21,8 @@ Thumbs.db
 desktop.ini
 *~
 
-# ---- runtime storage (local011 adapter) ----
-storage011/
+# ---- runtime storage (local011 adapter) —— 根锚定，避免误伤同名 Java 包 storage011/ ----
+/storage011/
 
 # ---- logs & temp ----
 *.log
