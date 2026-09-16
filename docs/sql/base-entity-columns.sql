@@ -37,5 +37,19 @@
 -- ============================================================
     sort_order INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）'
 
+-- ============================================================
+-- 逻辑删除 + 业务唯一键（强制模式）：唯一索引只约束存活行（dr='0'）
+-- 背景：dr 逻辑删除下，直接 UNIQUE(业务列) 会让已删行挡住同键重插（重复插入 500）。
+-- 做法：加生成列（dr='0' 时=业务键，否则 NULL），UNIQUE 建在生成列上——
+--       MySQL 允许多个 NULL，故墓碑不挡重插、且墓碑保留。
+-- 单列键示例：
+--   alive_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr='0', code, NULL)) STORED,
+--   UNIQUE KEY uk_code (alive_code)
+-- 复合键示例（CONCAT_WS('#', 各列)）：
+--   alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr='0', CONCAT_WS('#', pk_mt, item_code), NULL)) STORED,
+--   UNIQUE KEY uk_pk_mt_item_code (alive_key)
+-- 存量表迁移脚本：docs/sql/logic-delete-unique-fix.sql
+-- ============================================================
+
 
 

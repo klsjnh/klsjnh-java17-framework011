@@ -44,3 +44,6 @@ application-*.yaml
 
 # ---- node（tools/*.mjs 只用 Node 标准库，防误装依赖）----
 node_modules/
+
+# ---- 本地备份（不入库）----
+.backup011/
