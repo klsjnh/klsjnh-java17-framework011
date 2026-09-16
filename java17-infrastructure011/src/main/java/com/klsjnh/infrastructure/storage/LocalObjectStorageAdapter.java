@@ -16,9 +16,7 @@ package com.klsjnh.infrastructure.storage;
 
 import com.klsjnh.domain.storage.ObjectStat;
 import com.klsjnh.domain.storage.ObjectStoragePort;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
+import com.klsjnh.domain.storage.StorageConnectionConfig;
 
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -32,25 +30,23 @@ import java.util.stream.Stream;
 
 /**
  * Local011 adapter: objects as files under the configured base path
- * (bucket = subdirectory). Active when default-type = local011 (default).
+ * (bucket = subdirectory). Built by the factory from an instance config.
  */
 
-@Component
-@ConditionalOnProperty(name = "krt.storage-center.default-type", havingValue = "local011", matchIfMissing = true)
 public class LocalObjectStorageAdapter implements ObjectStoragePort {
 
     /**
-     * Storage properties.
+     * Connection config.
      */
-    private final StorageProperties properties;
+    private final StorageConnectionConfig config;
 
     /**
      * Create the adapter.
      *
-     * @param properties storage properties
+     * @param config connection config
      */
-    public LocalObjectStorageAdapter(StorageProperties properties) {
-        this.properties = properties;
+    public LocalObjectStorageAdapter(StorageConnectionConfig config) {
+        this.config = config;
     }
 
     /**
@@ -107,7 +103,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
         try {
             Path path = resolve(bucket, key);
             Files.deleteIfExists(path);
-            pruneEmptyParents(path.getParent(), Paths.get(properties.getLocal011().getBasePath(), safe(bucket)));
+            pruneEmptyParents(path.getParent(), Paths.get(config.basePath(), safe(bucket)));
 
             return true;
         } catch (IOException ex) {
@@ -161,7 +157,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
      */
     @Override
     public List<String> list(String bucket, String prefix) {
-        Path dir = Paths.get(properties.getLocal011().getBasePath(), safe(bucket));
+        Path dir = Paths.get(config.basePath(), safe(bucket));
 
         if (!Files.exists(dir)) {
             return List.of();
@@ -191,7 +187,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
             throw new IllegalStateException("invalid object key");
         }
 
-        return Paths.get(properties.getLocal011().getBasePath(), safe(bucket), key);
+        return Paths.get(config.basePath(), safe(bucket), key);
     }
 
     /**
@@ -229,7 +225,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
      */
     @Override
     public boolean bucketExists(String bucket) {
-        return Files.isDirectory(Paths.get(properties.getLocal011().getBasePath(), safe(bucket)));
+        return Files.isDirectory(Paths.get(config.basePath(), safe(bucket)));
     }
 
     /**
@@ -240,7 +236,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
     @Override
     public void createBucket(String bucket) {
         try {
-            Files.createDirectories(Paths.get(properties.getLocal011().getBasePath(), safe(bucket)));
+            Files.createDirectories(Paths.get(config.basePath(), safe(bucket)));
         } catch (IOException ex) {
             throw new IllegalStateException("create bucket failed: " + ex.getMessage(), ex);
         }
@@ -254,7 +250,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
      */
     @Override
     public boolean deleteBucket(String bucket) {
-        Path dir = Paths.get(properties.getLocal011().getBasePath(), safe(bucket));
+        Path dir = Paths.get(config.basePath(), safe(bucket));
 
         if (!Files.isDirectory(dir)) {
             return true;
@@ -278,7 +274,7 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
      */
     @Override
     public List<String> listBuckets() {
-        Path base = Paths.get(properties.getLocal011().getBasePath());
+        Path base = Paths.get(config.basePath());
 
         if (!Files.isDirectory(base)) {
             return List.of();
@@ -301,7 +297,20 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
      */
     @Override
     public String defaultBucket() {
-        return properties.getDefaultBucket();
+        return config.defaultBucket();
+    }
+
+    /**
+     * The object's local {@code file:} URI — the local adapter has nothing to
+     * sign.
+     *
+     * @param bucket bucket
+     * @param key    object key
+     * @return file URI
+     */
+    @Override
+    public String presignedGetUrl(String bucket, String key) {
+        return resolve(bucket, key).toUri().toString();
     }
 
     /**

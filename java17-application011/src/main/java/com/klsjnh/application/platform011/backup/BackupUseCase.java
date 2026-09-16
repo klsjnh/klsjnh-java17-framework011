@@ -26,6 +26,7 @@ import com.klsjnh.common.util.DateUtil011;
 import com.klsjnh.domain.iam.UserAuditPort;
 import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.domain.storage.ObjectStoragePort;
+import com.klsjnh.domain.storage.StorageResolverPort;
 import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import org.springframework.stereotype.Service;
@@ -64,9 +65,9 @@ public class BackupUseCase {
     private final ExportUseCase exportUseCase;
 
     /**
-     * Object storage port.
+     * Storage resolver (table-driven adapter lookup).
      */
-    private final ObjectStoragePort storagePort;
+    private final StorageResolverPort storageResolver;
 
     /**
      * User audit port.
@@ -83,13 +84,13 @@ public class BackupUseCase {
     /**
      * Create the use case.
      *
-     * @param exportUseCase export use case
-     * @param storagePort   object storage port
-     * @param userAuditPort user audit port
+     * @param exportUseCase   export use case
+     * @param storageResolver storage resolver
+     * @param userAuditPort   user audit port
      */
-    public BackupUseCase(ExportUseCase exportUseCase, ObjectStoragePort storagePort, UserAuditPort userAuditPort) {
+    public BackupUseCase(ExportUseCase exportUseCase, StorageResolverPort storageResolver, UserAuditPort userAuditPort) {
         this.exportUseCase = exportUseCase;
-        this.storagePort = storagePort;
+        this.storageResolver = storageResolver;
         this.userAuditPort = userAuditPort;
     }
 
@@ -122,6 +123,7 @@ public class BackupUseCase {
         }
 
         ExportResult result = exportUseCase.export(objectCode, operator);
+        ObjectStoragePort storagePort = storageResolver.resolve(null);
         String bucket = storagePort.defaultBucket();
         String key = objectKey(objectCode);
 

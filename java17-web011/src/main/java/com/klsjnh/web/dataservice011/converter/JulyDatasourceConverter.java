@@ -46,6 +46,7 @@ public class JulyDatasourceConverter {
         JulyDatasourceVo011 vo = new JulyDatasourceVo011();
         vo.setId(datasource.id().value());
         vo.setDsCode(datasource.dsCode());
+        vo.setSortOrder(datasource.sortOrder());
         vo.setDsName(datasource.dsName());
         vo.setDbType(datasource.dbType());
         vo.setJdbcUrl(datasource.jdbcUrl());

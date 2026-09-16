@@ -17,19 +17,19 @@ package com.klsjnh.infrastructure.dataservice011.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import com.klsjnh.infrastructure.persistence.entity.BasePo;
+import com.klsjnh.infrastructure.persistence.entity.BasePo011;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 
 /**
  * Datasource persistence PO mapped to july_datasource (runtime business
- * database connection registry).
+ * database connection registry), a sorted table (BasePo011 adds sort_order).
  */
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("july_datasource")
-public class JulyDatasourcePo extends BasePo {
+public class JulyDatasourcePo extends BasePo011 {
 
     /** Datasource code, unique, immutable, doubles as the pool name. */
     private String dsCode;

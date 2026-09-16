@@ -1,0 +1,285 @@
+package com.klsjnh.web.ai011.controller;
+
+/*                AiModelProviderController class
+ *
+ *      @author     xiangrkrs@163.com
+ *      @version    ver 0.0.1
+ *      @createdate 2026.09.15
+ *      @modifydate
+ *
+ *===========================================
+ *          modify history
+ *
+ *      2026.09.15  ai model provider controller class
+ *
+ */
+
+import com.klsjnh.common.identity.Operator011;
+import com.klsjnh.common.page.PageQuery011;
+import com.klsjnh.common.page.PageResult011;
+import com.klsjnh.common.response.Response011;
+import com.klsjnh.common.vo.IdVo011;
+
+import com.klsjnh.application.ai011.AiModelProviderUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
+import com.klsjnh.domain.ai011.AiModelProvider;
+import com.klsjnh.domain.ai011.AiModelProviderApi;
+import com.klsjnh.domain.ai011.AiModelProviderQuerySpec;
+import com.klsjnh.domain.platform011.export.ExportResult;
+
+import com.klsjnh.web.ai011.converter.AiModelProviderConverter;
+
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiInsertVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiQueryVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiUpdateVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderInsertVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderQueryVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderTestResultVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderTestVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderUpdateVo011;
+import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderVo011;
+import com.klsjnh.web.util.Operator011Resolver;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
+
+/**
+ * AiModelProvider HTTP adapter: provider and api key management, plus the
+ * provider and api level connectivity probes. The api key is never echoed back.
+ */
+
+@Tag(name = "AI模型接入011 - 提供商管理")
+@RestController
+@RequestMapping("/klsjnh/ai011/julyAiModelProvider/v1")
+public class AiModelProviderController {
+
+    /**
+     * Object code this controller exports under.
+     */
+    private static final String OBJECT_CODE = "julyAiModelProvider";
+
+    /**
+     * AiModelProvider use case.
+     */
+    private final AiModelProviderUseCase useCase;
+
+    /**
+     * Response converter.
+     */
+    private final AiModelProviderConverter converter;
+
+    /**
+     * Export use case.
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Create the controller.
+     *
+     * @param useCase       ai model provider use case
+     * @param converter     response converter
+     * @param exportUseCase export use case
+     */
+    public AiModelProviderController(AiModelProviderUseCase useCase, AiModelProviderConverter converter,
+            ExportUseCase exportUseCase) {
+        this.useCase = useCase;
+        this.converter = converter;
+        this.exportUseCase = exportUseCase;
+    }
+
+    /**
+     * Insert a new provider.
+     *
+     * @param vo insert request
+     * @return envelope with the new provider id
+     */
+    @PostMapping("/insert")
+    @Operation(summary = "新增提供商（providerCode 查重）")
+    public Response011<IdVo011> insert(@RequestBody AiModelProviderInsertVo011 vo) {
+        String funcName = "insert";
+
+        return Response011.successId(funcName, useCase.insert(vo.getProviderCode(), vo.getSortOrder(),
+                vo.getProviderName(), vo.getBaseUrl(), vo.getModels(), vo.getRemark()));
+    }
+
+    /**
+     * Update a provider.
+     *
+     * @param vo update request
+     * @return envelope with the provider id
+     */
+    @PostMapping("/update")
+    @Operation(summary = "修改提供商（providerCode 不可变）")
+    public Response011<IdVo011> update(@RequestBody AiModelProviderUpdateVo011 vo) {
+        String funcName = "update";
+
+        return Response011.successId(funcName, useCase.update(vo.getId(), vo.getProviderName(), vo.getSortOrder(),
+                vo.getBaseUrl(), vo.getModels(), vo.getStatus(), vo.getRemark()));
+    }
+
+    /**
+     * Logic delete a provider (refused while it has api keys).
+     *
+     * @param idVo request with the provider id
+     * @return envelope with the deleted provider id
+     */
+    @PostMapping("/logicDelete")
+    @Operation(summary = "逻辑删除提供商（仍有密钥则拒绝）")
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+        String funcName = "logic delete";
+
+        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
+    }
+
+    /**
+     * Find a provider by primary key (safe + idempotent, hence GET).
+     *
+     * @param id provider id, passed as a query parameter
+     * @return provider detail
+     */
+    @GetMapping("/getById")
+    @Operation(summary = "主键查询（id 走 query）")
+    public Response011<AiModelProviderVo011> getById(@RequestParam("id") String id) {
+        String funcName = "get by id";
+
+        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+    }
+
+    /**
+     * Page query with optional keyword / status filters.
+     *
+     * @param vo page query request
+     * @return page result of providers
+     */
+    @PostMapping("/selectListByPage")
+    @Operation(summary = "分页查询（编码/名称/URL 模糊 + 状态过滤）")
+    public Response011<PageResult011<AiModelProviderVo011>> selectListByPage(
+            @RequestBody AiModelProviderQueryVo011 vo) {
+        String funcName = "select list by page";
+
+        PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
+        PageResult011<AiModelProvider> page = useCase.selectListByPage(pageQuery,
+                new AiModelProviderQuerySpec(vo.getKeyword(), vo.getStatus()));
+
+        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+    }
+
+    /**
+     * Insert a new api key under a provider.
+     *
+     * @param vo insert request
+     * @return envelope with the new api key id
+     */
+    @PostMapping("/insertApi")
+    @Operation(summary = "新增密钥（同提供商内 apiCode 查重）")
+    public Response011<IdVo011> insertApi(@RequestBody AiModelProviderApiInsertVo011 vo) {
+        String funcName = "insert api";
+
+        return Response011.successId(funcName, useCase.insertApi(vo.getProviderCode(), vo.getSortOrder(),
+                vo.getApiCode(), vo.getApiName(), vo.getApiKey(), vo.getRemark()));
+    }
+
+    /**
+     * Update an api key (a blank apiKey keeps the stored one).
+     *
+     * @param vo update request
+     * @return envelope with the api key id
+     */
+    @PostMapping("/updateApi")
+    @Operation(summary = "修改密钥（apiCode 不可变；apiKey 留空保持原值）")
+    public Response011<IdVo011> updateApi(@RequestBody AiModelProviderApiUpdateVo011 vo) {
+        String funcName = "update api";
+
+        return Response011.successId(funcName, useCase.updateApi(vo.getId(), vo.getApiName(), vo.getSortOrder(),
+                vo.getApiKey(), vo.getStatus(), vo.getRemark()));
+    }
+
+    /**
+     * Logic delete an api key.
+     *
+     * @param idVo request with the api key id
+     * @return envelope with the deleted api key id
+     */
+    @PostMapping("/logicDeleteApi")
+    @Operation(summary = "逻辑删除密钥（单个）")
+    public Response011<IdVo011> logicDeleteApi(@RequestBody IdVo011 idVo) {
+        String funcName = "logic delete api";
+
+        return Response011.successId(funcName, useCase.logicDeleteApi(idVo.getId()));
+    }
+
+    /**
+     * List the api keys of a provider (no key content).
+     *
+     * @param vo request with provider code and optional status
+     * @return ordered api key list
+     */
+    @PostMapping("/selectApiListByProvider")
+    @Operation(summary = "按提供商取密钥列表（有序，出参不含密钥）")
+    public Response011<List<AiModelProviderApiVo011>> selectApiListByProvider(
+            @RequestBody AiModelProviderApiQueryVo011 vo) {
+        String funcName = "select api list by provider";
+
+        List<AiModelProviderApi> apis = useCase.selectApiListByProvider(vo.getProviderCode(), vo.getStatus());
+
+        return Response011.success(funcName, converter.toApiVoList(apis));
+    }
+
+    /**
+     * Probe a provider with its default enabled api key.
+     *
+     * @param vo request with provider code
+     * @return probe result
+     */
+    @PostMapping("/testConnection")
+    @Operation(summary = "测试连接（提供商级，用默认密钥 GET baseUrl/models）")
+    public Response011<AiModelProviderTestResultVo011> testConnection(@RequestBody AiModelProviderTestVo011 vo) {
+        String funcName = "test connection";
+
+        return Response011.success(funcName, converter.toTestResultVo(useCase.testConnection(vo.getProviderCode())));
+    }
+
+    /**
+     * Probe a specific api key (sub-table level).
+     *
+     * @param idVo request with the api key id
+     * @return probe result
+     */
+    @PostMapping("/testConnectionApi")
+    @Operation(summary = "测试连接（密钥级，指定 apiKey 记录）")
+    public Response011<AiModelProviderTestResultVo011> testConnectionApi(@RequestBody IdVo011 idVo) {
+        String funcName = "test connection api";
+
+        return Response011.success(funcName,
+                converter.toTestResultVo(useCase.testConnectionApi(idVo.getId())));
+    }
+
+    /**
+     * Export every provider row in batches and return the whole result in the
+     * JSON envelope (api keys are never exported).
+     *
+     * @param request http request (operator from the auth filter)
+     * @return envelope with the export result
+     */
+    @PostMapping("/export")
+    @Operation(summary = "导出全部提供商（不含密钥，分批取数，写 EXPORT 审计）")
+    public Response011<ExportResult> export(HttpServletRequest request) {
+        String funcName = "export";
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        return Response011.success(funcName, exportUseCase.export(OBJECT_CODE, operator));
+    }
+}

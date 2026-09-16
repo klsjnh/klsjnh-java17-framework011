@@ -95,7 +95,7 @@ public class JulyDatasourceController {
     public Response011<IdVo011> insert(@RequestBody JulyDatasourceInsertVo011 vo) {
         String funcName = "insert";
 
-        String id = useCase.insert(vo.getDsCode(), vo.getDsName(), vo.getDbType(), vo.getJdbcUrl(),
+        String id = useCase.insert(vo.getDsCode(), vo.getSortOrder(), vo.getDsName(), vo.getDbType(), vo.getJdbcUrl(),
                 vo.getSchemaName(), vo.getUsername(), vo.getPassword(), vo.getDriverClass(), vo.getRemark());
 
         return Response011.successId(funcName, id);
@@ -113,8 +113,8 @@ public class JulyDatasourceController {
     public Response011<IdVo011> update(@RequestBody JulyDatasourceUpdateVo011 vo) {
         String funcName = "update";
 
-        String id = useCase.update(vo.getId(), vo.getDsName(), vo.getDbType(), vo.getJdbcUrl(), vo.getSchemaName(),
-                vo.getUsername(), vo.getPassword(), vo.getDriverClass(), vo.getRemark());
+        String id = useCase.update(vo.getId(), vo.getDsName(), vo.getSortOrder(), vo.getDbType(), vo.getJdbcUrl(),
+                vo.getSchemaName(), vo.getUsername(), vo.getPassword(), vo.getDriverClass(), vo.getRemark());
 
         return Response011.successId(funcName, id);
     }

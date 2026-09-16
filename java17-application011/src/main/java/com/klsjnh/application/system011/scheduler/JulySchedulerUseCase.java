@@ -98,9 +98,10 @@ public class JulySchedulerUseCase {
      * @param schedulerHandler handler content
      * @param schedulerCron    cron expression
      * @param status           runtime status ("1" running / "0" stopped)
+     * @return updated task id
      */
     @Transactional
-    public void update(String id, String schedulerName, String schedulerHandler, String schedulerCron, String status) {
+    public String update(String id, String schedulerName, String schedulerHandler, String schedulerCron, String status) {
         Status011 target = Status011.of(status);
 
         if (target == null) {
@@ -121,6 +122,8 @@ public class JulySchedulerUseCase {
         repository.update(scheduler);
 
         syncEngine(scheduler);
+
+        return scheduler.id().value();
     }
 
     /**
@@ -207,36 +210,45 @@ public class JulySchedulerUseCase {
      * Start the task: status to running + register in the engine.
      *
      * @param id task id
+     * @return started task id
      */
     @Transactional
-    public void start(String id) {
+    public String start(String id) {
         JulyScheduler scheduler = require(id);
         scheduler.start();
         repository.update(scheduler);
         schedulerPort.register(scheduler.id().value(), scheduler.schedulerHandler(), scheduler.schedulerCron());
+
+        return scheduler.id().value();
     }
 
     /**
      * Stop the task: status to stopped + remove from the engine.
      *
      * @param id task id
+     * @return stopped task id
      */
     @Transactional
-    public void stop(String id) {
+    public String stop(String id) {
         JulyScheduler scheduler = require(id);
         scheduler.stop();
         repository.update(scheduler);
         schedulerPort.remove(scheduler.id().value());
+
+        return scheduler.id().value();
     }
 
     /**
      * Trigger the handler once immediately; does not change the runtime status.
      *
      * @param id task id
+     * @return triggered task id
      */
-    public void runOnce(String id) {
+    public String runOnce(String id) {
         JulyScheduler scheduler = require(id);
         schedulerPort.triggerOnce(scheduler.id().value(), scheduler.schedulerHandler());
+
+        return scheduler.id().value();
     }
 
     /**

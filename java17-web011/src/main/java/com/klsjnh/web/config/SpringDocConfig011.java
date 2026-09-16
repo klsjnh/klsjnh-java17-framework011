@@ -118,6 +118,36 @@ public class SpringDocConfig011 {
     }
 
     /**
+     * AI model access group (provider / api key management).
+     *
+     * @return grouped open api
+     */
+    @Bean
+    public GroupedOpenApi ai011GroupedOpenApi() {
+        return GroupedOpenApi.builder()
+                .group("ai011")
+                .displayName("AI模型接入011")
+                .pathsToMatch("/klsjnh/ai011/**")
+                .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
+                .build();
+    }
+
+    /**
+     * Low-code core group (object metadata, one master + three children).
+     *
+     * @return grouped open api
+     */
+    @Bean
+    public GroupedOpenApi lowcode011GroupedOpenApi() {
+        return GroupedOpenApi.builder()
+                .group("lowcode011")
+                .displayName("低代码核心011")
+                .pathsToMatch("/klsjnh/lowcode011/**")
+                .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
+                .build();
+    }
+
+    /**
      * Conditional app group for third-party business systems: declare
      * {@code krt.springdoc.app.group-name} (+ optional display-name and
      * paths-to-match) in their yaml and their controllers get their own doc

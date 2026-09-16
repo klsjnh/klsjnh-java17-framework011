@@ -18,13 +18,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.klsjnh.domain.storage.ObjectStat;
 import com.klsjnh.domain.storage.ObjectStoragePort;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
+import com.klsjnh.domain.storage.StorageConnectionConfig;
 
 import io.minio.messages.Bucket;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.http.Method;
 import io.minio.ListBucketsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -46,8 +46,6 @@ import java.util.List;
  */
 
 @Slf4j
-@Component
-@ConditionalOnProperty(name = "krt.storage-center.default-type", havingValue = "minio011")
 public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
     /**
@@ -56,49 +54,65 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     private final MinioClient client;
 
     /**
-     * Storage properties.
+     * Connection config.
      */
-    private final StorageProperties properties;
+    private final StorageConnectionConfig config;
 
     /**
      * Create the adapter and ensure the default bucket exists.
      *
-     * @param properties storage properties
+     * @param config connection config
      */
-    public MinioObjectStorageAdapter(StorageProperties properties) {
-        this.properties = properties;
-        StorageProperties.Minio011 minio = properties.getMinio011();
+    public MinioObjectStorageAdapter(StorageConnectionConfig config) {
+        this.config = config;
 
         this.client = MinioClient.builder()
-                .endpoint(minio.getEndpoint())
-                .credentials(minio.getAccessKey(), minio.getSecretKey())
+                .endpoint(config.endpoint())
+                .credentials(config.accessKey(), config.secretKey())
                 .build();
 
         try {
-            boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(defaultBucket()).build());
+            String bucket = config.defaultBucket();
 
-            if (!exists) {
-                client.makeBucket(MakeBucketArgs.builder().bucket(defaultBucket()).build());
-                log.info("minio011 bucket {} created ...", defaultBucket());
+            if (bucket != null && !bucket.isBlank()
+                    && !client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
+                client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+                log.info("storage bucket {} created ...", bucket);
             }
         } catch (Exception ex) {
-            log.warn("minio011 bucket ensure failed {} ...", ex.getMessage());
+            log.warn("storage bucket ensure failed {} ...", ex.getMessage());
         }
     }
 
     /**
-     * The storage center's default bucket: the adapter-level value when set,
-     * otherwise the shared top-level one.
+     * The configured default bucket.
      *
      * @return default bucket name
      */
     @Override
     public String defaultBucket() {
-        String adapterBucket = properties.getMinio011().getDefaultBucket();
+        return config.defaultBucket();
+    }
 
-        return adapterBucket == null || adapterBucket.isBlank()
-                ? properties.getDefaultBucket()
-                : adapterBucket;
+    /**
+     * Presigned GET URL with the configured expiry.
+     *
+     * @param bucket bucket
+     * @param key    object key
+     * @return presigned URL
+     */
+    @Override
+    public String presignedGetUrl(String bucket, String key) {
+        try {
+            return client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+                    .method(Method.GET)
+                    .bucket(bucketOf(bucket))
+                    .object(key)
+                    .expiry(config.presignExpirySeconds())
+                    .build());
+        } catch (Exception ex) {
+            throw new IllegalStateException("presign failed: " + ex.getMessage(), ex);
+        }
     }
 
     /**

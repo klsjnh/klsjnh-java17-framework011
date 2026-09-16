@@ -5,7 +5,7 @@
 -- 方案：docs/requirement013/033.topic-business-modeling.md
 -- 边界：合并老项目 july_sql + july_model；产物 = MetaData011 + FieldInfo011 的 JSON；
 --       本表不做物理建表，产物交 lowcode011 域
--- 两个裸列的理由：object_name 需唯一索引查重；sql_text 是探针/执行/分页执行的共同输入
+-- 两个裸列的理由：object_name 需唯一索引查重；sql_content 是探针/执行/分页执行的共同输入
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS july_business_modeling (
@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS july_business_modeling (
     model_name       VARCHAR(100)  NOT NULL                COMMENT '建模名称',
     object_name      VARCHAR(60)   NOT NULL                COMMENT '低代码对象名（产物 MetaData011.objectName，全局唯一）',
     data_source_code VARCHAR(60)   NOT NULL                COMMENT '数据源编码（挂 july_datasource.ds_code）',
-    sql_text         MEDIUMTEXT    NULL                    COMMENT '取数 SQL（探针推断 / 执行 / 分页执行共用，须以 SELECT 开头）',
-    model_data       MEDIUMTEXT    NULL                    COMMENT '建模产物 JSON（metaData + fieldData 两个键）',
+    sql_content      TEXT          NULL                    COMMENT '取数 SQL（探针推断 / 执行 / 分页执行共用，须以 SELECT 开头）',
+    model_data       TEXT          NULL                    COMMENT '建模产物 JSON（metaData + fieldData 两个键）',
     remark           VARCHAR(300)  NULL                    COMMENT '备注',
     status           VARCHAR(3)    NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by        VARCHAR(33)   NULL                    COMMENT '创建人',

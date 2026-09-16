@@ -33,6 +33,10 @@ public class JulyDatasourceUpdateVo011 {
     @Schema(description = "数据源名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dsName;
 
+    /** Manual sort order, smaller comes first; blank keeps the stored one. */
+    @Schema(description = "排序（越小越靠前，留空保持原值）")
+    private Integer sortOrder;
+
     /** Database type code. */
     @Schema(description = "数据库类型（mysql/oracle/sqlserver/postgresql）",
             requiredMode = Schema.RequiredMode.REQUIRED)

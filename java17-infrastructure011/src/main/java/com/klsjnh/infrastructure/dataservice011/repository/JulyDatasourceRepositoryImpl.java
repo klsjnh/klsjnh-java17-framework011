@@ -254,7 +254,7 @@ public class JulyDatasourceRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByDesc("create_time").orderByAsc("id");
+        wrapper.orderByAsc("sort_order").orderByAsc("id");
 
         return wrapper;
     }
@@ -269,6 +269,7 @@ public class JulyDatasourceRepositoryImpl
         JulyDatasourcePo po = new JulyDatasourcePo();
         po.setId(datasource.id().value());
         po.setDsCode(datasource.dsCode());
+        po.setSortOrder(datasource.sortOrder());
         po.setDsName(datasource.dsName());
         po.setDbType(datasource.dbType());
         po.setJdbcUrl(datasource.jdbcUrl());
@@ -292,8 +293,8 @@ public class JulyDatasourceRepositoryImpl
     private JulyDatasource toAggregate(JulyDatasourcePo po) {
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
-        return new JulyDatasource(EntityId.of(po.getId()), po.getDsCode(), po.getDsName(), po.getDbType(),
-                po.getJdbcUrl(), po.getSchemaName(), po.getUsername(), po.getPassword(), po.getDriverClass(),
-                po.getPoolConfig(), po.getRemark(), po.getStatus(), audit);
+        return new JulyDatasource(EntityId.of(po.getId()), po.getDsCode(), po.getSortOrder(), po.getDsName(),
+                po.getDbType(), po.getJdbcUrl(), po.getSchemaName(), po.getUsername(), po.getPassword(),
+                po.getDriverClass(), po.getPoolConfig(), po.getRemark(), po.getStatus(), audit);
     }
 }

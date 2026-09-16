@@ -41,6 +41,10 @@ public class JulyDatasourceVo011 {
     @Schema(description = "数据源编码（唯一，不可变）")
     private String dsCode;
 
+    /** Manual sort order, smaller comes first. */
+    @Schema(description = "排序（越小越靠前）")
+    private Integer sortOrder;
+
     /** Datasource name. */
     @Schema(description = "数据源名称")
     private String dsName;

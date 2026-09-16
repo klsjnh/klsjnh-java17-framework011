@@ -29,6 +29,10 @@ public class JulyDatasourceInsertVo011 {
     @Schema(description = "数据源编码（唯一，最长 60，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dsCode;
 
+    /** Manual sort order, smaller comes first; blank falls back to the default. */
+    @Schema(description = "排序（越小越靠前，留空取默认 9999）")
+    private Integer sortOrder;
+
     /** Datasource name, max 100. */
     @Schema(description = "数据源名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dsName;

@@ -19,8 +19,9 @@
 | 目录 | 内容 |
 |------|------|
 | [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · 019 存储中心 |
-| [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） || requirement011/ | 业务设计：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 021 julyScheduler（已编码）· 029 配置管理 · 030 数据导出 · 031 数据源管理（新域 dataservice011，已编码）· 033 业务建模（方案态） |
-| requirement013/ | 技术方案（021 julyScheduler 已编码完成；029 配置管理已编码；031 dataservice011 已编码；**033 业务建模方案态**；IAM 各主题按 011→013→编码 推进） |
+| [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
+| requirement011/ | 业务设计：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 021 julyScheduler（已编码）· 029 配置管理 · 030 数据导出 · 031 数据源管理（新域 dataservice011，已编码）· 033 业务建模（已编码）· 035 数据字典（已编码）· 036 AI 模型接入（新域 ai011，已编码）· 037 存储中心管理面（已编码）· 038 低代码核心（已编码） |
+| requirement013/ | 技术方案（021 julyScheduler 已编码完成；029 配置管理已编码；031 dataservice011 已编码；033 业务建模已编码；035 数据字典已编码；036 ai011 已编码；037 存储中心管理面已编码；038 低代码核心已编码；IAM 各主题按 011→013→编码 推进） |
 | archive011/ | 历史工作日志归档 |
 
 ## 编号分配台账（现状）
@@ -38,7 +39,7 @@
 | 016 | 在用 | **coding-standards 已落**（2026-09-14 自 `015.coding-standards` 迁入）；原「API 契约」已迁出至 013；infrastructure011/016 持久化体系；requirement011/016 july-role（自 022 迁入） |
 | 017 | 在用 | **顶层** `017.tech-debt-redlines.md`（技术债红线，2026-09-14 落盘）；**专题目录** infrastructure011/017 动态数据源（2026-09-15 修订：表驱动为运行时真源）；julyScheduler 主题对已迁移至 021 |
 | 018 | 在用 | infrastructure011/018 IAM 总设计；july-menu 主题已迁移至 011 |
-| 019 | 在用 | **顶层** `019.backend-api-review.md`（后端接口质量评审，待落盘）；**专题目录** infrastructure011/019 存储中心；july-user 主题已迁移至 015 |
+| 019 | 在用 | **顶层** `019.backend-api-review.md`（后端接口质量评审，2026-09-15 已落盘）；**专题目录** infrastructure011/019 存储中心；july-user 主题已迁移至 015 |
 | 020 / 021 | 已分配后撤销 | 原独立主题已并入 019（号不回收，永不复用） |
 | 021 | 在用 | julyScheduler 主题对（requirement011/013，自 017 迁移） |
 | 022 | 已迁移 | july-role 主题已迁移至 016（号不回收） |
@@ -49,10 +50,15 @@
 | 029 | 在用 | july-config（requirement011/013，配置管理） |
 | 030 | 在用 | export（requirement011/013，平台导出功能） |
 | 031 | 在用 | **dataservice011 新域**（requirement011/013 数据源管理，2026-09-15 落盘；DDL `sql/july_datasource.sql`）。本期范围：`july_datasource` 表驱动 + CRUD + 测试连接（**已落码：编译 SUCCESS / 门禁 0 违规 / 9 端点**）；`july_sql`/`july_model` 由 033 取代 |
-| 033 | 在用 | **业务建模**（requirement011/013，2026-09-15 落盘为**方案态**；DDL `sql/july_business_modeling.sql`）。表 `july_business_modeling`（合并老项目 `july_sql` + `july_model`），归属 `dataservice011`；**产物 = `MetaData011` + `List<FieldInfo011>` 的一份 JSON（`metaData` + `fieldData` 两键，没有别的）**，除公共列 + `object_name` + `sql_text` 外整体存 `model_data` 一列；**一期 = CRUD + SQL 探针推断 + 执行 SQL + 分页执行 SQL**（11 端点）；后期做「抽取同步数据到本地库」。机制：`july_datasource` → `july_business_modeling` → **lowcode011 域** → 低代码操作表。**9 项待定已全部定案**，**未编码**，可按 §021 路线图推进 |
+| 033 | 在用 | **业务建模**（requirement011/013，2026-09-15 **已编码**；DDL `sql/july_business_modeling.sql`）。表 `july_business_modeling`（合并老项目 `july_sql` + `july_model`），归属 `dataservice011`；**产物 = `MetaData011` + `List<FieldInfo011>` 的一份 JSON（`metaData` + `fieldData` 两键，没有别的）**，除公共列 + `object_name` + `sql_content` 外整体存 `model_data` 一列（两列均 `TEXT`，2026-09-15 由 `MEDIUMTEXT` 定案下调）；**一期 = CRUD + SQL 探针推断 + 执行 SQL + 分页执行 SQL**（11 端点）；后期做「抽取同步数据到本地库」。机制：`july_datasource` → `july_business_modeling` → **lowcode011 域** → 低代码操作表 |
+| 035 | 在用 | **数据字典**（requirement011/013，2026-09-15 **已编码**；DDL `sql/july_dictionary.sql`）。主子表 `july_dictionary` + `july_dictionary_item`，归属 `system011`；主表/子表都带 `sort_order`（BasePo011）；明细字段 code/label/sort/status/remark；程序读入口 `getByType`/`getLabel`/`isValidItem`（无 HTTP）；接 030 导出（`julyDictionary`）；**不加缓存**；10 端点（含 `/export`） |
+| 036 | 在用 | **AI 模型接入（新域 ai011）**（requirement011/013，2026-09-15 落盘并**已编码**；DDL `sql/july_ai_model_provider.sql`）。主子表 `july_ai_model_provider` + `july_ai_model_provider_api`，归属新顶层域 `ai011`；主表/子表都带 `sort_order`（BasePo011）；`api_key` 出参不回显（类型层剔除），明文入库、加密二期；程序读入口 `getByCode`/`getApiList`/`getDefaultApi`；提供商级 + 密钥级 testConnection；**12 端点**（含 `/export`，Swagger 组 `ai011`） |
 
-**下一可用编号：035。**
+| 037 | 在用 | **存储中心管理面 + 在线编辑**（requirement011/013，2026-09-16 **已编码并 E2E**）。`july_storage` 表驱动多实例（`StorageResolver011` + `ObjectStorageFactory011`，适配器由 bean 改按实例配置造）+ 实例 CRUD/testConnection + 桶 CRUD + 对象 列表/分页/stat/上传/下载/删除/批删/预签名 + **在线文本编辑（readText/saveText + `EditableTextPolicy`，sql/markdown，≤1MB）** + yaml 播种（`StorageSeed011`）。端点前缀 `/klsjnh/storage011/{storage,bucket,object}`；`secretKey` 出参不回显 |
+| 038 | 在用 | **低代码核心（一主三子）**（requirement011/013，2026-09-16 **已编码并 E2E**；DDL `sql/july_metadata.sql`）。`july_metadata` + `july_metadata_field/_display/_service`，归属 `lowcode011` 域；四表都带 `sort_order`；**仅 CRUD**（7 端点）；主子表**整替**（子行物理删）+ 级联逻辑删除；**不改** 033 依赖的 `domain.lowcode011.model` 值对象 |
+
+**下一可用编号：039。**
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
-> ⚠️ 未办：② `019.backend-api-review.md` 仍未落盘（`017.tech-debt-redlines.md` 已于 2026-09-14 落盘并登记）；落盘后需在本台账登记（行已预置用途）。
+> ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。
 > 📌 **号位口径（用户裁定 2026-09-14）：跨目录不算同号位。** 顶层文档号与专题目录号**各自成位**，故 `017.tech-debt-redlines.md` 与 `infrastructure011/017.topic-dynamic-datasource.md` **不构成冲突**，无需避让；`019.backend-api-review.md` 与 `infrastructure011/019.topic-storage-center.md` 同理。判重只在**同一目录、同一序列**内进行。

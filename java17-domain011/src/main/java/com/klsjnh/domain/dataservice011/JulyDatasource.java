@@ -41,6 +41,11 @@ public class JulyDatasource {
     private static final String RESERVED_CODE = "master";
 
     /**
+     * Default sort order when none is given (matches BasePo011 / DDL default).
+     */
+    private static final int DEFAULT_SORT_ORDER = 9999;
+
+    /**
      * Primary key.
      */
     private final EntityId id;
@@ -49,6 +54,11 @@ public class JulyDatasource {
      * Datasource code, unique, immutable, doubles as the pool name.
      */
     private final String dsCode;
+
+    /**
+     * Manual sort order, smaller comes first.
+     */
+    private Integer sortOrder;
 
     /**
      * Datasource name, display only.
@@ -112,6 +122,7 @@ public class JulyDatasource {
      *
      * @param id          primary key
      * @param dsCode      datasource code, unique
+     * @param sortOrder   manual sort order, null falls back to the default
      * @param dsName      datasource name
      * @param dbType      database type code
      * @param jdbcUrl     jdbc url
@@ -124,11 +135,12 @@ public class JulyDatasource {
      * @param status      row status
      * @param audit       audit info
      */
-    public JulyDatasource(EntityId id, String dsCode, String dsName, String dbType, String jdbcUrl, String schemaName,
-            String username, String password, String driverClass, String poolConfig, String remark, String status,
-            AuditInfo audit) {
+    public JulyDatasource(EntityId id, String dsCode, Integer sortOrder, String dsName, String dbType, String jdbcUrl,
+            String schemaName, String username, String password, String driverClass, String poolConfig, String remark,
+            String status, AuditInfo audit) {
         this.id = id;
         this.dsCode = dsCode;
+        this.sortOrder = sortOrder == null ? DEFAULT_SORT_ORDER : sortOrder;
         this.dsName = dsName;
         this.dbType = dbType;
         this.jdbcUrl = jdbcUrl;
@@ -147,6 +159,7 @@ public class JulyDatasource {
      *
      * @param id          primary key
      * @param dsCode      datasource code, unique, max 60
+     * @param sortOrder   manual sort order, null falls back to the default
      * @param dsName      datasource name, max 100
      * @param dbType      database type code, max 20
      * @param jdbcUrl     jdbc url, max 500, must start with jdbc:
@@ -158,12 +171,13 @@ public class JulyDatasource {
      * @param audit       audit info
      * @return new aggregate
      */
-    public static JulyDatasource create(EntityId id, String dsCode, String dsName, String dbType, String jdbcUrl,
-            String schemaName, String username, String password, String driverClass, String remark, AuditInfo audit) {
+    public static JulyDatasource create(EntityId id, String dsCode, Integer sortOrder, String dsName, String dbType,
+            String jdbcUrl, String schemaName, String username, String password, String driverClass, String remark,
+            AuditInfo audit) {
         validate(dsCode, dsName, dbType, jdbcUrl, schemaName, username, password, driverClass, remark);
 
-        return new JulyDatasource(id, dsCode, dsName, dbType, jdbcUrl, schemaName, username, password, driverClass,
-                null, remark, Status011.ENABLED.getCode(), audit);
+        return new JulyDatasource(id, dsCode, sortOrder, dsName, dbType, jdbcUrl, schemaName, username, password,
+                driverClass, null, remark, Status011.ENABLED.getCode(), audit);
     }
 
     /**
@@ -172,6 +186,7 @@ public class JulyDatasource {
      * blank means "unchanged").
      *
      * @param dsName      datasource name
+     * @param sortOrder   manual sort order, null keeps the stored one
      * @param dbType      database type code
      * @param jdbcUrl     jdbc url
      * @param schemaName  schema name, optional
@@ -180,10 +195,15 @@ public class JulyDatasource {
      * @param driverClass jdbc driver class, optional
      * @param remark      remark, optional
      */
-    public void update(String dsName, String dbType, String jdbcUrl, String schemaName, String username,
-            String password, String driverClass, String remark) {
+    public void update(String dsName, Integer sortOrder, String dbType, String jdbcUrl, String schemaName,
+            String username, String password, String driverClass, String remark) {
         validate(this.dsCode, dsName, dbType, jdbcUrl, schemaName, username, password, driverClass, remark);
         this.dsName = dsName;
+
+        if (sortOrder != null) {
+            this.sortOrder = sortOrder;
+        }
+
         this.dbType = dbType;
         this.jdbcUrl = jdbcUrl;
         this.schemaName = schemaName;
@@ -272,6 +292,15 @@ public class JulyDatasource {
      */
     public String dsCode() {
         return dsCode;
+    }
+
+    /**
+     * Get the manual sort order.
+     *
+     * @return sort order, smaller comes first
+     */
+    public Integer sortOrder() {
+        return sortOrder;
     }
 
     /**

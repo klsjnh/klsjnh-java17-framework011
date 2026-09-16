@@ -25,10 +25,12 @@ import com.klsjnh.domain.iam.RuntimeStatusPort;
 
 import io.swagger.v3.oas.annotations.Hidden;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Global exception handler: maps every exception onto the unified response
@@ -87,6 +89,40 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Response011<Void>> handleUnreadable(HttpMessageNotReadableException ex) {
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "malformed request body");
+
+        if (runtimeStatusPort.isDebug()) {
+            body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
+        }
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Map a missing static resource (e.g. favicon.ico) onto a not found
+     * envelope: it is a client path error, not a server failure, so it never
+     * hits the error log.
+     *
+     * @param ex no resource found exception
+     * @return not found envelope
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Response011<Void>> handleNoResource(NoResourceFoundException ex) {
+        Response011<Void> body = Response011.of(HttpCodeEnum011.NOT_FOUND, "resource not found");
+
+        return ResponseEntity.status(HttpCodeEnum011.NOT_FOUND.getCode()).body(body);
+    }
+
+    /**
+     * Map a database unique-key violation onto a bad request envelope: the
+     * friendly pre-check only sees alive rows, so a logic-deleted duplicate
+     * surfaces here — a 400 is the honest answer, not a 500.
+     *
+     * @param ex duplicate key exception
+     * @return error envelope
+     */
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<Response011<Void>> handleDuplicateKey(DuplicateKeyException ex) {
+        Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "duplicate key");
 
         if (runtimeStatusPort.isDebug()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());

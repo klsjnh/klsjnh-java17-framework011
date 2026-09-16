@@ -96,17 +96,15 @@ public class JulySchedulerController {
      * re-synced when the status or cron/handler changes).
      *
      * @param vo update request
-     * @return empty envelope
+     * @return envelope with the updated task id
      */
     @PostMapping("/update")
     @Operation(summary = "修改定时任务（含启停状态，变更触发调度引擎联动）")
-    public Response011<Void> update(@RequestBody JulySchedulerUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulySchedulerUpdateVo011 vo) {
         String funcName = "update";
 
-        useCase.update(vo.getId(), vo.getSchedulerName(), vo.getSchedulerHandler(), vo.getSchedulerCron(),
-                vo.getStatus());
-
-        return Response011.success(funcName, null);
+        return Response011.successId(funcName, useCase.update(vo.getId(), vo.getSchedulerName(),
+                vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getStatus()));
     }
 
     /**
@@ -175,41 +173,41 @@ public class JulySchedulerController {
      * Start a task: register it in the scheduler engine.
      *
      * @param idVo request with the task id
-     * @return empty envelope
+     * @return envelope with the started task id
      */
     @PostMapping("/start")
     @Operation(summary = "启动任务（注册调度引擎）")
-    public Response011<Void> start(@RequestBody IdVo011 idVo) {
-        useCase.start(idVo.getId());
+    public Response011<IdVo011> start(@RequestBody IdVo011 idVo) {
+        String funcName = "start";
 
-        return Response011.success("start", null);
+        return Response011.successId(funcName, useCase.start(idVo.getId()));
     }
 
     /**
      * Stop a task: remove it from the scheduler engine.
      *
      * @param idVo request with the task id
-     * @return empty envelope
+     * @return envelope with the stopped task id
      */
     @PostMapping("/stop")
     @Operation(summary = "停止任务（摘出调度引擎）")
-    public Response011<Void> stop(@RequestBody IdVo011 idVo) {
-        useCase.stop(idVo.getId());
+    public Response011<IdVo011> stop(@RequestBody IdVo011 idVo) {
+        String funcName = "stop";
 
-        return Response011.success("stop", null);
+        return Response011.successId(funcName, useCase.stop(idVo.getId()));
     }
 
     /**
      * Trigger the handler once immediately.
      *
      * @param idVo request with the task id
-     * @return empty envelope
+     * @return envelope with the triggered task id
      */
     @PostMapping("/runOnce")
     @Operation(summary = "立即执行一次（不改变运行态）")
-    public Response011<Void> runOnce(@RequestBody IdVo011 idVo) {
-        useCase.runOnce(idVo.getId());
+    public Response011<IdVo011> runOnce(@RequestBody IdVo011 idVo) {
+        String funcName = "run once";
 
-        return Response011.success("run once", null);
+        return Response011.successId(funcName, useCase.runOnce(idVo.getId()));
     }
 }

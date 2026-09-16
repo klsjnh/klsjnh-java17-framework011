@@ -87,6 +87,7 @@ public class JulyDatasourceUseCase {
      * Insert a new datasource and refresh the registry.
      *
      * @param dsCode      datasource code, unique, immutable
+     * @param sortOrder   manual sort order, null falls back to the default
      * @param dsName      datasource name
      * @param dbType      database type code
      * @param jdbcUrl     jdbc url
@@ -98,16 +99,16 @@ public class JulyDatasourceUseCase {
      * @return new datasource id
      */
     @Transactional
-    public String insert(String dsCode, String dsName, String dbType, String jdbcUrl, String schemaName,
-            String username, String password, String driverClass, String remark) {
+    public String insert(String dsCode, Integer sortOrder, String dsName, String dbType, String jdbcUrl,
+            String schemaName, String username, String password, String driverClass, String remark) {
         requireDbType(dbType);
 
         if (repository.findByCode(dsCode) != null) {
             throw BusinessException.badRequest("datasource code already exists: " + dsCode);
         }
 
-        JulyDatasource datasource = newAggregate(dsCode, dsName, dbType, jdbcUrl, schemaName, username, password,
-                driverClass, remark);
+        JulyDatasource datasource = newAggregate(dsCode, sortOrder, dsName, dbType, jdbcUrl, schemaName, username,
+                password, driverClass, remark);
         repository.insert(datasource);
         reloadRegistry();
 
@@ -120,6 +121,7 @@ public class JulyDatasourceUseCase {
      *
      * @param id          datasource id
      * @param dsName      datasource name
+     * @param sortOrder   manual sort order, null keeps the stored one
      * @param dbType      database type code
      * @param jdbcUrl     jdbc url
      * @param schemaName  schema name, optional
@@ -130,11 +132,11 @@ public class JulyDatasourceUseCase {
      * @return datasource id
      */
     @Transactional
-    public String update(String id, String dsName, String dbType, String jdbcUrl, String schemaName, String username,
-            String password, String driverClass, String remark) {
+    public String update(String id, String dsName, Integer sortOrder, String dbType, String jdbcUrl, String schemaName,
+            String username, String password, String driverClass, String remark) {
         JulyDatasource datasource = require(id);
         requireDbType(dbType);
-        applyUpdate(datasource, dsName, dbType, jdbcUrl, schemaName, username, password, driverClass, remark);
+        applyUpdate(datasource, dsName, sortOrder, dbType, jdbcUrl, schemaName, username, password, driverClass, remark);
         repository.update(datasource);
         reloadRegistry();
 
@@ -300,6 +302,7 @@ public class JulyDatasourceUseCase {
      *
      * @param datasource  aggregate
      * @param dsName      datasource name
+     * @param sortOrder   manual sort order
      * @param dbType      database type code
      * @param jdbcUrl     jdbc url
      * @param schemaName  schema name
@@ -308,10 +311,10 @@ public class JulyDatasourceUseCase {
      * @param driverClass jdbc driver class
      * @param remark      remark
      */
-    private void applyUpdate(JulyDatasource datasource, String dsName, String dbType, String jdbcUrl, String schemaName,
-            String username, String password, String driverClass, String remark) {
+    private void applyUpdate(JulyDatasource datasource, String dsName, Integer sortOrder, String dbType, String jdbcUrl,
+            String schemaName, String username, String password, String driverClass, String remark) {
         try {
-            datasource.update(dsName, dbType, jdbcUrl, schemaName, username, password, driverClass, remark);
+            datasource.update(dsName, sortOrder, dbType, jdbcUrl, schemaName, username, password, driverClass, remark);
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
         }
@@ -334,6 +337,7 @@ public class JulyDatasourceUseCase {
      * failures into 400 responses.
      *
      * @param dsCode      datasource code
+     * @param sortOrder   manual sort order
      * @param dsName      datasource name
      * @param dbType      database type code
      * @param jdbcUrl     jdbc url
@@ -344,11 +348,11 @@ public class JulyDatasourceUseCase {
      * @param remark      remark
      * @return new aggregate
      */
-    private JulyDatasource newAggregate(String dsCode, String dsName, String dbType, String jdbcUrl, String schemaName,
-            String username, String password, String driverClass, String remark) {
+    private JulyDatasource newAggregate(String dsCode, Integer sortOrder, String dsName, String dbType, String jdbcUrl,
+            String schemaName, String username, String password, String driverClass, String remark) {
         try {
-            return JulyDatasource.create(EntityId.generate(), dsCode, dsName, dbType, jdbcUrl, schemaName, username,
-                    password, driverClass, remark, AuditInfo.empty());
+            return JulyDatasource.create(EntityId.generate(), dsCode, sortOrder, dsName, dbType, jdbcUrl, schemaName,
+                    username, password, driverClass, remark, AuditInfo.empty());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
         }

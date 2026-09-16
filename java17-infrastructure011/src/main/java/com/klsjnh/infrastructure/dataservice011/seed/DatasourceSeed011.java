@@ -165,7 +165,7 @@ public class DatasourceSeed011 implements DatasourceSeedPort {
      * @return new aggregate
      */
     private JulyDatasource newAggregate(String dsCode, ConnectionInfo info) {
-        return JulyDatasource.create(EntityId.generate(), dsCode, info.dsName(), info.dsType(), info.dsUrl(),
+        return JulyDatasource.create(EntityId.generate(), dsCode, null, info.dsName(), info.dsType(), info.dsUrl(),
                 info.schemaName(), info.username(), info.password(), info.driverClass(), null, AuditInfo.empty());
     }
 }

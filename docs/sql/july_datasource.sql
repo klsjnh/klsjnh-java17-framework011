@@ -8,6 +8,7 @@
 
 CREATE TABLE IF NOT EXISTS july_datasource (
     id            VARCHAR(33)  NOT NULL                COMMENT '主键',
+    sort_order    INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     ds_code       VARCHAR(60)  NOT NULL                COMMENT '数据源编码（全局唯一，不可变，连接池名）',
     ds_name       VARCHAR(100) NOT NULL                COMMENT '数据源名称',
     db_type       VARCHAR(20)  NOT NULL DEFAULT 'mysql' COMMENT '数据库类型（mysql/oracle/sqlserver/postgresql）',

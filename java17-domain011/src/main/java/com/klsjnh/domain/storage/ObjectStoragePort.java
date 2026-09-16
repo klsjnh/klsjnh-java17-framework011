@@ -136,4 +136,14 @@ public interface ObjectStoragePort {
      * @return bucket names
      */
     List<String> listBuckets();
+
+    /**
+     * Presigned GET URL for an object: a real time-limited URL for the S3 /
+     * MinIO family, a {@code file:} URI for the local adapter (nothing to sign).
+     *
+     * @param bucket bucket
+     * @param key    object key
+     * @return presigned URL / URI
+     */
+    String presignedGetUrl(String bucket, String key);
 }
