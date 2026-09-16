@@ -1,21 +1,38 @@
 # ============================================================
 # deploy/docker-compose.bake.yml — 项目内编排（方案一：依赖拷贝进镜像 bake）
-# 用法：bash deploy/deploy.sh bake   （脚本会构建镜像并 export APP_IMAGE）
-#       或  APP_IMAGE=klsjnh-java17-framework011:v<ver> docker compose -f deploy/docker-compose.bake.yml up -d
+# 约定对齐 /klsjnh/docker/compose.yaml（networks service011 + ports + logging/healthcheck）
+# 用法: bash deploy/deploy.sh bake   （脚本构建镜像并 export APP_IMAGE）
 # ============================================================
 services:
-  app:
-    image: ${APP_IMAGE:?set APP_IMAGE (run: bash deploy/deploy.sh bake)}
+  klsjnh-java17-framework011:
+    image: "${APP_IMAGE:?set APP_IMAGE first}"
     container_name: klsjnh-java17-framework011
-    network_mode: host
+    ports:
+      - "23333:11610"
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-      - SERVER_PORT=23333
       - LOGGING_FILE_PATH=/klsjnh/volume/logs
     entrypoint: ["sh", "-c", "exec java $$JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.additional-location=/klsjnh/volume/config/"]
     volumes:
-      - ../java17-app011/src/main/resources:/klsjnh/volume/config:ro
-      - ./runtime/logs:/klsjnh/volume/logs
-      - ./runtime/data:/klsjnh/volume/data
-      - ./runtime/storage011:/klsjnh/app/storage011
+      - ./java011/klsjnh-java17-framework011/config:/klsjnh/volume/config
+      - ./java011/klsjnh-java17-framework011/logs:/klsjnh/volume/logs
+      - ./java011/klsjnh-java17-framework011/data:/klsjnh/volume/data
+      - ./java011/klsjnh-java17-framework011/storage011:/klsjnh/volume/storage011
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/11610"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+    networks:
+      - service011
+
+networks:
+  service011:
+    external: false

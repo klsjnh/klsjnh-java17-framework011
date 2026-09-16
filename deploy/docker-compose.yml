@@ -1,28 +1,44 @@
 # ============================================================
 # deploy/docker-compose.yml — 项目内编排（方案二：轻量挂载 mount）
-# 用法：在项目根执行
-#   docker compose -f deploy/docker-compose.yml up -d
-#     （或 bash deploy/deploy.sh mount，脚本会备好 jar 与 runtime 目录）
-# 底座：klsjnh/java17:v0.0.1（ubuntu 26.04 + JDK17，见 Dockerfile.base）
-# 说明：相对路径以本文件所在目录（deploy/）为基准；runtime/ 不入库
+# 约定对齐 /klsjnh/docker/compose.yaml：networks service011 + ports 映射 + logging/healthcheck
+# 用法（项目根）: docker compose -f deploy/docker-compose.yml up -d
+# 上服务器: 把下方 services 段（不含 networks 段）追加到 /klsjnh/docker/compose.yaml
+#            （该文件已定义 networks.service011）
+# 底座: klsjnh/java17:v0.0.1（ubuntu 26.04 + JDK17）
+# 注意: bridge 网络下 DB 用服务名（如 mysql013:3306），不能用 127.0.0.1
 # ============================================================
 services:
-  app:
+  klsjnh-java17-framework011:
     image: klsjnh/java17:v0.0.1
     container_name: klsjnh-java17-framework011
-    # host 网络：容器内 127.0.0.1 = 宿主，直连宿主 MySQL 33306
-    network_mode: host
+    ports:
+      - "23333:11610"                 # 对外 23333 → 容器应用 11610
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-      - SERVER_PORT=23333
       - LOGGING_FILE_PATH=/klsjnh/volume/logs
     entrypoint: ["sh", "-c", "exec java $$JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.additional-location=/klsjnh/volume/config/"]
     volumes:
-      # 轻量挂载：jar 从构建产物挂入，换 jar 只重启容器（不重建镜像）
-      - ../java17-app011/target/java17-app011-1.0.0.jar:/klsjnh/app/app.jar:ro
-      # 配置：application.yml + application-development.yml（开发共享，dev 凭据）
-      - ../java17-app011/src/main/resources:/klsjnh/volume/config:ro
-      - ./runtime/logs:/klsjnh/volume/logs
-      - ./runtime/data:/klsjnh/volume/data
-      - ./runtime/storage011:/klsjnh/app/storage011
+      # 轻量挂载：jar 从宿主挂入，换 jar 只重启容器
+      - ./java011/klsjnh-java17-framework011/app.jar:/klsjnh/app/app.jar:ro
+      - ./java011/klsjnh-java17-framework011/config:/klsjnh/volume/config
+      - ./java011/klsjnh-java17-framework011/logs:/klsjnh/volume/logs
+      - ./java011/klsjnh-java17-framework011/data:/klsjnh/volume/data
+      - ./java011/klsjnh-java17-framework011/storage011:/klsjnh/volume/storage011
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/11610"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+    networks:
+      - service011
+
+networks:
+  service011:
+    external: false

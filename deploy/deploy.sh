@@ -1,11 +1,13 @@
 #!/bin/bash
 # ============================================================
-# deploy.sh — klsjnh-java17-framework011 Docker 部署（docker compose）
+# deploy.sh — klsjnh-java17-framework011 部署（docker compose）
+# 约定对齐 /klsjnh/docker/compose.yaml：networks service011 + ports 23333:11610
 # 用法:  bash deploy/deploy.sh [mount|bake]      (默认 mount)
-#   mount = 方案二：轻量挂载（jar 从 target 挂入，换 jar 只重启）→ deploy/docker-compose.yml
-#   bake  = 方案一：依赖拷贝进镜像（构建项目镜像）           → deploy/docker-compose.bake.yml
+#   mount = 轻量挂载（jar 从宿主挂入，换 jar 只重启）
+#   bake  = 依赖拷进镜像（构建项目镜像）
 # 前置:  基镜像 klsjnh/java17:v0.0.1（缺则 bash deploy/build-base.sh）
-# 说明:  编排在项目内（不依赖 /klsjnh/docker）；无内网地址 / 凭据入库
+# 说明:  服务块在 deploy/docker-compose*.yml（追加到 /klsjnh/docker/compose.yaml）
+#        运行时目录 /klsjnh/docker/java011/<项目>/（app.jar + config + logs + data + storage011）
 # ============================================================
 set -e
 
@@ -15,12 +17,12 @@ MODE="${1:-mount}"
 PROJECT="klsjnh-java17-framework011"
 APP_JAR="java17-app011/target/java17-app011-1.0.0.jar"
 BASE_IMAGE="${BASE_IMAGE:-klsjnh/java17:v0.0.1}"
+DOCKER_ROOT="${DOCKER_ROOT:-/klsjnh/docker}"
+PROJECT_DIR="$DOCKER_ROOT/java011/$PROJECT"
+COMPOSE_FILE="$DOCKER_ROOT/compose.yaml"
 
-DOCKER="docker"
-docker info >/dev/null 2>&1 || DOCKER="sudo docker"
-
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT"
+DOCKER="docker"; docker info >/dev/null 2>&1 || DOCKER="sudo docker"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
 
 echo "=== 0. 基镜像: $BASE_IMAGE ==="
 $DOCKER images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${BASE_IMAGE}$" \
@@ -32,28 +34,31 @@ mvn -o clean package -DskipTests
 
 echo "=== 2. 版本（git commit ver x.x.x）==="
 VER="$(git log -1 --format=%s | grep -oP 'ver \K\d+\.\d+\.\d+' || true)"
-[ -n "$VER" ] || { read -rp "未取到版本，请输入(如 0.0.17): " VER; }
+[ -n "$VER" ] || VER="1.0.0"
 
-echo "=== 3. runtime 目录 ==="
-mkdir -p deploy/runtime/logs deploy/runtime/data deploy/runtime/storage011
-chmod -R 777 deploy/runtime
+echo "=== 3. 运行时目录: $PROJECT_DIR ==="
+mkdir -p "$PROJECT_DIR/config" "$PROJECT_DIR/logs" "$PROJECT_DIR/data" "$PROJECT_DIR/storage011"
+cp "$APP_JAR" "$PROJECT_DIR/app.jar"
+cp java17-app011/src/main/resources/application.yml "$PROJECT_DIR/config/application.yml"
+[ -f java17-app011/src/main/resources/application-development.yml ] \
+    && cp java17-app011/src/main/resources/application-development.yml "$PROJECT_DIR/config/application-development.yml"
+# 约定：容器内可挂载目录一律在 /klsjnh/volume 下——存储中心 base-path 统一指过去
+sed -i 's#base-path: \./storage011#base-path: /klsjnh/volume/storage011#' "$PROJECT_DIR/config/application.yml"
+chmod -R 777 "$PROJECT_DIR/logs" "$PROJECT_DIR/data" "$PROJECT_DIR/storage011"
 
 if [ "$MODE" = "bake" ]; then
     echo "=== 4. 构建项目镜像（bake）==="
-    cp "$APP_JAR" deploy/runtime/app_v${VER}.jar
+    mkdir -p deploy/runtime && cp "$APP_JAR" deploy/runtime/app.jar
     $DOCKER build -t "${PROJECT}:v${VER}" -f deploy/Dockerfile.project deploy/runtime
-    export APP_IMAGE="${PROJECT}:v${VER}"
-    COMPOSE="deploy/docker-compose.bake.yml"
+    echo "镜像: ${PROJECT}:v${VER}"
 else
     echo "=== 4. 轻量挂载（mount，不建项目镜像）==="
-    COMPOSE="deploy/docker-compose.yml"
 fi
 
-echo "=== 5. docker compose up ==="
-$DOCKER compose -f "$COMPOSE" up -d
-$DOCKER compose -f "$COMPOSE" ps
-
 echo ""
-echo "=== 6. 完成（mode=$MODE，ver=$VER）==="
-echo "访问:  http://127.0.0.1:23333/doc.html"
-echo "日志:  $DOCKER compose -f $COMPOSE logs -f app    （文件：deploy/runtime/logs/）"
+echo "=== 5. 完成（mode=$MODE，ver=$VER）==="
+echo "运行时: $PROJECT_DIR （app.jar / config/ / logs/ / data/ / storage011/）"
+echo ""
+echo "把 deploy/docker-compose${MODE/bake/.bake}.yml 的 services 段追加到 $COMPOSE_FILE 后："
+echo "  docker compose -f $COMPOSE_FILE up -d"
+echo "  docker compose -f $COMPOSE_FILE logs -f $PROJECT"

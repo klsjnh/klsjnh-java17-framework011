@@ -21,7 +21,7 @@ RUN mkdir -p ${JAVA_HOME} \
     && rm -f /tmp/jdk.tar.gz
 
 RUN groupadd -r klsjnh && useradd -r -g klsjnh -d /klsjnh -m klsjnh \
-    && mkdir -p /klsjnh/app /klsjnh/volume/config /klsjnh/volume/logs /klsjnh/volume/data \
+    && mkdir -p /klsjnh/app /klsjnh/volume/config /klsjnh/volume/logs /klsjnh/volume/data /klsjnh/volume/storage011 \
     && chown -R klsjnh:klsjnh /klsjnh ${JAVA_HOME}
 
 WORKDIR /klsjnh/app
