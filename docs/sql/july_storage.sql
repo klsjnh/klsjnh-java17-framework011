@@ -3,7 +3,7 @@
 -- 列顺序规范：id → 业务字段 → status → 审计四列 → dr
 -- 设计：docs/requirement011/037.topic-storage-migration.md
 -- 方案：docs/requirement013/037.topic-storage-migration.md
--- 边界：yaml krt.storage-center.* 仅作播种；表为运行时唯一真源；secret_key 出参不回显
+-- 边界：yaml krt.storage-center.* 仅作播种（默认桶除外）；表为运行时唯一真源；AK/SK 出参打码
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS july_storage (
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS july_storage (
     base_path              VARCHAR(500) NULL                    COMMENT '本地根目录（local011 必填）',
     endpoint               VARCHAR(300) NULL                    COMMENT 'Endpoint（S3 系必填）',
     access_key             VARCHAR(100) NULL                    COMMENT 'Access Key',
-    secret_key             VARCHAR(300) NULL                    COMMENT 'Secret Key（出参不回显）',
+    secret_key             VARCHAR(300) NULL                    COMMENT 'Secret Key（出参打码 ******）',
     secure                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT 'HTTPS（0 否 / 1 是）',
     default_bucket         VARCHAR(100) NULL                    COMMENT '默认桶',
     presign_expiry_seconds INT          NOT NULL DEFAULT 3600   COMMENT '预签名有效期（秒）',

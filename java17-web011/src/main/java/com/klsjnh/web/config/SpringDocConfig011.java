@@ -40,9 +40,9 @@ import java.util.List;
  * third-party business systems that embed the framework (their own group,
  * excluding the /klsjnh/** framework paths).
  * <p>
- * Groups: system011 (system management) / storage011 (storage center,
- * endpoints land with the feature) / dataservice011 (data service, datasource
- * management) / app (optional, yml driven). Doc meta (title / version /
+ * Groups: system011 (system management) / storagecenter (storage center) /
+ * dataservice011 (data service) / ai011 (ai model access) / lowcode011
+ * (low-code core) / app (optional, yml driven). Doc meta (title / version /
  * description) is driven by {@code krt.springdoc}.
  * </p>
  */
@@ -92,11 +92,11 @@ public class SpringDocConfig011 {
      * @return grouped open api
      */
     @Bean
-    public GroupedOpenApi storage011GroupedOpenApi() {
+    public GroupedOpenApi storagecenterGroupedOpenApi() {
         return GroupedOpenApi.builder()
-                .group("storage011")
+                .group("storagecenter")
                 .displayName("存储中心")
-                .pathsToMatch("/klsjnh/storage011/**")
+                .pathsToMatch("/klsjnh/storagecenter/**")
                 .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
                 .build();
     }

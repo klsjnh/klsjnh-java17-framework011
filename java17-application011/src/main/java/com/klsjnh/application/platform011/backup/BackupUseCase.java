@@ -26,8 +26,9 @@ import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.domain.iam.UserAuditPort;
 import com.klsjnh.domain.platform011.export.ExportResult;
-import com.klsjnh.domain.storage.ObjectStoragePort;
-import com.klsjnh.domain.storage.StorageResolverPort;
+import com.klsjnh.domain.storagecenter.ObjectStoragePort;
+import com.klsjnh.domain.storagecenter.StorageDefaultsPort;
+import com.klsjnh.domain.storagecenter.StorageResolverPort;
 import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import org.springframework.stereotype.Service;
@@ -46,9 +47,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * how the rows are collected.
  * </p>
  * <p>
- * The target bucket is the storage center's configured default
- * ({@code krt.storage-center.default-bucket}), read through the storage port,
- * so no bucket name is hard-coded here.
+ * The target bucket is the active adapter's configured default
+ * ({@code krt.storage-center.local011.default-bucket} /
+ * {@code minio011.default-bucket}), falling back to the resolved instance's
+ * own {@code july_storage.default_bucket}; no bucket name is hard-coded here.
  * </p>
  */
 
@@ -71,6 +73,11 @@ public class BackupUseCase {
     private final StorageResolverPort storageResolver;
 
     /**
+     * Configuration-declared storage defaults (active adapter default bucket).
+     */
+    private final StorageDefaultsPort storageDefaults;
+
+    /**
      * User audit port.
      */
     private final UserAuditPort userAuditPort;
@@ -87,11 +94,14 @@ public class BackupUseCase {
      *
      * @param exportUseCase   export use case
      * @param storageResolver storage resolver
+     * @param storageDefaults configuration-declared storage defaults
      * @param userAuditPort   user audit port
      */
-    public BackupUseCase(ExportUseCase exportUseCase, StorageResolverPort storageResolver, UserAuditPort userAuditPort) {
+    public BackupUseCase(ExportUseCase exportUseCase, StorageResolverPort storageResolver,
+            StorageDefaultsPort storageDefaults, UserAuditPort userAuditPort) {
         this.exportUseCase = exportUseCase;
         this.storageResolver = storageResolver;
+        this.storageDefaults = storageDefaults;
         this.userAuditPort = userAuditPort;
     }
 
@@ -125,7 +135,7 @@ public class BackupUseCase {
 
         ExportResult result = exportUseCase.export(objectCode, operator);
         ObjectStoragePort storagePort = storageResolver.resolve(null);
-        String bucket = storagePort.defaultBucket();
+        String bucket = resolveBucket(storagePort);
         String key = objectKey(objectCode);
 
         storagePort.put(bucket, key, toJsonBytes(result), "application/json");
@@ -147,6 +157,19 @@ public class BackupUseCase {
      */
     private String objectKey(String objectCode) {
         return objectCode + "/" + DateUtil011.nowStamp() + ".json";
+    }
+
+    /**
+     * Resolve the backup target bucket: the active adapter's configured default
+     * first, then the resolved instance's own default bucket.
+     *
+     * @param storagePort resolved storage adapter
+     * @return bucket name
+     */
+    private String resolveBucket(ObjectStoragePort storagePort) {
+        String bucket = storageDefaults.defaultBucket();
+
+        return bucket == null || bucket.isBlank() ? storagePort.defaultBucket() : bucket;
     }
 
     /**

@@ -1,0 +1,109 @@
+package com.klsjnh.infrastructure.storagecenter;
+
+/*                StorageResolver011 class
+ *
+ *      @author     xiangrkrs@163.com
+ *      @version    ver 0.0.1
+ *      @createdate 2026.09.15
+ *      @modifydate
+ *
+ *===========================================
+ *          modify history
+ *
+ *      2026.09.15  storage resolver 011 class
+ *
+ */
+
+import com.klsjnh.common.util.StringUtil011;
+
+import com.klsjnh.domain.storagecenter.JulyStorage;
+import com.klsjnh.domain.storagecenter.JulyStorageRepository;
+import com.klsjnh.domain.storagecenter.ObjectStorageFactoryPort;
+import com.klsjnh.domain.storagecenter.ObjectStoragePort;
+import com.klsjnh.domain.storagecenter.StorageResolverPort;
+
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Table-driven storage resolver: storage code → cached {@link ObjectStoragePort}
+ * adapter built by the factory. A blank code falls back to the {@code default}
+ * instance (the yaml seed).
+ */
+
+@Component
+public class StorageResolver011 implements StorageResolverPort {
+
+    /**
+     * Default instance code.
+     */
+    private static final String DEFAULT_CODE = "default";
+
+    /**
+     * Storage repository.
+     */
+    private final JulyStorageRepository repository;
+
+    /**
+     * Adapter factory.
+     */
+    private final ObjectStorageFactoryPort factory;
+
+    /**
+     * Cached adapters by storage code.
+     */
+    private final Map<String, ObjectStoragePort> cache = new ConcurrentHashMap<>();
+
+    /**
+     * Create the resolver.
+     *
+     * @param repository storage repository
+     * @param factory    adapter factory
+     */
+    public StorageResolver011(JulyStorageRepository repository, ObjectStorageFactoryPort factory) {
+        this.repository = repository;
+        this.factory = factory;
+    }
+
+    /**
+     * Resolve the adapter for a storage code.
+     *
+     * @param storageCode storage code, may be blank for the default instance
+     * @return storage adapter, never null
+     */
+    @Override
+    public ObjectStoragePort resolve(String storageCode) {
+        String key = StringUtil011.isBlank(storageCode) ? DEFAULT_CODE : storageCode.trim();
+
+        ObjectStoragePort cached = cache.get(key);
+
+        if (cached != null) {
+            return cached;
+        }
+
+        JulyStorage storage = repository.findEnabledByCode(key);
+
+        if (storage == null) {
+            throw new IllegalStateException("storage is not available: " + key);
+        }
+
+        ObjectStoragePort adapter = factory.create(storage.toConnectionConfig());
+        cache.put(key, adapter);
+
+        return adapter;
+    }
+
+    /**
+     * Evict the cached adapter of a storage code.
+     *
+     * @param storageCode storage code
+     */
+    @Override
+    public void evict(String storageCode) {
+        if (!StringUtil011.isBlank(storageCode)) {
+            cache.remove(storageCode.trim());
+        }
+    }
+}

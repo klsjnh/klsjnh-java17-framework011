@@ -13,8 +13,11 @@ spring:
       local: development
 
 # 存储中心：本期 local011（本地盘）/ minio011（自部署 MinIO）双适配器，按需切换
+# 默认桶声明在适配器下：local011.default-bucket / minio011.default-bucket
+#   物理位置 = base-path/default-bucket（例：./storage011/backup011）
 krt:
   storage-center:
     default-type: local011
     local011:
       base-path: ./storage011
+      default-bucket: backup011

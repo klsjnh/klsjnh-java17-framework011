@@ -42,9 +42,9 @@ web ──► application ──► domain ◄── infrastructure
 | 模块 | 层 | 内容 |
 |------|-----|------|
 | java17-common011 | common | 枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011 / StorageType011 / AuditType011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 / AuthAttribute011 |
-| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源 Port）· storage（ObjectStoragePort / JulyStorage / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· dataservice011（JulyDatasource / JulyBusinessModeling + 探针/推断/Guard）· ai011（AiModelProvider + Api + Probe）· lowcode011（MetaData011 值对象 + JulyMetadata 一主三子）· platform011（export / backup Port） |
-| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· dataservice011（datasource / business modeling）· ai011 · storage011（实例 / 桶 / 对象 + 在线编辑）· lowcode011 · platform011（export / backup） |
-| java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / dataservice011 / ai011 / lowcode011 / storage011 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
+| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源 Port）· storagecenter（ObjectStoragePort / JulyStorage / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· dataservice011（JulyDatasource / JulyBusinessModeling + 探针/推断/Guard）· ai011（AiModelProvider + Api + Probe）· lowcode011（MetaData011 值对象 + JulyMetadata 一主三子）· platform011（export / backup Port） |
+| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· dataservice011（datasource / business modeling）· ai011 · storagecenter（实例 / 桶 / 对象 + 在线编辑）· lowcode011 · platform011（export / backup） |
+| java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / dataservice011 / ai011 / lowcode011 / storagecenter 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
 | java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 5 组 |
 | java17-app011 | app | 唯一 main + 配置 + 参考样板（demo11 纵切面 / Demo011Scheduler）+ 启动播种（ci011 / storage） |
 
@@ -100,7 +100,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | platform011：数据导出 + 备份（030，注册制 Provider / EXPORT·BACKUP 审计） |
 | ✅ | dataservice011：数据源管理（031，表驱动 + 双向驱动 + 测试连接 + 排序）· 业务建模（033，探针推断 + 执行/分页 SQL + 交接产物） |
 | ✅ | ai011：模型接入（036，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出） |
-| ✅ | storage011：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
+| ✅ | storagecenter：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
 | ✅ | lowcode011：低代码核心（038，一主三子 CRUD + 排序 + 级联） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 审计切面 |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插） |
