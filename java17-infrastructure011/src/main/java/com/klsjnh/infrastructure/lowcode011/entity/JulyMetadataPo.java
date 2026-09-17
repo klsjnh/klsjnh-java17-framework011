@@ -50,4 +50,13 @@ public class JulyMetadataPo extends BasePo011 {
 
     /** Remark, optional. */
     private String remark;
+
+    /** Source datasource code (probe / import origin). */
+    private String dataSourceCode;
+
+    /** Source probe sql. */
+    private String probeSql;
+
+    /** Source model sql code, optional. */
+    private String sqlCode;
 }

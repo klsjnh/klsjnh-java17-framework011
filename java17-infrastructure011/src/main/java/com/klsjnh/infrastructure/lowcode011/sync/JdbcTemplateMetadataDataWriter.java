@@ -77,7 +77,7 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
      * @return number of rows processed
      */
     @Override
-    public int upsert(String physicalTable, List<Map<String, Object>> rows) {
+    public int upsert(String physicalTable, String businessField, List<Map<String, Object>> rows) {
         if (rows == null || rows.isEmpty()) {
             return 0;
         }
@@ -92,10 +92,19 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
 
         List<String> targetColumns = new ArrayList<>();
         List<String> sourceKeys = new ArrayList<>();
+        String businessSourceKey = null;
 
         for (Map.Entry<String, String> entry : mapping.entrySet()) {
             targetColumns.add(entry.getValue());
             sourceKeys.add(entry.getKey());
+
+            if (businessField != null && entry.getValue().equalsIgnoreCase(businessField)) {
+                businessSourceKey = entry.getKey();
+            }
+        }
+
+        if (businessField != null && !businessField.isBlank() && businessSourceKey == null) {
+            throw new IllegalArgumentException("business field not present in source: " + businessField);
         }
 
         String columnList = targetColumns.stream().map(c -> "`" + c + "`").collect(Collectors.joining(","));

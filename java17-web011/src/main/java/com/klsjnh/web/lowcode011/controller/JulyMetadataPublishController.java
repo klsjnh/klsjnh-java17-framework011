@@ -37,7 +37,7 @@ import java.util.Map;
  * object (gated by the ddl-execute switch).
  */
 
-@Tag(name = "低代码 - 元数据发布")
+@Tag(name = "低代码011 - 元数据发布")
 @RestController
 @RequestMapping("/klsjnh/lowcode011/julyMetadata/v1")
 public class JulyMetadataPublishController {

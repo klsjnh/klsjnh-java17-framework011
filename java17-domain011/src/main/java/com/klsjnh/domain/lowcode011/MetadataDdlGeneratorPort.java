@@ -25,14 +25,18 @@ import java.util.List;
 public interface MetadataDdlGeneratorPort {
 
     /**
-     * Generate the CREATE TABLE statement for an object's physical table.
+     * Generate the CREATE TABLE statement for an object's physical table. The
+     * business field, when present, also gets a UNIQUE KEY so data sync can
+     * upsert on it.
      *
      * @param physicalTable physical table name (already prefixed)
      * @param tableComment  table comment
      * @param fields        object fields
+     * @param businessField business field code (unique business key), nullable
      * @return CREATE TABLE statement (without trailing semicolon)
      */
-    String generateCreate(String physicalTable, String tableComment, List<JulyMetadataField> fields);
+    String generateCreate(String physicalTable, String tableComment, List<JulyMetadataField> fields,
+            String businessField);
 
     /**
      * Generate an {@code ALTER TABLE ... ADD COLUMN} statement for fields that

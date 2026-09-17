@@ -40,10 +40,10 @@ import java.util.List;
  * third-party business systems that embed the framework (their own group,
  * excluding the /klsjnh/** framework paths).
  * <p>
- * Groups: system011 (system management) / storagecenter (storage center) /
- * dataservice011 (data service) / ai011 (ai model access) / lowcode011
- * (low-code core) / app (optional, yml driven). Doc meta (title / version /
- * description) is driven by {@code krt.springdoc}.
+ * Groups: system011 / storagecenter / dataservice011 / ai011 / lowcode011
+ * (the low-code group also covers {@code /klsjnh/open/**}) / app (optional,
+ * yml driven). Document tags are prefixed with the group's 011 domain name.
+ * Doc meta (title / version / description) is driven by {@code krt.springdoc}.
  * </p>
  */
 
@@ -95,7 +95,7 @@ public class SpringDocConfig011 {
     public GroupedOpenApi storagecenterGroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("storagecenter")
-                .displayName("存储中心")
+                .displayName("存储中心011")
                 .pathsToMatch("/klsjnh/storagecenter/**")
                 .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
                 .build();
@@ -141,8 +141,8 @@ public class SpringDocConfig011 {
     public GroupedOpenApi lowcode011GroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("lowcode011")
-                .displayName("低代码核心011")
-                .pathsToMatch("/klsjnh/lowcode011/**")
+                .displayName("低代码011")
+                .pathsToMatch("/klsjnh/lowcode011/**", "/klsjnh/open/**")
                 .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
                 .build();
     }

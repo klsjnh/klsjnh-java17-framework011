@@ -136,6 +136,7 @@ public class JulyMetadataDesignerUseCase {
         String objectType = text(metaData.get("objectType"));
         String description = text(metaData.get("description"));
         String businessField = text(metaData.get("businessField"));
+        fields = normalizeBusinessField(fields, businessField);
         String packageName = text(metaData.get("packageName"));
         String routerPath = text(metaData.get("routerPath"));
         String remark = text(metaData.get("remark"));
@@ -163,7 +164,7 @@ public class JulyMetadataDesignerUseCase {
 
         try {
             return ddlGenerator.generateCreate(TABLE_PREFIX + metadata.objectName(), metadata.description(),
-                    metadata.fields());
+                    metadata.fields(), metadata.businessField());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
         }
@@ -236,6 +237,33 @@ public class JulyMetadataDesignerUseCase {
         dto.put("serviceData", serviceData);
 
         return dto;
+    }
+
+    /**
+     * Force the business field to the platform-fixed shape: string, length 33
+     * (the business unique key, aligned with the surrogate id column).
+     *
+     * @param fields        parsed fields
+     * @param businessField business field code, nullable
+     * @return normalized fields
+     */
+    private List<JulyMetadataField> normalizeBusinessField(List<JulyMetadataField> fields, String businessField) {
+        if (businessField == null || businessField.isBlank()) {
+            return fields;
+        }
+
+        List<JulyMetadataField> normalized = new ArrayList<>();
+
+        for (JulyMetadataField field : fields) {
+            if (field.fieldCode() != null && field.fieldCode().equalsIgnoreCase(businessField)) {
+                normalized.add(new JulyMetadataField(field.fieldCode(), field.fieldName(), "string", 33,
+                        field.requiredField(), field.defaultValue(), field.sortOrder()));
+            } else {
+                normalized.add(field);
+            }
+        }
+
+        return normalized;
     }
 
     /**

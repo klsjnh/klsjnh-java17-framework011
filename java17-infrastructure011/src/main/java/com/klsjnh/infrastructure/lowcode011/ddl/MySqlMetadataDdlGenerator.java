@@ -52,7 +52,8 @@ public class MySqlMetadataDdlGenerator implements MetadataDdlGeneratorPort {
      * @return CREATE TABLE statement (without trailing semicolon)
      */
     @Override
-    public String generateCreate(String physicalTable, String tableComment, List<JulyMetadataField> fields) {
+    public String generateCreate(String physicalTable, String tableComment, List<JulyMetadataField> fields,
+            String businessField) {
         if (fields == null || fields.isEmpty()) {
             throw new IllegalArgumentException("metadata has no fields to publish");
         }
@@ -69,7 +70,7 @@ public class MySqlMetadataDdlGenerator implements MetadataDdlGeneratorPort {
                 primaryKey = column;
             }
 
-            lines.add(columnLine(field, type));
+            lines.add(columnLine(field, type, businessField));
         }
 
         if (primaryKey == null) {
@@ -78,6 +79,18 @@ public class MySqlMetadataDdlGenerator implements MetadataDdlGeneratorPort {
         }
 
         lines.add("  PRIMARY KEY (`" + primaryKey + "`)");
+
+        if (businessField != null && !businessField.isBlank()) {
+            String business = requireIdentifier(businessField);
+            boolean declared = fields.stream().anyMatch(f -> f.fieldCode().equalsIgnoreCase(business));
+            if (declared && !business.equalsIgnoreCase(primaryKey)) {
+                String indexName = "uk_" + table + "_" + business;
+                if (indexName.length() > 64) {
+                    throw new IllegalArgumentException("unique index name too long: " + indexName);
+                }
+                lines.add("  UNIQUE KEY `" + indexName + "` (`" + business + "`)");
+            }
+        }
 
         return "CREATE TABLE IF NOT EXISTS `" + table + "` (\n" + String.join(",\n", lines)
                 + "\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='"
@@ -115,12 +128,26 @@ public class MySqlMetadataDdlGenerator implements MetadataDdlGeneratorPort {
      * @return column definition (indented)
      */
     private String columnLine(JulyMetadataField field, FieldType011 type) {
+        return columnLine(field, type, null);
+    }
+
+    /**
+     * Build one column definition line, forcing the business key to VARCHAR(33).
+     *
+     * @param field         field
+     * @param type          resolved field type
+     * @param businessField business field code, nullable
+     * @return column definition (indented)
+     */
+    private String columnLine(JulyMetadataField field, FieldType011 type, String businessField) {
         String column = requireIdentifier(field.fieldCode());
         String nullable = field.requiredField() ? " NOT NULL" : "";
         String comment = field.fieldName() == null ? field.fieldCode() : field.fieldName();
+        String columnType = businessField != null && column.equalsIgnoreCase(businessField)
+                ? "VARCHAR(33)"
+                : columnType(type, field.fieldLength());
 
-        return "  `" + column + "` " + columnType(type, field.fieldLength()) + nullable + " COMMENT '"
-                + escapeLiteral(comment) + "'";
+        return "  `" + column + "` " + columnType + nullable + " COMMENT '" + escapeLiteral(comment) + "'";
     }
 
     /**

@@ -129,7 +129,7 @@ public class JulyMetadataDataSyncUseCase {
                 new BusinessModelingExecuteCommand(null, dataSourceCode, null, null, sqlCode), page, size);
 
         List<Map<String, Object>> rows = source.rows();
-        int processed = dataWriter.upsert(latest.physicalTable(), rows);
+        int processed = dataWriter.upsert(latest.physicalTable(), metadata.businessField(), rows);
         boolean init = Boolean.TRUE.equals(forceInit) || !metadataRepository.isSynced(metadata.objectName());
 
         metadataRepository.markSynced(metadata.objectName());

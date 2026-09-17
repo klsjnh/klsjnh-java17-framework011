@@ -26,11 +26,15 @@ import java.util.Map;
 public interface MetadataDataWriterPort {
 
     /**
-     * Upsert rows into a physical table (by primary key; insert-or-update).
+     * Upsert rows into a physical table (by primary key; insert-or-update). When
+     * the source carries no primary key, the id is derived deterministically
+     * from {@code businessField} so re-importing the same page updates instead
+     * of duplicating.
      *
      * @param physicalTable target table
+     * @param businessField business field code (source column matched case-insensitively)
      * @param rows          source rows (column label → value)
      * @return number of rows processed
      */
-    int upsert(String physicalTable, List<Map<String, Object>> rows);
+    int upsert(String physicalTable, String businessField, List<Map<String, Object>> rows);
 }

@@ -157,7 +157,8 @@ public class JulyMetadataPublishUseCase {
     private String buildDdl(String table, JulyMetadata metadata) {
         try {
             if (!ddlExecutor.tableExists(table)) {
-                return ddlGenerator.generateCreate(table, metadata.description(), metadata.fields());
+                return ddlGenerator.generateCreate(table, metadata.description(), metadata.fields(),
+                        metadata.businessField());
             }
 
             Set<String> existing = ddlExecutor.columnsOf(table);

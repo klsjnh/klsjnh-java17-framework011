@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
  * child collections).
  */
 
-@Tag(name = "低代码核心 - 对象元数据")
+@Tag(name = "低代码011 - 对象元数据")
 @RestController
 @RequestMapping("/klsjnh/lowcode011/julyMetadata/v1")
 public class JulyMetadataController {

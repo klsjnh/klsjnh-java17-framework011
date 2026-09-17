@@ -101,7 +101,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | dataservice011：数据源管理（031，表驱动 + 双向驱动 + 测试连接 + 排序）· 业务建模（033，探针推断 + 执行/分页 SQL + 交接产物） |
 | ✅ | ai011：模型接入（036，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出） |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
-| ⏳ | lowcode011：低代码设计器与运行时（039，立案·分三期；设计/探测/发布建表/数据同步/运行时/开放 API） |
+| ◐ | lowcode011：低代码设计器与运行时（039，设计 / 发布建表 / 数据同步 / 开放 API 已 E2E；运行时菜单·运行页挂起） |
 | ✅ | lowcode011：低代码核心（038，一主三子 CRUD + 排序 + 级联） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 审计切面 |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插） |

@@ -39,7 +39,7 @@ import java.util.Map;
  * into the published physical table.
  */
 
-@Tag(name = "低代码 - 数据同步")
+@Tag(name = "低代码011 - 数据同步")
 @RestController
 @RequestMapping("/klsjnh/lowcode011/julyMetadata/v1")
 public class JulyMetadataDataSyncController {

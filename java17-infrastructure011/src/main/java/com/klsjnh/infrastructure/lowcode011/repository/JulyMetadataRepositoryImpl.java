@@ -20,6 +20,7 @@ import com.klsjnh.domain.lowcode011.JulyMetadataField;
 import com.klsjnh.domain.lowcode011.JulyMetadataQuerySpec;
 import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
 import com.klsjnh.domain.lowcode011.JulyMetadataService;
+import com.klsjnh.domain.lowcode011.JulyMetadataSource;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -195,6 +196,34 @@ public class JulyMetadataRepositoryImpl extends BaseRepository<JulyMetadataPo, J
         return mapper.selectCount(new QueryWrapper<JulyMetadataPo>()
                 .eq("object_name", objectName)
                 .eq("data_initialized", "1")) > 0;
+    }
+
+    /**
+     * Persist the source descriptor of an object.
+     *
+     * @param id             object id
+     * @param dataSourceCode source datasource code
+     * @param probeSql       probe sql
+     */
+    @Override
+    public void updateSource(String id, String dataSourceCode, String probeSql) {
+        mapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<JulyMetadataPo>()
+                .eq("id", id)
+                .set("data_source_code", dataSourceCode)
+                .set("probe_sql", probeSql));
+    }
+
+    /**
+     * Read the source descriptor of an object.
+     *
+     * @param objectName object name
+     * @return source descriptor, null when absent
+     */
+    @Override
+    public JulyMetadataSource findSource(String objectName) {
+        JulyMetadataPo po = mapper.selectOne(new QueryWrapper<JulyMetadataPo>().eq("object_name", objectName));
+
+        return po == null ? null : new JulyMetadataSource(po.getDataSourceCode(), po.getProbeSql());
     }
 
     /**

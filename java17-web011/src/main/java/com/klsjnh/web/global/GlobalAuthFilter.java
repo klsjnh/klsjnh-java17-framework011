@@ -75,7 +75,8 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
      * Path prefixes that never require a token (API docs, error page).
      */
     private static final List<String> WHITELIST_PREFIXES = List.of(
-            "/doc.html", "/webjars/", "/v3/api-docs", "/swagger-ui", "/swagger-resources", "/favicon.ico", "/error");
+            "/doc.html", "/webjars/", "/v3/api-docs", "/swagger-ui", "/swagger-resources", "/favicon.ico", "/error",
+            "/klsjnh/open/");
 
     /**
      * Token port (verify only; issuing stays in the login flow).

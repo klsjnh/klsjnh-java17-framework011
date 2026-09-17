@@ -106,4 +106,21 @@ public interface JulyMetadataRepository {
      * @return true when initialized
      */
     boolean isSynced(String objectName);
+
+    /**
+     * Persist the source descriptor (datasource + probe sql) of an object.
+     *
+     * @param id             object id
+     * @param dataSourceCode source datasource code
+     * @param probeSql       probe sql
+     */
+    void updateSource(String id, String dataSourceCode, String probeSql);
+
+    /**
+     * Read the source descriptor of an object.
+     *
+     * @param objectName object name
+     * @return source descriptor, null when the object is absent
+     */
+    JulyMetadataSource findSource(String objectName);
 }

@@ -40,7 +40,7 @@ import java.util.Map;
  * models, load a model as MetaDTO, save it back, and preview the publish DDL.
  */
 
-@Tag(name = "低代码 - 元数据设计器")
+@Tag(name = "低代码011 - 元数据设计器")
 @RestController
 @RequestMapping("/klsjnh/lowcode011/julyMetadata/v1")
 public class JulyMetadataDesignerController {
