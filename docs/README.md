@@ -19,7 +19,7 @@
 | 目录 | 内容 |
 |------|------|
 | [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · 019 存储中心 · 020 容器化部署 · 021 低代码前端对接指南 · 022 AI 低代码机制 |
-| [lowcode011/](lowcode011/) | **低代码知识库（细分拆开；编号 011/013/015/016…）**：011 体系总览 · 013 MetaData011 · 015 FieldInfo011（FieldType011 逐个 + 字典字段） · 016 DisplayInfo011 · 017 ServiceInfo011 · 018 JulyMetadata（持久化聚合） · 019 MetaDTO · 020 设计器 · 021 发布与 DDL · 022 数据同步 · 023 运行时 · 024 开放 API · 025 元数据模板 · 026 字典字段（dictionary011/dictionary013） · 027 低代码核心（业务规则） · 028 设计器与运行时（业务规则） · 029 元数据模板（业务规则） |
+| [lowcode011/](lowcode011/) | **低代码知识库（细分拆开；编号 011/013/015/016…）**：011 体系总览 · 013 MetaData011 · 015 FieldInfo011（FieldType011 逐个 + 字典字段） · 016 DisplayInfo011 · 017 ServiceInfo011 · 018 JulyMetadata（持久化聚合） · 019 MetaDTO · 020 设计器 · 021 发布与 DDL · 022 数据同步 · 023 运行时 · 024 开放 API · 025 元数据模板 · 026 字典字段（dictionary011/dictionary013） · 027 低代码核心（业务规则） · 028 设计器与运行时（业务规则） · 029 元数据模板（业务规则） · 030 引擎重构（架构评审，待评审） |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
 | requirement011/ | 业务设计：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 021 julyScheduler（已编码）· 029 配置管理 · 030 数据导出 · 031 数据源管理（新域 dataservice011，已编码）· 033 业务建模（已编码）· 035 数据字典（已编码）· 036 AI 模型接入（新域 ai011，已编码）· 037 存储中心管理面（已编码）；（低代码 038/039/040 业务规则已迁至 [lowcode011/](lowcode011/)） |
 | requirement013/ | 技术方案（021 julyScheduler 已编码完成；029 配置管理已编码；031 dataservice011 已编码；033 业务建模已编码；035 数据字典已编码；036 ai011 已编码；037 存储中心管理面已编码；038 低代码核心已编码；039 低代码设计器与运行时已编码；040 元数据模板已编码；IAM 各主题按 011→013→编码 推进） |
@@ -61,7 +61,12 @@
 
 | 040 | 在用 | **元数据模板导入导出**（业务规则 [lowcode011/029](lowcode011/029.topic-metadata-template.md) · 技术方案 requirement013/040；2026-09-17 **已实现并 E2E**）。自包含 JSON 模板（1 主 3 子 + `source` + `templateVersion`，`_guide` 代注释）：`GET /getTemplate011`（默认骨架）、`GET /downloadTemplate011?objectName=`（导出）、`POST /uploadTemplate011`（multipart 单文件或 JSON，**审核**零副作用 → `{valid,errors,plan,previewDdl}`）、`POST /deployObject`（`{template|objectName, overwrite?}` → 落库 + 发布）。校验：子 code 大小写不敏感唯一（基列允许一次并归一类型）、`businessField` 非基列且固定 `VARCHAR(33)`、`pk_*` 固定 `VARCHAR(33)`、枚举、display 绑定。**不新增表、复用 038/039** |
 
-**下一可用编号：041。**
+| 041 | 立案 | **AI 模型调用（chat）**（requirement011/013，2026-09-17 **立案·待评审**）。`ai011` 域新增调用能力：传 `provider`（**id 或 code**）+ `api`（**id 或 code**，缺省默认启用密钥）+ `model`（缺省取 `provider.models` 首个）+ `messages` → 模型回复；OpenAI 兼容、非流式；出参不含 apiKey；调用审计。端点 `/klsjnh/ai011/julyAiChat/v1/chat`；供平台内部（**AI 自开发**）与 HTTP。示例：`longcat` |
+| 042 | 立案 | **低代码内核重构（元模型收口 + 内核抽取）**（评审记录 [lowcode011/030](lowcode011/030.topic-engine-refactor.md) · 技术方案 requirement013/042；2026-09-17 **方案态·待评审**）。四期：① 契约化 —— `MetaData011` 族降格 record 契约（更名 `MetadataContent`，JSON 键不变），`JulyMetadata` **组合**契约并删自有三套子实体（**显式解除 038「不改 model/ 值对象」约束**，033 侧 6 文件联动）；② 内核 —— `ObjectTablePolicy`（纯策略）+ `ObjectTableGateway`，消灭 Runtime/OpenApi/DataSync 三处逐行重复；③ 边界定型（`ObjectQueryCommand`/`RowView`，`meta`→`getMeta`）；④ 横切裁剪版（`CurrentOperatorPort`、审计基列入网关、`DateUtil011` 归口 9 处、`@Value`→`KrtConfig011`、开放 API NPE→401、pageSize clamp [1,500]）。**不改表、不改端点形状**；039 挂起项不翻案 |
+
+| 043 | 立案 | **多入口建模与数据同步**（requirement011/013，2026-09-17 **提案·待评审**）。**一个引擎、N 个门**：`sql` / `table` / `template` / `ai`（自然语言）/ `modeling`（033 交接）/ `copy` 等入口 → 统一契约 `MetadataContent`（030 共享契约）→ 审核 → 发布 → 数据同步（含 mock 造数 / source 回放 / 异表直拷 / checkpoint）。入口 = 源适配器（`ModelSourcePort`），下游唯一。依赖 030/039/040/041。**配套**：前端 SSR 按 `meta`（MetaDTO）动态渲染表单/列表（低代码运行时契约） |
+
+**下一可用编号：044。**
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。

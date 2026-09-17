@@ -45,6 +45,12 @@ import java.util.Map;
 public class BusinessModelingProbe011 implements BusinessModelingProbePort {
 
     /**
+     * Paging row-number alias injected by the Oracle page wrapper — never a
+     * business field, so it is filtered out of the inferred columns.
+     */
+    private static final String PAGING_ROW_NUMBER = "klsjnh_rn";
+
+    /**
      * Registry (config declaration + lazy pool ensure).
      */
     private final DynamicDataSourceRegistryImpl registry;
@@ -115,10 +121,18 @@ public class BusinessModelingProbe011 implements BusinessModelingProbePort {
             ResultSetMetaData meta = resultSet.getMetaData();
             int count = meta.getColumnCount();
             List<ProbeOutcome.ProbeColumn> columns = new ArrayList<>();
+            List<Integer> indexes = new ArrayList<>();
 
             for (int i = 1; i <= count; i++) {
-                columns.add(new ProbeOutcome.ProbeColumn(meta.getColumnLabel(i), meta.getColumnType(i),
-                        meta.getColumnDisplaySize(i), meta.isNullable(i) != ResultSetMetaData.columnNoNulls));
+                String label = meta.getColumnLabel(i);
+
+                if (PAGING_ROW_NUMBER.equalsIgnoreCase(label)) {
+                    continue;
+                }
+
+                columns.add(new ProbeOutcome.ProbeColumn(label, meta.getColumnType(i), meta.getColumnDisplaySize(i),
+                        meta.isNullable(i) != ResultSetMetaData.columnNoNulls));
+                indexes.add(i);
             }
 
             List<Map<String, Object>> rows = new ArrayList<>();
@@ -126,8 +140,8 @@ public class BusinessModelingProbe011 implements BusinessModelingProbePort {
             while (rows.size() < SAMPLE_ROWS && resultSet.next()) {
                 Map<String, Object> row = new LinkedHashMap<>();
 
-                for (int i = 1; i <= count; i++) {
-                    row.put(columns.get(i - 1).code(), resultSet.getObject(i));
+                for (int i = 0; i < columns.size(); i++) {
+                    row.put(columns.get(i).code(), resultSet.getObject(indexes.get(i)));
                 }
 
                 rows.add(row);

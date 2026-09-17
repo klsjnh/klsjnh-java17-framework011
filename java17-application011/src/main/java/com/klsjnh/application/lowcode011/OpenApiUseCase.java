@@ -14,8 +14,10 @@ package com.klsjnh.application.lowcode011;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
 
+import com.klsjnh.domain.iam.UserAuditPort;
 import com.klsjnh.domain.lowcode011.JulyMetadataOpenApi;
 import com.klsjnh.domain.lowcode011.JulyMetadataOpenApiRepository;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -68,6 +71,11 @@ public class OpenApiUseCase {
     private final JulyMetadataDesignerUseCase designerUseCase;
 
     /**
+     * User audit port (dynamic objectCode for open API writes).
+     */
+    private final UserAuditPort userAuditPort;
+
+    /**
      * Create the use case.
      *
      * @param configRepository  configuration repository
@@ -75,15 +83,18 @@ public class OpenApiUseCase {
      * @param ddlExecutor       catalog reads
      * @param dataAccess        generic data access
      * @param designerUseCase   designer use case
+     * @param userAuditPort     user audit port
      */
     public OpenApiUseCase(JulyMetadataOpenApiRepository configRepository,
             JulyMetadataVersionRepository versionRepository, MetadataDdlExecutorPort ddlExecutor,
-            MetadataDataAccessPort dataAccess, JulyMetadataDesignerUseCase designerUseCase) {
+            MetadataDataAccessPort dataAccess, JulyMetadataDesignerUseCase designerUseCase,
+            UserAuditPort userAuditPort) {
         this.configRepository = configRepository;
         this.versionRepository = versionRepository;
         this.ddlExecutor = ddlExecutor;
         this.dataAccess = dataAccess;
         this.designerUseCase = designerUseCase;
+        this.userAuditPort = userAuditPort;
     }
 
     /**
@@ -155,7 +166,10 @@ public class OpenApiUseCase {
 
         fillBaseDefaults(values, columns);
 
-        return dataAccess.insert(table, values);
+        int rows = dataAccess.insert(table, values);
+        audit(objectName, AuditType011.INSERT);
+
+        return rows;
     }
 
     /**
@@ -212,7 +226,10 @@ public class OpenApiUseCase {
         Map<String, Object> values = filter(body, columns);
         values.remove(keyColumn);
 
-        return dataAccess.updateByKey(table, keyColumn, keyValue, values);
+        int rows = dataAccess.updateByKey(table, keyColumn, keyValue, values);
+        audit(objectName, AuditType011.UPDATE);
+
+        return rows;
     }
 
     /**
@@ -236,7 +253,25 @@ public class OpenApiUseCase {
             throw BusinessException.badRequest(keyColumn + " required");
         }
 
-        return dataAccess.deleteByKey(table, keyColumn, keyValue, columns.contains("dr"));
+        int rows = dataAccess.deleteByKey(table, keyColumn, keyValue, columns.contains("dr"));
+        audit(objectName, AuditType011.DELETE);
+
+        return rows;
+    }
+
+    /**
+     * Record an audit row with the dynamic object code; never breaks the write.
+     *
+     * @param objectName object name
+     * @param type       audit type
+     */
+    private void audit(String objectName, AuditType011 type) {
+        try {
+            userAuditPort.record(null, "open-api", type, objectName,
+                    "open-api " + type.name().toLowerCase(Locale.ROOT) + " " + objectName, null);
+        } catch (Exception ignored) {
+            // audit must never break the business write
+        }
     }
 
     /**

@@ -14,8 +14,11 @@ package com.klsjnh.application.lowcode011;
  *
  */
 
+import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.identity.Operator011;
 
+import com.klsjnh.domain.iam.UserAuditPort;
 import com.klsjnh.domain.lowcode011.JulyMetadata;
 import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
@@ -92,6 +95,11 @@ public class JulyMetadataRuntimeUseCase {
     private final MetadataValueValidator valueValidator;
 
     /**
+     * User audit port (dynamic objectCode for runtime writes).
+     */
+    private final UserAuditPort userAuditPort;
+
+    /**
      * Create the use case.
      *
      * @param metadataUseCase    metadata CRUD use case
@@ -102,11 +110,12 @@ public class JulyMetadataRuntimeUseCase {
      * @param designerUseCase    designer use case
      * @param menuRepository     menu repository
      * @param valueValidator     value validator
+     * @param userAuditPort      user audit port
      */
     public JulyMetadataRuntimeUseCase(JulyMetadataUseCase metadataUseCase, JulyMetadataRepository metadataRepository,
             JulyMetadataVersionRepository versionRepository, MetadataDdlExecutorPort ddlExecutor,
             MetadataDataAccessPort dataAccess, JulyMetadataDesignerUseCase designerUseCase,
-            JulyMenuRepository menuRepository, MetadataValueValidator valueValidator) {
+            JulyMenuRepository menuRepository, MetadataValueValidator valueValidator, UserAuditPort userAuditPort) {
         this.metadataUseCase = metadataUseCase;
         this.metadataRepository = metadataRepository;
         this.versionRepository = versionRepository;
@@ -115,6 +124,7 @@ public class JulyMetadataRuntimeUseCase {
         this.designerUseCase = designerUseCase;
         this.menuRepository = menuRepository;
         this.valueValidator = valueValidator;
+        this.userAuditPort = userAuditPort;
     }
 
     /**
@@ -250,7 +260,7 @@ public class JulyMetadataRuntimeUseCase {
      * @param body       row values
      * @return affected rows
      */
-    public int create(String objectName, Map<String, Object> body) {
+    public int create(String objectName, Map<String, Object> body, Operator011 operator) {
         JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
         String table = physicalTable(objectName);
         Set<String> columns = ddlExecutor.columnsOf(table);
@@ -263,7 +273,10 @@ public class JulyMetadataRuntimeUseCase {
         fillBaseDefaults(values, columns);
         ensureValid(values, metadata, false);
 
-        return dataAccess.insert(table, values);
+        int rows = dataAccess.insert(table, values);
+        audit(operator, AuditType011.INSERT, objectName);
+
+        return rows;
     }
 
     /**
@@ -273,7 +286,7 @@ public class JulyMetadataRuntimeUseCase {
      * @param body       key + values
      * @return affected rows
      */
-    public int update(String objectName, Map<String, Object> body) {
+    public int update(String objectName, Map<String, Object> body, Operator011 operator) {
         JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
         String table = physicalTable(objectName);
         Set<String> columns = ddlExecutor.columnsOf(table);
@@ -288,7 +301,10 @@ public class JulyMetadataRuntimeUseCase {
         values.remove(keyColumn);
         ensureValid(values, metadata, true);
 
-        return dataAccess.updateByKey(table, keyColumn, keyValue, values);
+        int rows = dataAccess.updateByKey(table, keyColumn, keyValue, values);
+        audit(operator, AuditType011.UPDATE, objectName);
+
+        return rows;
     }
 
     /**
@@ -299,7 +315,7 @@ public class JulyMetadataRuntimeUseCase {
      * @param body       key
      * @return affected rows
      */
-    public int delete(String objectName, Map<String, Object> body) {
+    public int delete(String objectName, Map<String, Object> body, Operator011 operator) {
         requirePublished(objectName);
 
         String table = physicalTable(objectName);
@@ -311,7 +327,28 @@ public class JulyMetadataRuntimeUseCase {
             throw BusinessException.badRequest(keyColumn + " required");
         }
 
-        return dataAccess.deleteByKey(table, keyColumn, keyValue, columns.contains("dr"));
+        int rows = dataAccess.deleteByKey(table, keyColumn, keyValue, columns.contains("dr"));
+        audit(operator, AuditType011.DELETE, objectName);
+
+        return rows;
+    }
+
+    /**
+     * Record an audit row with the dynamic object code; never breaks the write.
+     *
+     * @param operator   current operator, nullable (debug)
+     * @param type       audit type
+     * @param objectName object name
+     */
+    private void audit(Operator011 operator, AuditType011 type, String objectName) {
+        try {
+            userAuditPort.record(operator == null ? null : operator.id(),
+                    operator == null ? null : operator.userAccount(), type, objectName,
+                    "runtime " + type.name().toLowerCase(Locale.ROOT) + " " + objectName,
+                    operator == null ? null : operator.ip());
+        } catch (Exception ignored) {
+            // audit must never break the business write
+        }
     }
 
     /**

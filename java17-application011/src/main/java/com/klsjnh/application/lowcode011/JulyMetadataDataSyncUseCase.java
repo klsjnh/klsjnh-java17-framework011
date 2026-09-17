@@ -27,8 +27,10 @@ import com.klsjnh.domain.lowcode011.MetadataDataWriterPort;
 
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -76,6 +78,12 @@ public class JulyMetadataDataSyncUseCase {
     private final JulyBusinessModelingUseCase businessModelingUseCase;
 
     /**
+     * Metadata-driven value validator (sync writes must pass the same gate as
+     * runtime writes).
+     */
+    private final MetadataValueValidator valueValidator;
+
+    /**
      * Create the use case.
      *
      * @param metadataUseCase        metadata CRUD use case
@@ -83,15 +91,18 @@ public class JulyMetadataDataSyncUseCase {
      * @param versionRepository      snapshot repository
      * @param dataWriter             data writer
      * @param businessModelingUseCase business modeling executor
+     * @param valueValidator         metadata value validator
      */
     public JulyMetadataDataSyncUseCase(JulyMetadataUseCase metadataUseCase,
             JulyMetadataRepository metadataRepository, JulyMetadataVersionRepository versionRepository,
-            MetadataDataWriterPort dataWriter, JulyBusinessModelingUseCase businessModelingUseCase) {
+            MetadataDataWriterPort dataWriter, JulyBusinessModelingUseCase businessModelingUseCase,
+            MetadataValueValidator valueValidator) {
         this.metadataUseCase = metadataUseCase;
         this.metadataRepository = metadataRepository;
         this.versionRepository = versionRepository;
         this.dataWriter = dataWriter;
         this.businessModelingUseCase = businessModelingUseCase;
+        this.valueValidator = valueValidator;
     }
 
     /**
@@ -129,6 +140,12 @@ public class JulyMetadataDataSyncUseCase {
                 new BusinessModelingExecuteCommand(null, dataSourceCode, null, null, sqlCode), page, size);
 
         List<Map<String, Object>> rows = source.rows();
+        List<String> errors = validateRows(rows, metadata);
+
+        if (!errors.isEmpty()) {
+            throw BusinessException.badRequest("sync validation failed: " + String.join("; ", errors));
+        }
+
         int processed = dataWriter.upsert(latest.physicalTable(), metadata.businessField(), rows);
         boolean init = Boolean.TRUE.equals(forceInit) || !metadataRepository.isSynced(metadata.objectName());
 
@@ -150,6 +167,41 @@ public class JulyMetadataDataSyncUseCase {
         result.put("dataInitialized", true);
 
         return result;
+    }
+
+    /**
+     * Validate source rows against the object metadata: the business field must
+     * be present and every mapped value must satisfy its field type / length
+     * (partial mode — base columns are filled by the writer).
+     *
+     * @param rows     source rows (labels may be upper case on Oracle)
+     * @param metadata object metadata
+     * @return errors (capped), empty when valid
+     */
+    private List<String> validateRows(List<Map<String, Object>> rows, JulyMetadata metadata) {
+        List<String> errors = new ArrayList<>();
+        String business = metadata.businessField() == null ? null
+                : metadata.businessField().toLowerCase(Locale.ROOT);
+
+        for (Map<String, Object> row : rows) {
+            Map<String, Object> normalized = new LinkedHashMap<>();
+
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+                normalized.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
+            }
+
+            if (business != null && !normalized.containsKey(business)) {
+                errors.add("business field missing: " + metadata.businessField());
+            }
+
+            errors.addAll(valueValidator.validate(normalized, metadata.fields(), true));
+
+            if (errors.size() >= 20) {
+                break;
+            }
+        }
+
+        return errors;
     }
 
     /**
