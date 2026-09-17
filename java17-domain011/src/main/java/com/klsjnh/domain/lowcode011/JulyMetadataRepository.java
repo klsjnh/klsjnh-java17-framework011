@@ -79,4 +79,31 @@ public interface JulyMetadataRepository {
      * @return total row count
      */
     long count(JulyMetadataQuerySpec spec);
+
+    /**
+     * Update the publish state pointer of an object (the DRAFT row keeps a
+     * reference to its latest published version / physical table).
+     *
+     * @param id            object id
+     * @param publishStatus publish status (DRAFT / PUBLISHED)
+     * @param version       current published version
+     * @param physicalTable physical table name
+     * @param backupTable   backup table name, nullable
+     */
+    void updatePublishState(String id, String publishStatus, String version, String physicalTable, String backupTable);
+
+    /**
+     * Mark an object's data as initialized and stamp the last sync time.
+     *
+     * @param objectName object name
+     */
+    void markSynced(String objectName);
+
+    /**
+     * Whether an object's data has been initialized.
+     *
+     * @param objectName object name
+     * @return true when initialized
+     */
+    boolean isSynced(String objectName);
 }

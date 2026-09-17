@@ -31,6 +31,9 @@ krt:
       ds-url: jdbc:mysql://127.0.0.1:33306/ds20260913001?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
       username: dev202608011
       password: dev202608011
+  lowcode:
+    ddl-execute:
+      enabled: true
   storage-center:
     default-type: local011
     minio011:

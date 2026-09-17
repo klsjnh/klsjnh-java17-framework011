@@ -152,6 +152,52 @@ public class JulyMetadataRepositoryImpl extends BaseRepository<JulyMetadataPo, J
     }
 
     /**
+     * Update the publish state pointer of an object.
+     *
+     * @param id            object id
+     * @param publishStatus publish status
+     * @param version       published version
+     * @param physicalTable physical table name
+     * @param backupTable   backup table name, nullable
+     */
+    @Override
+    public void updatePublishState(String id, String publishStatus, String version, String physicalTable,
+            String backupTable) {
+        mapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<JulyMetadataPo>()
+                .eq("id", id)
+                .set("publish_status", publishStatus)
+                .set("version", version)
+                .set("physical_table", physicalTable)
+                .set("backup_table", backupTable));
+    }
+
+    /**
+     * Mark an object's data as initialized and stamp the last sync time.
+     *
+     * @param objectName object name
+     */
+    @Override
+    public void markSynced(String objectName) {
+        mapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<JulyMetadataPo>()
+                .eq("object_name", objectName)
+                .set("data_initialized", "1")
+                .set("last_sync_at", java.time.LocalDateTime.now()));
+    }
+
+    /**
+     * Whether an object's data has been initialized.
+     *
+     * @param objectName object name
+     * @return true when initialized
+     */
+    @Override
+    public boolean isSynced(String objectName) {
+        return mapper.selectCount(new QueryWrapper<JulyMetadataPo>()
+                .eq("object_name", objectName)
+                .eq("data_initialized", "1")) > 0;
+    }
+
+    /**
      * Find by primary key together with its children.
      *
      * @param id primary key

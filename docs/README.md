@@ -56,8 +56,9 @@
 
 | 037 | 在用 | **存储中心管理面 + 在线编辑**（requirement011/013，2026-09-16 **已编码并 E2E**）。`july_storage` 表驱动多实例（`StorageResolver011` + `ObjectStorageFactory011`，适配器由 bean 改按实例配置造）+ 实例 CRUD/testConnection + 桶 CRUD + 对象 列表/分页/stat/上传/下载/删除/批删/预签名 + **在线文本编辑（readText/saveText + `EditableTextPolicy`，sql/markdown，≤1MB）** + yaml 播种（`StorageSeed011`）。端点前缀 `/klsjnh/storagecenter/julyStorage/v1`（实例+桶）· `/klsjnh/storagecenter/julyObject/v1`（对象）（2026-09-17 包名收敛 `storagecenter`、三控制器并为两模块，并对齐老 f016：对象分页带元数据、桶列表 `{bucketName,creationDate}`、`getBucket` `{bucketName,exists}`、`testConnection` 带 `bucketCount+basePath|endpoint`、实例 AK/SK 打码 + `secure` "1"/"0"）；AK/SK 出参打码 `******`。默认桶由适配器配置声明（`local011.default-bucket: backup011` → 落 `base-path/backup011`，`backup011` 读它，空则回退实例行） |
 | 038 | 在用 | **低代码核心（一主三子）**（requirement011/013，2026-09-16 **已编码并 E2E**；DDL `sql/july_metadata.sql`）。`july_metadata` + `july_metadata_field/_display/_service`，归属 `lowcode011` 域；四表都带 `sort_order`；**仅 CRUD**（7 端点）；主子表**整替**（子行物理删）+ 级联逻辑删除；**不改** 033 依赖的 `domain.lowcode011.model` 值对象 |
+| 039 | 在用 | **低代码设计器与运行时**（requirement011/013，2026-09-17 **一期完成·分三期**）。一期（设计闭环·只读）：`listModels/load/save/previewDdl` 已 E2E；二期发布（`publish`：首建 CREATE / 后仅 ADD COLUMN / 快照 / 版本 / 开关）已 E2E（`bpm_user011` → `lc_bpm_user011`）；数据同步（import/sync）进行中；在 038 之上补「设计 → 探测 → 发布建表（**DDL 执行**）→ 数据同步 → 运行时 → 开放 API」全链路；端点挂 `/klsjnh/lowcode011/julyMetadata/v1`（对齐前端 BASE）。**决策**：发布快照 `july_metadata_version` + DRAFT/PUBLISHED 分离；DDL **首建 `CREATE`、后仅 `ALTER`、禁 `DROP`**（开关 `krt.lowcode.ddl-execute.enabled` 默认关）；探测复用 dataservice011；apiKey 打码/轮换；运行时权限模型单列。一期（设计闭环，只读）开工中 |
 
-**下一可用编号：039。**
+**下一可用编号：040。**
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。
