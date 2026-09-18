@@ -20,7 +20,6 @@ ALTER TABLE july_metadata
 -- 2) 发布快照：物理表结构由发布那一刻的元数据驱动（不可变）
 CREATE TABLE IF NOT EXISTS july_metadata_version (
     id              VARCHAR(33)  NOT NULL                COMMENT '主键',
-    sort_order      INT          NOT NULL DEFAULT 9999   COMMENT '排序',
     object_name     VARCHAR(60)  NOT NULL                COMMENT '低代码对象名',
     version         VARCHAR(20)  NOT NULL                COMMENT '版本（0.0.1 递增）',
     payload_json    MEDIUMTEXT   NOT NULL                COMMENT 'MetaDTO 快照（metaData+fieldData+displayData+serviceData）',
@@ -30,6 +29,7 @@ CREATE TABLE IF NOT EXISTS july_metadata_version (
     publish_status  VARCHAR(20)  NOT NULL DEFAULT 'PUBLISHED' COMMENT '快照状态（PENDING / PUBLISHED）',
     published_by    VARCHAR(33)  NULL                    COMMENT '发布人',
     published_at    DATETIME     NULL                    COMMENT '发布时间',
+    sort_order      INT          NOT NULL DEFAULT 9999   COMMENT '排序',
     status          VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by       VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by       VARCHAR(33)  NULL                    COMMENT '最后修改人',
@@ -44,13 +44,13 @@ CREATE TABLE IF NOT EXISTS july_metadata_version (
 -- 3) 开放 API 配置（apiKey 打码出参；轮换首次回明文一次）
 CREATE TABLE IF NOT EXISTS july_metadata_open_api (
     id                VARCHAR(33)  NOT NULL                COMMENT '主键',
-    sort_order        INT          NOT NULL DEFAULT 9999   COMMENT '排序',
     object_name       VARCHAR(60)  NOT NULL                COMMENT '低代码对象名',
     enabled           VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '是否启用（0 否 / 1 是）',
     auth_mode         VARCHAR(20)  NOT NULL DEFAULT 'closed' COMMENT '鉴权（closed / none / apiKey）',
     allowed_ops       VARCHAR(300) NULL                    COMMENT '允许操作（query/insert/update/delete 逗号分隔）',
     api_key           VARCHAR(300) NULL                    COMMENT 'API Key（出参打码 ******）',
     api_key_updated_at DATETIME    NULL                    COMMENT 'API Key 最近轮换时间',
+    sort_order        INT          NOT NULL DEFAULT 9999   COMMENT '排序',
     status            VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by         VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by         VARCHAR(33)  NULL                    COMMENT '最后修改人',

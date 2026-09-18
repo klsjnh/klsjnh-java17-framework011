@@ -1,6 +1,6 @@
 -- ============================================================
 -- july_metadata / _field / _display / _service — 低代码核心（一主三子）
--- 列顺序规范：id → 业务字段 → status → 审计四列 → dr
+-- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
 -- 设计：docs/requirement011/038.topic-lowcode-core.md
 -- 方案：docs/requirement013/038.topic-lowcode-core.md
 -- 边界：只做 CRUD；不生成物理表 / 代码 / 页面；四表均带 sort_order
@@ -8,7 +8,6 @@
 
 CREATE TABLE IF NOT EXISTS july_metadata (
     id             VARCHAR(33)  NOT NULL                COMMENT '主键',
-    sort_order     INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     object_name    VARCHAR(60)  NOT NULL                COMMENT '低代码对象名（全局唯一，不可变）',
     object_type    VARCHAR(20)  NOT NULL DEFAULT 'type011' COMMENT '对象类型（ObjectType011）',
     description    VARCHAR(300) NULL                    COMMENT '对象描述',
@@ -16,6 +15,7 @@ CREATE TABLE IF NOT EXISTS july_metadata (
     package_name   VARCHAR(300) NULL                    COMMENT '目标包名',
     router_path    VARCHAR(300) NULL                    COMMENT '前端路由',
     remark         VARCHAR(300) NULL                    COMMENT '备注',
+    sort_order     INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status         VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by      VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by      VARCHAR(33)  NULL                    COMMENT '最后修改人',
@@ -29,13 +29,13 @@ CREATE TABLE IF NOT EXISTS july_metadata (
 CREATE TABLE IF NOT EXISTS july_metadata_field (
     id             VARCHAR(33)  NOT NULL                COMMENT '主键',
     pk_mt          VARCHAR(33)  NOT NULL                COMMENT '主表链接（july_metadata.id）',
-    sort_order     INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     field_code     VARCHAR(60)  NOT NULL                COMMENT '字段编码（同对象内唯一）',
     field_name     VARCHAR(60)  NOT NULL                COMMENT '字段名称',
     field_type     VARCHAR(30)  NOT NULL                COMMENT '字段类型（FieldType011）',
     field_length   INT          NOT NULL DEFAULT 0      COMMENT '长度',
     required_field VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '是否必填（0 否 / 1 是）',
     default_value  VARCHAR(300) NULL                    COMMENT '默认值',
+    sort_order     INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status         VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by      VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by      VARCHAR(33)  NULL                    COMMENT '最后修改人',
@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS july_metadata_field (
 CREATE TABLE IF NOT EXISTS july_metadata_display (
     id             VARCHAR(33)  NOT NULL                COMMENT '主键',
     pk_mt          VARCHAR(33)  NOT NULL                COMMENT '主表链接（july_metadata.id）',
-    sort_order     INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     display_code   VARCHAR(60)  NOT NULL                COMMENT '列编码（绑定字段，同对象内唯一）',
     display_name   VARCHAR(60)  NOT NULL                COMMENT '列名称',
     align          VARCHAR(10)  NOT NULL DEFAULT 'left' COMMENT '对齐（left/center/right）',
@@ -58,6 +57,7 @@ CREATE TABLE IF NOT EXISTS july_metadata_display (
     component_type VARCHAR(30)  NOT NULL                COMMENT '组件类型',
     display_type   VARCHAR(20)  NOT NULL DEFAULT 'all'  COMMENT '显示类型（DisplayType011）',
     param011       VARCHAR(300) NULL                    COMMENT '扩展参数',
+    sort_order     INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status         VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by      VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by      VARCHAR(33)  NULL                    COMMENT '最后修改人',
@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS july_metadata_display (
 CREATE TABLE IF NOT EXISTS july_metadata_service (
     id                  VARCHAR(33)   NOT NULL                COMMENT '主键',
     pk_mt               VARCHAR(33)   NOT NULL                COMMENT '主表链接（july_metadata.id）',
-    sort_order          INT           NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     service_code        VARCHAR(60)   NOT NULL                COMMENT '服务编码（同对象内唯一）',
     service_name        VARCHAR(60)   NOT NULL                COMMENT '服务名称',
     service_description VARCHAR(300)  NULL                    COMMENT '服务描述',
@@ -80,6 +79,7 @@ CREATE TABLE IF NOT EXISTS july_metadata_service (
     param_type          VARCHAR(30)   NOT NULL DEFAULT 'none' COMMENT '参数类型（ServiceParamType011）',
     service_content     TEXT           NULL                   COMMENT 'SQL / 脚本内容',
     enabled             VARCHAR(3)    NOT NULL DEFAULT '0'    COMMENT '是否启用（0 否 / 1 是）',
+    sort_order          INT           NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status              VARCHAR(3)    NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by           VARCHAR(33)   NULL                    COMMENT '创建人',
     update_by           VARCHAR(33)   NULL                    COMMENT '最后修改人',

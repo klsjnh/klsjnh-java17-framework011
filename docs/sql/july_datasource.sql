@@ -1,6 +1,6 @@
 -- ============================================================
 -- july_datasource — 数据服务-数据源管理（运行时可变业务库连接注册）
--- 列顺序规范：id → 业务字段 → status → 审计四列 → dr
+-- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
 -- 设计：docs/requirement011/031.topic-dataservice011.md
 -- 方案：docs/requirement013/031.topic-dataservice011.md
 -- 边界：krt.ci011（yaml）为引导数据源；同一 dsCode 只允许一个家
@@ -8,7 +8,6 @@
 
 CREATE TABLE IF NOT EXISTS july_datasource (
     id            VARCHAR(33)  NOT NULL                COMMENT '主键',
-    sort_order    INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     ds_code       VARCHAR(60)  NOT NULL                COMMENT '数据源编码（全局唯一，不可变，连接池名）',
     ds_name       VARCHAR(100) NOT NULL                COMMENT '数据源名称',
     db_type       VARCHAR(20)  NOT NULL DEFAULT 'mysql' COMMENT '数据库类型（mysql/oracle/sqlserver/postgresql）',
@@ -19,6 +18,7 @@ CREATE TABLE IF NOT EXISTS july_datasource (
     driver_class  VARCHAR(200) NULL                    COMMENT '驱动类名（为空时按 db_type 取 DatabaseType011 默认值）',
     pool_config   VARCHAR(500) NULL                    COMMENT '连接池 JSON（本期预留，不解析，走代码默认值）',
     remark        VARCHAR(300) NULL                    COMMENT '备注',
+    sort_order    INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status        VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用，停用即从运行时注册表摘除）',
     create_by     VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by     VARCHAR(33)  NULL                    COMMENT '最后修改人',

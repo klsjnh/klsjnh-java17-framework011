@@ -1,12 +1,15 @@
 -- ============================================================
 -- BaseEntity 公共列：所有业务表建表时包含以下字段（表名前缀 july_ 按需调整）
--- 注意：本文件是公共列"模板"；真实业务表的列顺序规范 = id → 业务字段 → status → 审计四列 → dr
---       （业务列紧跟主键可读性最好，技术列沉底；参见各主题 july_*.sql）
+-- 注意：本文件是公共列"模板"；真实业务表的列顺序规范 =
+--       id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
+--       （业务列紧跟主键可读性最好；sort_order 紧挨 status 之前；技术列沉底；参见各主题 july_*.sql）
 -- ============================================================
 
--- 建表模板示例：
+-- 建表模板示例（无排序需求的表省略 sort_order）：
 -- CREATE TABLE july_xxx (
     id          VARCHAR(33)  NOT NULL                COMMENT '主键',
+    -- 业务字段...
+    sort_order  INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前；无需求则省略）',
     status      VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态',
     create_by   VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by   VARCHAR(33)  NULL                    COMMENT '最后修改人',
@@ -23,6 +26,7 @@
 
 -- ============================================================
 -- BaseEntity011（继承 BaseEntity）：需要业务排序的表（字典/分类等）额外追加一列
+-- 位置：紧挨 `status` 之前（id → 业务字段 → sort_order → status → 审计四列 → dr）
 -- ============================================================
     sort_order INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
 

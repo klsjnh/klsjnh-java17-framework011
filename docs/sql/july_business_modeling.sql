@@ -1,6 +1,6 @@
 -- ============================================================
 -- july_business_modeling — 数据服务011 - 业务建模
--- 列顺序规范：id → 业务字段 → status → 审计四列 → dr
+-- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
 -- 设计：docs/requirement011/033.topic-business-modeling.md
 -- 方案：docs/requirement013/033.topic-business-modeling.md
 -- 边界：合并老项目 july_sql + july_model；产物 = MetaData011 + FieldInfo011 的 JSON；

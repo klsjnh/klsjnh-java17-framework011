@@ -1,6 +1,6 @@
 -- ============================================================
 -- july_storage — 存储中心 - 对象存储实例（表驱动多实例）
--- 列顺序规范：id → 业务字段 → status → 审计四列 → dr
+-- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
 -- 设计：docs/requirement011/037.topic-storage-migration.md
 -- 方案：docs/requirement013/037.topic-storage-migration.md
 -- 边界：yaml krt.storage-center.* 仅作播种（默认桶除外）；表为运行时唯一真源；AK/SK 出参打码
@@ -8,7 +8,6 @@
 
 CREATE TABLE IF NOT EXISTS july_storage (
     id                     VARCHAR(33)  NOT NULL                COMMENT '主键',
-    sort_order             INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     storage_code           VARCHAR(60)  NOT NULL                COMMENT '存储实例编码（全局唯一，不可变）',
     storage_name           VARCHAR(100) NOT NULL                COMMENT '存储实例名称',
     provider               VARCHAR(20)  NOT NULL DEFAULT 'local011' COMMENT '存储类型（StorageType011：local011/minio011/cos011/tos011/oss011/s3011）',
@@ -20,6 +19,7 @@ CREATE TABLE IF NOT EXISTS july_storage (
     default_bucket         VARCHAR(100) NULL                    COMMENT '默认桶',
     presign_expiry_seconds INT          NOT NULL DEFAULT 3600   COMMENT '预签名有效期（秒）',
     remark                 VARCHAR(300) NULL                    COMMENT '备注',
+    sort_order             INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status                 VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     create_by              VARCHAR(33)  NULL                    COMMENT '创建人',
     update_by              VARCHAR(33)  NULL                    COMMENT '最后修改人',
