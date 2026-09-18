@@ -15,6 +15,7 @@ package com.klsjnh.application.lowcode011;
  */
 
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.domain.lowcode011.JulyMetadata;
 import com.klsjnh.domain.lowcode011.JulyMetadataField;
@@ -132,7 +133,7 @@ public class JulyMetadataPublishUseCase {
         }
 
         versionRepository.insert(new JulyMetadataVersion(EntityId.generate().value(), objectName, version,
-                toPayload(metadata), table, null, ddl, "PUBLISHED", null, LocalDateTime.now()));
+                toPayload(metadata), table, null, ddl, "PUBLISHED", null, DateUtil011.now()));
         metadataRepository.updatePublishState(metadata.id().value(), "PUBLISHED", version, table, null);
 
         Map<String, Object> result = new LinkedHashMap<>();

@@ -16,7 +16,8 @@ package com.klsjnh.infrastructure.lowcode011.ddl;
 
 import com.klsjnh.domain.lowcode011.MetadataDdlExecutorPort;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.klsjnh.infrastructure.config.KrtConfig011;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -48,12 +49,11 @@ public class DatasourceDdlExecutor implements MetadataDdlExecutorPort {
      * Create the executor.
      *
      * @param dataSource primary datasource
-     * @param enabled    ddl execution switch
+     * @param krtConfig  framework config (krt.lowcode.ddl-execute.enabled)
      */
-    public DatasourceDdlExecutor(DataSource dataSource,
-            @Value("${krt.lowcode.ddl-execute.enabled:false}") boolean enabled) {
+    public DatasourceDdlExecutor(DataSource dataSource, KrtConfig011 krtConfig) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
-        this.enabled = enabled;
+        this.enabled = krtConfig.getLowcode().getDdlExecute().isEnabled();
     }
 
     /**

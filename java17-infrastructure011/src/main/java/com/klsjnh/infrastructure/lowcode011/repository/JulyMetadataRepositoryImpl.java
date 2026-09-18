@@ -14,6 +14,8 @@ package com.klsjnh.infrastructure.lowcode011.repository;
  *
  */
 
+import com.klsjnh.common.util.DateUtil011;
+
 import com.klsjnh.domain.lowcode011.JulyMetadata;
 import com.klsjnh.domain.lowcode011.JulyMetadataDisplay;
 import com.klsjnh.domain.lowcode011.JulyMetadataField;
@@ -182,7 +184,7 @@ public class JulyMetadataRepositoryImpl extends BaseRepository<JulyMetadataPo, J
         mapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<JulyMetadataPo>()
                 .eq("object_name", objectName)
                 .set("data_initialized", "1")
-                .set("last_sync_at", java.time.LocalDateTime.now()));
+                .set("last_sync_at", DateUtil011.now()));
     }
 
     /**

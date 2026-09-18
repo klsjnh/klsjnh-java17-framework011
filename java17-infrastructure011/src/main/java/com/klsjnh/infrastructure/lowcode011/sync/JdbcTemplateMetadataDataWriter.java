@@ -14,6 +14,8 @@ package com.klsjnh.infrastructure.lowcode011.sync;
  *
  */
 
+import com.klsjnh.common.util.DateUtil011;
+
 import com.klsjnh.domain.lowcode011.MetadataDataWriterPort;
 import com.klsjnh.domain.lowcode011.MetadataDdlExecutorPort;
 
@@ -192,7 +194,7 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
                 return "0";
             case "create_time":
             case "update_time":
-                return Timestamp.valueOf(LocalDateTime.now());
+                return Timestamp.valueOf(DateUtil011.now());
             default:
                 return null;
         }

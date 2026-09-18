@@ -83,6 +83,16 @@ public class KrtConfig011 {
     private List<ConnectionInfo> ci011 = new ArrayList<>();
 
     /**
+     * Low-code settings (krt.lowcode.*).
+     */
+    private LowcodeConfig lowcode = new LowcodeConfig();
+
+    /**
+     * AI settings (krt.ai011.*).
+     */
+    private AiConfig ai011 = new AiConfig();
+
+    /**
      * Startup guard: reject unsafe config combinations at boot.
      */
     @PostConstruct
@@ -143,6 +153,42 @@ public class KrtConfig011 {
          * </p>
          */
         private List<String> trustedProxies = new ArrayList<>();
+    }
+
+    /**
+     * Low-code settings.
+     */
+    @Data
+    public static class LowcodeConfig {
+
+        /**
+         * DDL execution gate (krt.lowcode.ddl-execute.enabled), default off.
+         */
+        private DdlExecute ddlExecute = new DdlExecute();
+
+        /**
+         * DDL execute gate.
+         */
+        @Data
+        public static class DdlExecute {
+
+            /**
+             * Whether publishing may execute DDL.
+             */
+            private boolean enabled;
+        }
+    }
+
+    /**
+     * AI settings.
+     */
+    @Data
+    public static class AiConfig {
+
+        /**
+         * Chat request timeout seconds (krt.ai011.chat-timeout-seconds).
+         */
+        private long chatTimeoutSeconds = 60;
     }
 
     /**

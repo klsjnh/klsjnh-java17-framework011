@@ -19,7 +19,8 @@ import com.klsjnh.domain.ai011.AiChatMessage;
 import com.klsjnh.domain.ai011.AiChatPort;
 import com.klsjnh.domain.ai011.AiChatResult;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.klsjnh.infrastructure.config.KrtConfig011;
+
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -63,10 +64,10 @@ public class OpenAiCompatChatAdapter implements AiChatPort {
     /**
      * Create the adapter.
      *
-     * @param timeoutSeconds request timeout in seconds
+     * @param krtConfig framework config (krt.ai011.chat-timeout-seconds)
      */
-    public OpenAiCompatChatAdapter(@Value("${krt.ai011.chat-timeout-seconds:60}") long timeoutSeconds) {
-        this.timeoutSeconds = timeoutSeconds;
+    public OpenAiCompatChatAdapter(KrtConfig011 krtConfig) {
+        this.timeoutSeconds = krtConfig.getAi011().getChatTimeoutSeconds();
     }
 
     /**

@@ -15,6 +15,7 @@ package com.klsjnh.application.lowcode011;
  */
 
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.domain.lowcode011.JulyMetadataOpenApi;
 import com.klsjnh.domain.lowcode011.JulyMetadataOpenApiRepository;
@@ -119,7 +120,7 @@ public class JulyMetadataOpenApiUseCase {
 
         JulyMetadataOpenApi config = new JulyMetadataOpenApi(existing == null ? EntityId.generate().value()
                 : existing.id(), objectName, enabled, authMode, allowedOps, apiKey,
-                clearKey == null ? (existing == null ? null : existing.apiKeyUpdatedAt()) : LocalDateTime.now());
+                clearKey == null ? (existing == null ? null : existing.apiKeyUpdatedAt()) : DateUtil011.now());
 
         if (existing == null) {
             repository.insert(config);
@@ -145,7 +146,7 @@ public class JulyMetadataOpenApiUseCase {
 
         String clearKey = randomKey();
         JulyMetadataOpenApi rotated = new JulyMetadataOpenApi(existing.id(), objectName, true, "apiKey",
-                existing.allowedOps(), clearKey, LocalDateTime.now());
+                existing.allowedOps(), clearKey, DateUtil011.now());
         repository.update(rotated);
 
         return toView(rotated, clearKey);

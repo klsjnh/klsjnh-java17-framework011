@@ -16,6 +16,7 @@ package com.klsjnh.application.lowcode011;
 
 import com.klsjnh.domain.lowcode011.JulyMetadataField;
 import com.klsjnh.domain.lowcode011.enums.FieldType011;
+import com.klsjnh.domain.lowcode011.records.BaseColumn011;
 
 import org.springframework.stereotype.Component;
 
@@ -105,8 +106,7 @@ public class MetadataValueValidator {
      * @return true for audit-created columns
      */
     private boolean isAuditColumn(String code) {
-        return "create_by".equals(code) || "update_by".equals(code) || "create_time".equals(code)
-                || "update_time".equals(code);
+        return BaseColumn011.AUDIT.contains(code);
     }
 
     /**

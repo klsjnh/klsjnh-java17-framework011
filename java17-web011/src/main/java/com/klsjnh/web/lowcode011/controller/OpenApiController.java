@@ -72,13 +72,13 @@ public class OpenApiController {
      * @param apiKey     api key header
      * @return MetaDTO
      */
-    @GetMapping("/meta")
+    @GetMapping("/getMeta")
     @Operation(summary = "对象元信息（MetaDTO，api_key 鉴权）")
-    public Response011<Map<String, Object>> meta(@RequestParam("objectName") String objectName,
+    public Response011<Map<String, Object>> getMeta(@RequestParam("objectName") String objectName,
             @RequestHeader(value = API_KEY_HEADER, required = false) String apiKey) {
         String funcName = "open meta";
 
-        return Response011.success(funcName, useCase.meta(objectName, apiKey));
+        return Response011.success(funcName, useCase.getMeta(objectName, apiKey));
     }
 
     /**

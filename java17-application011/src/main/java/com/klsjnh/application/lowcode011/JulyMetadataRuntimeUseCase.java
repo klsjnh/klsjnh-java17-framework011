@@ -11,6 +11,7 @@ package com.klsjnh.application.lowcode011;
  *          modify history
  *
  *      2026.09.17  metadata runtime use case class
+ *      2026.09.17  delegate data plane to ObjectTableGateway
  *
  */
 
@@ -19,12 +20,9 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 
 import com.klsjnh.domain.iam.UserAuditPort;
-import com.klsjnh.domain.lowcode011.JulyMetadata;
-import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
+import com.klsjnh.domain.lowcode011.CurrentOperatorPort;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersionRepository;
-import com.klsjnh.domain.lowcode011.MetadataDataAccessPort;
-import com.klsjnh.domain.lowcode011.MetadataDdlExecutorPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.system011.menu.JulyMenu;
@@ -37,13 +35,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 /**
- * Runtime use case: publish a published object as a runtime menu, list runtime
- * menus, and serve the internal (JWT) dynamic CRUD of a published object. The
- * data plane reuses the generic access port (catalog whitelist + bound values).
+ * Runtime use case: runtime menu plus the internal (JWT) dynamic CRUD. The data
+ * plane is delegated to {@link ObjectTableGateway}; this class keeps only the
+ * menu orchestration, metadata read and the dynamic audit.
  */
 
 @Service
@@ -55,34 +51,14 @@ public class JulyMetadataRuntimeUseCase {
     private static final String ROUTE_PREFIX = "/runtime/";
 
     /**
-     * Metadata CRUD use case.
-     */
-    private final JulyMetadataUseCase metadataUseCase;
-
-    /**
-     * Metadata repository.
-     */
-    private final JulyMetadataRepository metadataRepository;
-
-    /**
-     * Snapshot repository (physical table / version).
-     */
-    private final JulyMetadataVersionRepository versionRepository;
-
-    /**
-     * Catalog reads (columns).
-     */
-    private final MetadataDdlExecutorPort ddlExecutor;
-
-    /**
-     * Generic data access.
-     */
-    private final MetadataDataAccessPort dataAccess;
-
-    /**
      * Designer use case (metadata read).
      */
     private final JulyMetadataDesignerUseCase designerUseCase;
+
+    /**
+     * Snapshot repository (menu version).
+     */
+    private final JulyMetadataVersionRepository versionRepository;
 
     /**
      * Menu repository (runtime menu entry).
@@ -90,46 +66,43 @@ public class JulyMetadataRuntimeUseCase {
     private final JulyMenuRepository menuRepository;
 
     /**
-     * Metadata-driven value validator.
-     */
-    private final MetadataValueValidator valueValidator;
-
-    /**
      * User audit port (dynamic objectCode for runtime writes).
      */
     private final UserAuditPort userAuditPort;
 
     /**
+     * Object table kernel.
+     */
+    private final ObjectTableGateway tableGateway;
+
+    /**
+     * Current operator port (dynamic audit operator).
+     */
+    private final CurrentOperatorPort currentOperatorPort;
+
+    /**
      * Create the use case.
      *
-     * @param metadataUseCase    metadata CRUD use case
-     * @param metadataRepository metadata repository
-     * @param versionRepository  snapshot repository
-     * @param ddlExecutor        catalog reads
-     * @param dataAccess         generic data access
-     * @param designerUseCase    designer use case
-     * @param menuRepository     menu repository
-     * @param valueValidator     value validator
-     * @param userAuditPort      user audit port
+     * @param designerUseCase     designer use case
+     * @param versionRepository   snapshot repository
+     * @param menuRepository      menu repository
+     * @param userAuditPort       user audit port
+     * @param tableGateway        object table gateway
+     * @param currentOperatorPort current operator port
      */
-    public JulyMetadataRuntimeUseCase(JulyMetadataUseCase metadataUseCase, JulyMetadataRepository metadataRepository,
-            JulyMetadataVersionRepository versionRepository, MetadataDdlExecutorPort ddlExecutor,
-            MetadataDataAccessPort dataAccess, JulyMetadataDesignerUseCase designerUseCase,
-            JulyMenuRepository menuRepository, MetadataValueValidator valueValidator, UserAuditPort userAuditPort) {
-        this.metadataUseCase = metadataUseCase;
-        this.metadataRepository = metadataRepository;
-        this.versionRepository = versionRepository;
-        this.ddlExecutor = ddlExecutor;
-        this.dataAccess = dataAccess;
+    public JulyMetadataRuntimeUseCase(JulyMetadataDesignerUseCase designerUseCase,
+            JulyMetadataVersionRepository versionRepository, JulyMenuRepository menuRepository,
+            UserAuditPort userAuditPort, ObjectTableGateway tableGateway, CurrentOperatorPort currentOperatorPort) {
         this.designerUseCase = designerUseCase;
+        this.versionRepository = versionRepository;
         this.menuRepository = menuRepository;
-        this.valueValidator = valueValidator;
         this.userAuditPort = userAuditPort;
+        this.tableGateway = tableGateway;
+        this.currentOperatorPort = currentOperatorPort;
     }
 
     /**
-     * Publish a published object as a runtime menu (idempotent: re-publish
-     * updates the existing entry).
+     * Publish a published object as a runtime menu (idempotent).
      *
      * @param objectName     object name
      * @param parentMenuCode parent menu code, nullable for root
@@ -137,16 +110,18 @@ public class JulyMetadataRuntimeUseCase {
      * @return menu entry
      */
     public Map<String, Object> publishMenu(String objectName, String parentMenuCode, String projectCode) {
-        JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
+        Map<String, Object> metadata = designerUseCase.load(objectName);
 
         if (versionRepository.findLatest(objectName) == null) {
             throw BusinessException.badRequest("object not published: " + objectName);
         }
 
-        String menuCode = "rt_" + objectName;
-        String menuName = metadata.description() == null || metadata.description().isBlank()
+        @SuppressWarnings("unchecked")
+        Map<String, Object> metaData = (Map<String, Object>) metadata.get("metaData");
+        String menuName = metaData.get("description") == null || String.valueOf(metaData.get("description")).isBlank()
                 ? objectName
-                : metadata.description();
+                : String.valueOf(metaData.get("description"));
+        String menuCode = "rt_" + objectName;
         String route = ROUTE_PREFIX + objectName;
         String parentId = "";
 
@@ -214,9 +189,7 @@ public class JulyMetadataRuntimeUseCase {
      * @param objectName object name
      * @return MetaDTO
      */
-    public Map<String, Object> meta(String objectName) {
-        requirePublished(objectName);
-
+    public Map<String, Object> getMeta(String objectName) {
         return designerUseCase.load(objectName);
     }
 
@@ -228,29 +201,12 @@ public class JulyMetadataRuntimeUseCase {
      * @return page result
      */
     public Map<String, Object> query(String objectName, Map<String, Object> body) {
-        requirePublished(objectName);
+        Object filters = body.get("filters");
 
-        String table = physicalTable(objectName);
-        Set<String> columns = ddlExecutor.columnsOf(table);
-        Map<String, Object> filters = filter(body.get("filters"), columns);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> where = filters instanceof Map ? (Map<String, Object>) filters : Map.of();
 
-        if (columns.contains("dr") && !filters.containsKey("dr")) {
-            filters.put("dr", "0");
-        }
-
-        int pageIndex = integer(body.get("pageIndex"), 1);
-        int pageSize = integer(body.get("pageSize"), 20);
-        long total = dataAccess.count(table, filters);
-        List<Map<String, Object>> rows = dataAccess.select(table, new ArrayList<>(columns), filters, "id",
-                (pageIndex - 1) * pageSize, pageSize);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("pageIndex", pageIndex);
-        result.put("pageSize", pageSize);
-        result.put("total", total);
-        result.put("rows", rows);
-
-        return result;
+        return tableGateway.query(objectName, where, integer(body.get("pageIndex")), integer(body.get("pageSize")));
     }
 
     /**
@@ -258,77 +214,42 @@ public class JulyMetadataRuntimeUseCase {
      *
      * @param objectName object name
      * @param body       row values
+     * @param operator   current operator, nullable
      * @return affected rows
      */
-    public int create(String objectName, Map<String, Object> body, Operator011 operator) {
-        JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
-        String table = physicalTable(objectName);
-        Set<String> columns = ddlExecutor.columnsOf(table);
-        Map<String, Object> values = filter(body, columns);
-
-        if (values.isEmpty()) {
-            throw BusinessException.badRequest("no valid column in body");
-        }
-
-        fillBaseDefaults(values, columns);
-        ensureValid(values, metadata, false);
-
-        int rows = dataAccess.insert(table, values);
-        audit(operator, AuditType011.INSERT, objectName);
+    public int create(String objectName, Map<String, Object> body) {
+        int rows = tableGateway.insert(objectName, body);
+        audit(AuditType011.INSERT, objectName);
 
         return rows;
     }
 
     /**
-     * Update one row by id (or {@code sid}).
+     * Update one row by id / sid.
      *
      * @param objectName object name
      * @param body       key + values
+     * @param operator   current operator, nullable
      * @return affected rows
      */
-    public int update(String objectName, Map<String, Object> body, Operator011 operator) {
-        JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
-        String table = physicalTable(objectName);
-        Set<String> columns = ddlExecutor.columnsOf(table);
-        String keyColumn = body.containsKey("sid") ? "sid" : "id";
-        Object keyValue = body.get(keyColumn);
-
-        if (keyValue == null) {
-            throw BusinessException.badRequest(keyColumn + " required");
-        }
-
-        Map<String, Object> values = filter(body, columns);
-        values.remove(keyColumn);
-        ensureValid(values, metadata, true);
-
-        int rows = dataAccess.updateByKey(table, keyColumn, keyValue, values);
-        audit(operator, AuditType011.UPDATE, objectName);
+    public int update(String objectName, Map<String, Object> body) {
+        int rows = tableGateway.update(objectName, body);
+        audit(AuditType011.UPDATE, objectName);
 
         return rows;
     }
 
     /**
-     * Delete one row by id (or {@code sid}); logic delete when the table has a
-     * {@code dr}.
+     * Delete one row by id / sid (logic delete when supported).
      *
      * @param objectName object name
      * @param body       key
+     * @param operator   current operator, nullable
      * @return affected rows
      */
-    public int delete(String objectName, Map<String, Object> body, Operator011 operator) {
-        requirePublished(objectName);
-
-        String table = physicalTable(objectName);
-        Set<String> columns = ddlExecutor.columnsOf(table);
-        String keyColumn = body.containsKey("sid") ? "sid" : "id";
-        Object keyValue = body.get(keyColumn);
-
-        if (keyValue == null) {
-            throw BusinessException.badRequest(keyColumn + " required");
-        }
-
-        int rows = dataAccess.deleteByKey(table, keyColumn, keyValue, columns.contains("dr"));
-        audit(operator, AuditType011.DELETE, objectName);
+    public int delete(String objectName, Map<String, Object> body) {
+        int rows = tableGateway.delete(objectName, body);
+        audit(AuditType011.DELETE, objectName);
 
         return rows;
     }
@@ -340,7 +261,9 @@ public class JulyMetadataRuntimeUseCase {
      * @param type       audit type
      * @param objectName object name
      */
-    private void audit(Operator011 operator, AuditType011 type, String objectName) {
+    private void audit(AuditType011 type, String objectName) {
+        Operator011 operator = currentOperatorPort.current();
+
         try {
             userAuditPort.record(operator == null ? null : operator.id(),
                     operator == null ? null : operator.userAccount(), type, objectName,
@@ -352,110 +275,12 @@ public class JulyMetadataRuntimeUseCase {
     }
 
     /**
-     * Ensure the object is published.
+     * Read an optional int body value.
      *
-     * @param objectName object name
+     * @param value raw value
+     * @return integer or null
      */
-    private void requirePublished(String objectName) {
-        if (metadataRepository.findByObjectName(objectName) == null) {
-            throw BusinessException.recordNotFound(objectName);
-        }
-    }
-
-    /**
-     * Validate a write payload against the object fields.
-     *
-     * @param values   values
-     * @param metadata object metadata
-     * @param partial  true for update
-     */
-    private void ensureValid(Map<String, Object> values, JulyMetadata metadata, boolean partial) {
-        List<String> errors = valueValidator.validate(values, metadata.fields(), partial);
-
-        if (!errors.isEmpty()) {
-            throw BusinessException.badRequest("validation failed: " + String.join("; ", errors));
-        }
-    }
-
-    /**
-     * Resolve the physical table of a published object.
-     *
-     * @param objectName object name
-     * @return physical table
-     */
-    private String physicalTable(String objectName) {
-        JulyMetadataVersion latest = versionRepository.findLatest(objectName);
-
-        if (latest == null) {
-            throw BusinessException.badRequest("object not published: " + objectName);
-        }
-
-        return latest.physicalTable();
-    }
-
-    /**
-     * Fill platform base columns that are NOT NULL but absent from the request.
-     *
-     * @param values  column values (mutated)
-     * @param columns target columns
-     */
-    private void fillBaseDefaults(Map<String, Object> values, Set<String> columns) {
-        if (columns.contains("id") && !values.containsKey("id")) {
-            values.put("id", UUID.randomUUID().toString().replace("-", ""));
-        }
-
-        if (columns.contains("status") && !values.containsKey("status")) {
-            values.put("status", "1");
-        }
-
-        if (columns.contains("dr") && !values.containsKey("dr")) {
-            values.put("dr", "0");
-        }
-
-        java.sql.Timestamp now = java.sql.Timestamp.valueOf(java.time.LocalDateTime.now());
-
-        if (columns.contains("create_time") && !values.containsKey("create_time")) {
-            values.put("create_time", now);
-        }
-
-        if (columns.contains("update_time") && !values.containsKey("update_time")) {
-            values.put("update_time", now);
-        }
-    }
-
-    /**
-     * Keep only keys that are real target columns.
-     *
-     * @param raw     raw map
-     * @param columns target columns
-     * @return filtered map
-     */
-    private Map<String, Object> filter(Object raw, Set<String> columns) {
-        Map<String, Object> filtered = new LinkedHashMap<>();
-
-        if (raw instanceof Map) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>) raw).entrySet()) {
-                String key = String.valueOf(entry.getKey()).toLowerCase(Locale.ROOT);
-
-                if (columns.contains(key)) {
-                    filtered.put(key, entry.getValue());
-                }
-            }
-        }
-
-        return filtered;
-    }
-
-    /**
-     * Read a positive int with a default.
-     *
-     * @param value    raw value
-     * @param fallback default
-     * @return int
-     */
-    private int integer(Object value, int fallback) {
-        int v = value instanceof Number ? ((Number) value).intValue() : fallback;
-
-        return v < 1 ? fallback : v;
+    private Integer integer(Object value) {
+        return value instanceof Number ? ((Number) value).intValue() : null;
     }
 }

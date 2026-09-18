@@ -26,6 +26,7 @@ import com.klsjnh.domain.lowcode011.MetadataDdlExecutorPort;
 import com.klsjnh.domain.lowcode011.MetadataDdlGeneratorPort;
 import com.klsjnh.domain.lowcode011.enums.FieldType011;
 import com.klsjnh.domain.lowcode011.enums.ObjectType011;
+import com.klsjnh.domain.lowcode011.records.BaseColumn011;
 
 import org.springframework.stereotype.Service;
 
@@ -67,8 +68,7 @@ public class JulyMetadataTemplateUseCase {
     /**
      * Platform base columns: business fields may never reuse these codes.
      */
-    private static final Set<String> BASE_COLUMNS = Set.of("id", "status", "dr", "create_by", "update_by",
-            "create_time", "update_time");
+    private static final Set<String> BASE_COLUMNS = BaseColumn011.ALL;
 
     /**
      * Metadata CRUD use case.

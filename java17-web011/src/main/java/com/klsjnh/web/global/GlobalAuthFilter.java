@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.klsjnh.common.constant.FrameConst011;
+import com.klsjnh.common.identity.Operator011;
+import com.klsjnh.common.identity.OperatorContext011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.domain.iam.AuthTokenPort;
@@ -142,14 +144,19 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
         if (identity != null) {
             request.setAttribute(FrameConst011.OPERATOR_ID, identity.id());
             request.setAttribute(FrameConst011.OPERATOR_ACCOUNT, identity.userAccount());
+            OperatorContext011.set(new Operator011(identity.id(), identity.userAccount(), null));
         }
 
-        if (identity == null && !runtimeStatusPort.isDebug()) {
-            writeUnauthorized(request, response);
-            return;
-        }
+        try {
+            if (identity == null && !runtimeStatusPort.isDebug()) {
+                writeUnauthorized(request, response);
+                return;
+            }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+        } finally {
+            OperatorContext011.clear();
+        }
     }
 
     /**

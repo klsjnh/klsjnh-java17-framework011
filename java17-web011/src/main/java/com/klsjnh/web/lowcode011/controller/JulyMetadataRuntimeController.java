@@ -19,8 +19,6 @@ import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.lowcode011.JulyMetadataRuntimeUseCase;
 
-import com.klsjnh.web.util.Operator011Resolver;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -30,8 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -67,12 +63,12 @@ public class JulyMetadataRuntimeController {
      * @param objectName object name, query parameter
      * @return MetaDTO
      */
-    @GetMapping("/meta")
+    @GetMapping("/getMeta")
     @Operation(summary = "运行时·对象元信息（MetaDTO）")
-    public Response011<Map<String, Object>> meta(@RequestParam("objectName") String objectName) {
+    public Response011<Map<String, Object>> getMeta(@RequestParam("objectName") String objectName) {
         String funcName = "runtime meta";
 
-        return Response011.success(funcName, useCase.meta(objectName));
+        return Response011.success(funcName, useCase.getMeta(objectName));
     }
 
     /**
@@ -97,12 +93,11 @@ public class JulyMetadataRuntimeController {
      */
     @PostMapping("/insert")
     @Operation(summary = "运行时·新增")
-    public Response011<Map<String, Object>> insert(@RequestBody Map<String, Object> body,
-            HttpServletRequest request) {
+    public Response011<Map<String, Object>> insert(@RequestBody Map<String, Object> body) {
         String funcName = "runtime insert";
 
         return Response011.success(funcName,
-                affected(useCase.create(objectName(body), body, Operator011Resolver.resolve(request))));
+                affected(useCase.create(objectName(body), body)));
     }
 
     /**
@@ -113,12 +108,11 @@ public class JulyMetadataRuntimeController {
      */
     @PostMapping("/update")
     @Operation(summary = "运行时·修改（按 id/sid）")
-    public Response011<Map<String, Object>> update(@RequestBody Map<String, Object> body,
-            HttpServletRequest request) {
+    public Response011<Map<String, Object>> update(@RequestBody Map<String, Object> body) {
         String funcName = "runtime update";
 
         return Response011.success(funcName,
-                affected(useCase.update(objectName(body), body, Operator011Resolver.resolve(request))));
+                affected(useCase.update(objectName(body), body)));
     }
 
     /**
@@ -129,12 +123,11 @@ public class JulyMetadataRuntimeController {
      */
     @PostMapping("/delete")
     @Operation(summary = "运行时·删除（逻辑删）")
-    public Response011<Map<String, Object>> delete(@RequestBody Map<String, Object> body,
-            HttpServletRequest request) {
+    public Response011<Map<String, Object>> delete(@RequestBody Map<String, Object> body) {
         String funcName = "runtime delete";
 
         return Response011.success(funcName,
-                affected(useCase.delete(objectName(body), body, Operator011Resolver.resolve(request))));
+                affected(useCase.delete(objectName(body), body)));
     }
 
     /**
