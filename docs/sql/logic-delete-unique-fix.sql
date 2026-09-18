@@ -60,20 +60,6 @@ ALTER TABLE july_storage
     DROP INDEX uk_storage_code,
     ADD UNIQUE KEY uk_storage_code (alive_storage_code);
 
-ALTER TABLE july_metadata
-    ADD COLUMN alive_object_name VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', object_name, NULL)) STORED,
-    DROP INDEX uk_object_name,
-    ADD UNIQUE KEY uk_object_name (alive_object_name);
-
--- 双唯一键：july_business_modeling（model_code + object_name）
-ALTER TABLE july_business_modeling
-    ADD COLUMN alive_model_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', model_code, NULL)) STORED,
-    ADD COLUMN alive_object_name VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', object_name, NULL)) STORED,
-    DROP INDEX uk_model_code,
-    DROP INDEX uk_object_name,
-    ADD UNIQUE KEY uk_model_code (alive_model_code),
-    ADD UNIQUE KEY uk_object_name (alive_object_name);
-
 -- 复合唯一键：生成列 = CONCAT_WS('#', 各列)
 ALTER TABLE july_dictionary_item
     ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, item_code), NULL)) STORED,
@@ -84,21 +70,6 @@ ALTER TABLE july_ai_model_provider_api
     ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, api_code), NULL)) STORED,
     DROP INDEX uk_pk_mt_api_code,
     ADD UNIQUE KEY uk_pk_mt_api_code (alive_key);
-
-ALTER TABLE july_metadata_field
-    ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, field_code), NULL)) STORED,
-    DROP INDEX uk_pk_mt_field_code,
-    ADD UNIQUE KEY uk_pk_mt_field_code (alive_key);
-
-ALTER TABLE july_metadata_display
-    ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, display_code), NULL)) STORED,
-    DROP INDEX uk_pk_mt_display_code,
-    ADD UNIQUE KEY uk_pk_mt_display_code (alive_key);
-
-ALTER TABLE july_metadata_service
-    ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, service_code), NULL)) STORED,
-    DROP INDEX uk_pk_mt_service_code,
-    ADD UNIQUE KEY uk_pk_mt_service_code (alive_key);
 
 ALTER TABLE july_role_permissions
     ADD COLUMN alive_key VARCHAR(300) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, pk_menu, permission_code), NULL)) STORED,

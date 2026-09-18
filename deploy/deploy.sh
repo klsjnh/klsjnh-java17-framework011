@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # deploy.sh — klsjnh-java17-framework011 部署（docker compose）
-# 约定对齐 /klsjnh/docker/compose.yaml：networks service011 + ports 23333:11610
+# 约定对齐 /klsjnh/docker/compose.yaml：networks service011 + ports 23333:11160
 # 用法:  bash deploy/deploy.sh [mount|bake]      (默认 mount)
 #   mount = 轻量挂载（jar 从宿主挂入，换 jar 只重启）
 #   bake  = 依赖拷进镜像（构建项目镜像）

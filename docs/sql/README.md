@@ -13,7 +13,6 @@
    | dataservice011 | `july_datasource` · `july_business_modeling` |
    | ai011 | `july_ai_model_provider` |
    | storagecenter | `july_storage` |
-   | lowcode011 | `july_metadata` → `july_metadata_publish` |
    | demo | `july_demo011` |
 
 2. **逻辑删除唯一键迁移**：`logic-delete-unique-fix.sql` —— 把业务唯一键切到 `alive_*` 生成列，**必须在对应表建好之后执行一次**。
@@ -27,4 +26,3 @@
 
 ## 不在本目录的表
 
-- 低代码发布的物理表 `<objectName>` 由运行时 `publish` 自动 `CREATE` / `ALTER ... ADD COLUMN` 生成（禁 `DROP`/`MODIFY`/`RENAME`），**不是手工 DDL**。见 [../lowcode011/021.topic-publish-runtime.md](../lowcode011/021.topic-publish-runtime.md)。

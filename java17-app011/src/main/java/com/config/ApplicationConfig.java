@@ -24,7 +24,7 @@ import org.mybatis.spring.annotation.MapperScan;
 
 @Configuration
 @MapperScan({ "com.klsjnh.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.system011.mapper",
-    "com.klsjnh.demo11.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.datasource.mapper", "com.klsjnh.infrastructure.lowcode011.modeling.mapper" })
+    "com.klsjnh.demo11.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.datasource.mapper" })
 public class ApplicationConfig {
 
 }

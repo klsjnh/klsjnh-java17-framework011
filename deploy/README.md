@@ -34,7 +34,7 @@ docker compose -f /klsjnh/docker/compose.yaml logs -f klsjnh-java17-framework011
 
 ## 关键约定（与服务器对齐）
 
-- **网络**：`networks: [service011]`（bridge）；**端口**：`ports: "23333:11610"`（对外 23333 → 容器 11610）。
+- **网络**：`networks: [service011]`（bridge）；**端口**：`ports: "23333:11160"`（对外 23333 → 容器 11160）。
 - **DB**：bridge 网络下用服务名，如 `jdbc:mysql://mysql013:3306/...`（**不能用 127.0.0.1**）。
 - **挂载约定**：容器内**所有可挂载目录都在 `/klsjnh/volume` 下** —— `config` / `logs` / `data` / `storage011`（app.jar 除外）。
 - **配置**：`/klsjnh/docker/java011/<项目>/config/`（`application.yml` + `application-development.yml`），挂为 `/klsjnh/volume/config`；存储中心 `base-path` 指向 `/klsjnh/volume/storage011`。

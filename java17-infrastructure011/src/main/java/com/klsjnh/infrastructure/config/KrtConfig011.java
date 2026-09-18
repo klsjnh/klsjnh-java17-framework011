@@ -82,10 +82,6 @@ public class KrtConfig011 {
      */
     private List<ConnectionInfo> ci011 = new ArrayList<>();
 
-    /**
-     * Low-code settings (krt.lowcode.*).
-     */
-    private LowcodeConfig lowcode = new LowcodeConfig();
 
     /**
      * AI settings (krt.ai011.*).
@@ -153,30 +149,6 @@ public class KrtConfig011 {
          * </p>
          */
         private List<String> trustedProxies = new ArrayList<>();
-    }
-
-    /**
-     * Low-code settings.
-     */
-    @Data
-    public static class LowcodeConfig {
-
-        /**
-         * DDL execution gate (krt.lowcode.ddl-execute.enabled), default off.
-         */
-        private DdlExecute ddlExecute = new DdlExecute();
-
-        /**
-         * DDL execute gate.
-         */
-        @Data
-        public static class DdlExecute {
-
-            /**
-             * Whether publishing may execute DDL.
-             */
-            private boolean enabled;
-        }
     }
 
     /**

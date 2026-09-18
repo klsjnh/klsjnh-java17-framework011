@@ -16,7 +16,7 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | 对象存储 | MinIO SDK 8.5.7（local011 / minio011 适配器） |
 | 鉴权 | JJWT 0.12.6 |
 | AOP | spring-boot-starter-aop（controller IUD 审计） |
-| JSON | Jackson（业务建模产物 / 导出） |
+| JSON | Jackson（导出） |
 | API 文档 | knife4j 4.5.0 (OpenAPI3) |
 | 工具 | Lombok 1.18.36（domain 层禁用） |
 
@@ -42,10 +42,10 @@ web ──► application ──► domain ◄── infrastructure
 | 模块 | 层 | 内容 |
 |------|-----|------|
 | java17-common011 | common | 枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011 / StorageType011 / AuditType011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 / AuthAttribute011 · 工具（DateUtil011 / MarkdownUtil011） |
-| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源 Port）· storagecenter（ObjectStoragePort / JulyStorage / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· dataservice011（JulyDatasource / JulyBusinessModeling + 探针/推断/Guard）· ai011（AiModelProvider + Api + Probe）· lowcode011（MetadataContent 契约 + JulyMetadata 组合聚合 + ObjectTablePolicy/Gateway + 端口）· platform011（export / backup Port） |
-| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· dataservice011（datasource / business modeling）· ai011 · storagecenter（实例 / 桶 / 对象 + 在线编辑）· lowcode011 · platform011（export / backup） |
-| java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / dataservice011 / ai011 / lowcode011 / storagecenter 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
-| java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 5 组 |
+| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源内核 Port + **JulyDatasource 管理** + 方言/探针）· storagecenter（ObjectStoragePort / JulyStorage / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· ai011（AiModelProvider + Api + Probe）· platform011（export / backup Port） |
+| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· ai011 · storagecenter（实例 / 桶 / 对象 + 在线编辑）· platform011（export / backup） |
+| java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / datasource / ai011 / storagecenter 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
+| java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 4 组（system011 / storagecenter / datasource / ai011） |
 | java17-app011 | app | 唯一 main + 配置 + 参考样板（demo11 纵切面 / Demo011Scheduler）+ 启动播种（ci011 / storage） |
 
 ## 快速开始
@@ -55,10 +55,10 @@ web ──► application ──► domain ◄── infrastructure
 ```bash
 mvn -o clean package -DskipTests          # 离线构建，产出 app011 可执行 jar
 ./script011.sh gate                       # 规范检查（正则 + AST）+ 离线编译
-./script011.sh dev013                     # 杀进程 + 重新编译 + 启动（11610）
+./script011.sh dev013                     # 杀进程 + 重新编译 + 启动（11160）
 ```
 
-> 说明：`application.yml` 配置端口 11610 与默认 development profile；数据源与 dev 用 krt 配置落在入库的 `application-development.yml`，本机差异走忽略的 `application-local.yml`。
+> 说明：`application.yml` 配置端口 11160 与默认 development profile；数据源与 dev 用 krt 配置落在入库的 `application-development.yml`，本机差异走忽略的 `application-local.yml`。
 
 ## 部署（Docker）
 
@@ -98,12 +98,9 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | 编码规则门禁（正则 + AST，经 script011.sh 强制） |
 | ✅ | system011：配置（029）· 组织（013）· 用户（015）· 角色（016）· 菜单（011）· 调度（021）· 数据字典（035） |
 | ✅ | platform011：数据导出 + 备份（030，注册制 Provider / EXPORT·BACKUP 审计） |
-| ✅ | dataservice011：数据源管理（031，表驱动 + 双向驱动 + 测试连接 + 排序）· 业务建模（033，探针推断 + 执行/分页 SQL + 交接产物） |
+| ✅ | datasource：数据源管理（031，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页） |
 | ✅ | ai011：模型接入（036，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 模型调用 chat（041，OpenAI 兼容，id/code 解析） |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
-| ✅ | lowcode011：低代码核心（038）· 设计器与运行时（039）· 元数据模板（040）· 内核重构（042）· 业务字段口径（045）· 模板多格式 JSON/CSV/Markdown（050） |
-| ◐ | lowcode011 挂起项（用户口径：价值有限，不再扩展）：运行时权限模型 · 真字段映射 · 开放 API 限流 · `syncData` · 模板批量 · `/runtime` 运行页（前端） |
-| ◐ | 043 多入口建模（P1+P2 部分实现：`/lowcode011/intake/v1/{review,create}`，kind=`sql/template/copy/modeling/ai`；**AI 一句话开发已通**；`table`/P3/P4 未做） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 审计切面 |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插） |
 | ✅ | 容器化部署（docker compose + ubuntu 26.04 基镜像 + mount/bake，见 020） |

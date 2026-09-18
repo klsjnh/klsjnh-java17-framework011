@@ -8,7 +8,7 @@ services:
     image: "${APP_IMAGE:?set APP_IMAGE first}"
     container_name: klsjnh-java17-framework011
     ports:
-      - "23333:11610"
+      - "23333:11160"
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
       - LOGGING_FILE_PATH=/klsjnh/volume/logs
@@ -20,7 +20,7 @@ services:
       - ./java011/klsjnh-java17-framework011/storage011:/klsjnh/volume/storage011
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/11610"]
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/11160"]
       interval: 30s
       timeout: 10s
       retries: 3

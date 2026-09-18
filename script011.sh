@@ -129,7 +129,7 @@ do_push() {
 APP_JAR="$PROJECT_ROOT/java17-app011/target/java17-app011-1.0.0.jar"
 APP_LOG="$PROJECT_ROOT/logs/app011.log"
 PID_FILE="$PROJECT_ROOT/.app011.pid"
-APP_PORT=11610
+APP_PORT=11160
 
 # debug 模式：development profile + krt.status=debug（application.yml 默认即 debug）
 PROFILE="development"
