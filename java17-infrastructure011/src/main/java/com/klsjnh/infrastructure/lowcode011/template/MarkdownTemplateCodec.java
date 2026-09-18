@@ -26,56 +26,33 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
  * Markdown template codec: a human-friendly document where each section is a
  * table ({@code metaData} / {@code fieldData} / {@code displayData} /
  * {@code serviceData} / {@code source}). Table syntax comes from
- * {@link MarkdownUtil011}; this codec owns only the section/column/typing
- * semantics. Import reads the tables back into the MetaDTO shape, so the review
- * / deploy downstream stays unique.
+ * {@link MarkdownUtil011}, column/typing semantics from
+ * {@link TemplateChildSupport}; this codec holds no magic keys.
  */
 
 @Component
 public class MarkdownTemplateCodec implements TemplateCodec {
 
     /**
-     * Section headers.
+     * Document title.
+     */
+    private static final String TITLE = "# Template";
+
+    /**
+     * Heading marker.
+     */
+    private static final String HEADING_PREFIX = "#";
+
+    /**
+     * Key/value table header.
      */
     private static final List<String> KEY_VALUE_HEADER = List.of("key", "value");
-
-    /**
-     * fieldData columns.
-     */
-    private static final String[] FIELD_COLUMNS = { "code", "name", "fieldType", "length", "notNull", "defaultValue",
-            "sort" };
-
-    /**
-     * displayData columns.
-     */
-    private static final String[] DISPLAY_COLUMNS = { "code", "name", "align", "width", "componentType", "displayType",
-            "param011", "sort" };
-
-    /**
-     * serviceData columns.
-     */
-    private static final String[] SERVICE_COLUMNS = { "code", "name", "description", "objectType", "paramType",
-            "serviceContent", "enabled", "sort" };
-
-    /**
-     * Canonical child column keys by lower-case name.
-     */
-    private static final Map<String, String> COLUMN_KEYS = Map.ofEntries(
-            Map.entry("code", "code"), Map.entry("name", "name"), Map.entry("fieldtype", "fieldType"),
-            Map.entry("length", "length"), Map.entry("notnull", "notNull"),
-            Map.entry("defaultvalue", "defaultValue"), Map.entry("sort", "sort"), Map.entry("align", "align"),
-            Map.entry("width", "width"), Map.entry("componenttype", "componentType"),
-            Map.entry("displaytype", "displayType"), Map.entry("param011", "param011"),
-            Map.entry("description", "description"), Map.entry("objecttype", "objectType"),
-            Map.entry("paramtype", "paramType"), Map.entry("servicecontent", "serviceContent"),
-            Map.entry("enabled", "enabled"));
 
     /** {@inheritDoc} */
     @Override
@@ -89,18 +66,19 @@ public class MarkdownTemplateCodec implements TemplateCodec {
         StringBuilder sb = new StringBuilder();
         Map<String, Object> metaData = asMap(template.get(MetaDtoKey011.META_DATA));
 
-        sb.append("# Template\n\n## ").append(MetaDtoKey011.META_DATA).append("\n\n");
-        sb.append(MarkdownUtil011.renderTable(KEY_VALUE_HEADER, keyValues(metaData, true))).append('\n');
-
-        appendTable(sb, MetaDtoKey011.FIELD_DATA, FIELD_COLUMNS, asList(template.get(MetaDtoKey011.FIELD_DATA)));
-        appendTable(sb, MetaDtoKey011.DISPLAY_DATA, DISPLAY_COLUMNS, asList(template.get(MetaDtoKey011.DISPLAY_DATA)));
-        appendTable(sb, MetaDtoKey011.SERVICE_DATA, SERVICE_COLUMNS, asList(template.get(MetaDtoKey011.SERVICE_DATA)));
+        sb.append(TITLE).append("\n\n");
+        appendTable(sb, MetaDtoKey011.META_DATA, KEY_VALUE_HEADER, TemplateChildSupport.keyValues(metaData, true));
+        appendChildTable(sb, MetaDtoKey011.FIELD_DATA, TemplateChildSupport.FIELD_COLUMNS,
+                asList(template.get(MetaDtoKey011.FIELD_DATA)));
+        appendChildTable(sb, MetaDtoKey011.DISPLAY_DATA, TemplateChildSupport.DISPLAY_COLUMNS,
+                asList(template.get(MetaDtoKey011.DISPLAY_DATA)));
+        appendChildTable(sb, MetaDtoKey011.SERVICE_DATA, TemplateChildSupport.SERVICE_COLUMNS,
+                asList(template.get(MetaDtoKey011.SERVICE_DATA)));
 
         Map<String, Object> source = metaData == null ? null : asMap(metaData.get(MetaDtoKey011.SOURCE));
 
         if (source != null && !source.isEmpty()) {
-            sb.append("## ").append(MetaDtoKey011.SOURCE).append("\n\n");
-            sb.append(MarkdownUtil011.renderTable(KEY_VALUE_HEADER, keyValues(source, false))).append('\n');
+            appendTable(sb, MetaDtoKey011.SOURCE, KEY_VALUE_HEADER, TemplateChildSupport.keyValues(source, false));
         }
 
         return sb.toString().getBytes(StandardCharsets.UTF_8);
@@ -122,8 +100,8 @@ public class MarkdownTemplateCodec implements TemplateCodec {
             String line = rawLine.endsWith("\r") ? rawLine.substring(0, rawLine.length() - 1) : rawLine;
             String trimmed = line.trim();
 
-            if (trimmed.startsWith("#")) {
-                section = trimmed.replaceFirst("^#+", "").trim().toLowerCase(Locale.ROOT);
+            if (trimmed.startsWith(HEADING_PREFIX)) {
+                section = trimmed.replaceFirst("^#+", "").trim();
                 header = null;
                 continue;
             }
@@ -138,40 +116,20 @@ public class MarkdownTemplateCodec implements TemplateCodec {
                 continue;
             }
 
-            switch (section) {
-                case "metadata":
-                    if (cells.size() >= 2 && !cells.get(0).isBlank()) {
-                        putMeta(metaData, cells.get(0), cells.get(1));
-                    }
-                    break;
-                case "source":
-                    if (cells.size() >= 2 && !cells.get(0).isBlank()) {
-                        source.put(cells.get(0).trim(), blankToNull(cells.get(1)));
-                    }
-                    break;
-                case "fielddata":
-                    if (header == null) {
-                        header = canonicalHeader(cells);
-                    } else {
-                        addChild(fields, header, cells);
-                    }
-                    break;
-                case "displaydata":
-                    if (header == null) {
-                        header = canonicalHeader(cells);
-                    } else {
-                        addChild(displays, header, cells);
-                    }
-                    break;
-                case "servicedata":
-                    if (header == null) {
-                        header = canonicalHeader(cells);
-                    } else {
-                        addChild(services, header, cells);
-                    }
-                    break;
-                default:
-                    break;
+            if (MetaDtoKey011.META_DATA.equalsIgnoreCase(section)) {
+                if (cells.size() >= 2 && !cells.get(0).isBlank()) {
+                    TemplateChildSupport.putMeta(metaData, cells.get(0), cells.get(1));
+                }
+            } else if (MetaDtoKey011.SOURCE.equalsIgnoreCase(section)) {
+                if (cells.size() >= 2 && !cells.get(0).isBlank()) {
+                    source.put(cells.get(0).trim(), TemplateChildSupport.blankToNull(cells.get(1)));
+                }
+            } else if (MetaDtoKey011.FIELD_DATA.equalsIgnoreCase(section)) {
+                header = sectionRows(fields, header, cells);
+            } else if (MetaDtoKey011.DISPLAY_DATA.equalsIgnoreCase(section)) {
+                header = sectionRows(displays, header, cells);
+            } else if (MetaDtoKey011.SERVICE_DATA.equalsIgnoreCase(section)) {
+                header = sectionRows(services, header, cells);
             }
         }
 
@@ -189,159 +147,59 @@ public class MarkdownTemplateCodec implements TemplateCodec {
     }
 
     /**
-     * Build the key/value rows of a scalar map.
+     * Feed a child section row (first row is the header).
      *
-     * @param map            source map, nullable
-     * @param skipSourceKey  whether to skip the nested {@code source} entry
-     * @return rows
+     * @param target target list
+     * @param header current header, nullable
+     * @param cells  row cells
+     * @return (possibly new) header
      */
-    private List<List<String>> keyValues(Map<String, Object> map, boolean skipSourceKey) {
-        List<List<String>> rows = new ArrayList<>();
-
-        if (map != null) {
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                if (skipSourceKey && MetaDtoKey011.SOURCE.equals(entry.getKey())) {
-                    continue;
-                }
-
-                if (entry.getValue() instanceof Map || entry.getValue() instanceof List) {
-                    continue;
-                }
-
-                rows.add(List.of(entry.getKey(), str(entry.getValue())));
-            }
+    private List<String> sectionRows(List<Map<String, Object>> target, List<String> header, List<String> cells) {
+        if (header == null) {
+            return TemplateChildSupport.canonicalHeader(cells);
         }
 
-        return rows;
+        TemplateChildSupport.addChild(target, header, cells);
+
+        return header;
     }
 
     /**
-     * Append a section table.
+     * Append a section table from ready rows.
+     *
+     * @param sb      target
+     * @param name    section name
+     * @param header  header cells
+     * @param rows    rows
+     */
+    private void appendTable(StringBuilder sb, String name, List<String> header, List<List<String>> rows) {
+        sb.append("## ").append(name).append("\n\n");
+        sb.append(MarkdownUtil011.renderTable(header, rows)).append('\n');
+    }
+
+    /**
+     * Append a child section table.
      *
      * @param sb      target
      * @param name    section name
      * @param columns column keys
      * @param rows    rows
      */
-    private void appendTable(StringBuilder sb, String name, String[] columns, List<Map<String, Object>> rows) {
+    private void appendChildTable(StringBuilder sb, String name, List<String> columns,
+            List<Map<String, Object>> rows) {
         List<List<String>> table = new ArrayList<>();
 
         for (Map<String, Object> row : rows) {
             List<String> cells = new ArrayList<>();
 
             for (String column : columns) {
-                cells.add(str(row.get(column)));
+                cells.add(TemplateChildSupport.str(row.get(column)));
             }
 
             table.add(cells);
         }
 
-        sb.append("## ").append(name).append("\n\n");
-        sb.append(MarkdownUtil011.renderTable(List.of(columns), table)).append('\n');
-    }
-
-    /**
-     * Add one child row using the header mapping and typed coercion.
-     *
-     * @param target target list
-     * @param header canonical header cells
-     * @param cells  row cells
-     */
-    private void addChild(List<Map<String, Object>> target, List<String> header, List<String> cells) {
-        Map<String, Object> row = new LinkedHashMap<>();
-
-        for (int i = 0; i < header.size() && i < cells.size(); i++) {
-            row.put(header.get(i), coerce(header.get(i), cells.get(i)));
-        }
-
-        target.add(row);
-    }
-
-    /**
-     * Coerce a cell to the JSON value type expected by the validator.
-     *
-     * @param key   column key
-     * @param value raw cell
-     * @return typed value
-     */
-    private Object coerce(String key, String value) {
-        String v = value == null ? "" : value.trim();
-
-        switch (key == null ? "" : key.toLowerCase(Locale.ROOT)) {
-            case "length":
-            case "width":
-            case "sort":
-                return v.isEmpty() ? null : Integer.valueOf(v);
-            case "notnull":
-            case "enabled":
-                return "true".equalsIgnoreCase(v) || "1".equals(v) || "yes".equalsIgnoreCase(v)
-                        || "y".equalsIgnoreCase(v);
-            default:
-                return blankToNull(v);
-        }
-    }
-
-    /**
-     * Put a metaData pair, canonicalising known keys and types.
-     *
-     * @param metaData target
-     * @param key      raw key
-     * @param value    raw value
-     */
-    private void putMeta(Map<String, Object> metaData, String key, String value) {
-        String lower = key.trim().toLowerCase(Locale.ROOT);
-
-        if (MetaDtoKey011.SORT_ORDER.toLowerCase(Locale.ROOT).equals(lower)) {
-            String v = value == null ? "" : value.trim();
-            metaData.put(MetaDtoKey011.SORT_ORDER, v.isEmpty() ? null : Integer.valueOf(v));
-            return;
-        }
-
-        for (String canonical : new String[] { MetaDtoKey011.OBJECT_NAME, MetaDtoKey011.OBJECT_TYPE,
-                MetaDtoKey011.DESCRIPTION, MetaDtoKey011.BUSINESS_FIELD, MetaDtoKey011.PACKAGE_NAME,
-                MetaDtoKey011.ROUTER_PATH, MetaDtoKey011.REMARK }) {
-            if (canonical.toLowerCase(Locale.ROOT).equals(lower)) {
-                metaData.put(canonical, blankToNull(value));
-                return;
-            }
-        }
-    }
-
-    /**
-     * Map header cells to canonical child column keys (case-insensitive).
-     *
-     * @param cells header cells
-     * @return canonical keys
-     */
-    private List<String> canonicalHeader(List<String> cells) {
-        List<String> out = new ArrayList<>();
-
-        for (String cell : cells) {
-            String lower = cell == null ? "" : cell.trim().toLowerCase(Locale.ROOT);
-            out.add(COLUMN_KEYS.getOrDefault(lower, lower));
-        }
-
-        return out;
-    }
-
-    /**
-     * Whether a value is blank.
-     *
-     * @param value value
-     * @return value or null when blank
-     */
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value;
-    }
-
-    /**
-     * String form of a value (null becomes empty).
-     *
-     * @param value value
-     * @return string
-     */
-    private String str(Object value) {
-        return value == null ? "" : String.valueOf(value);
+        appendTable(sb, name, columns, table);
     }
 
     /**

@@ -19,6 +19,7 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.application.ai011.AiInvokeOutcome;
 import com.klsjnh.application.ai011.AiInvokeUseCase;
 import com.klsjnh.domain.ai011.AiChatMessage;
+import com.klsjnh.domain.lowcode011.ModelSourceKind011;
 import com.klsjnh.domain.lowcode011.ModelSourcePort;
 import com.klsjnh.domain.lowcode011.SourceRequest;
 import com.klsjnh.domain.lowcode011.records.BaseColumn011;
@@ -79,7 +80,7 @@ public class AiSourceAdapter implements ModelSourcePort {
     /** {@inheritDoc} */
     @Override
     public String kind() {
-        return "ai";
+        return ModelSourceKind011.AI;
     }
 
     /** {@inheritDoc} */
@@ -104,8 +105,8 @@ public class AiSourceAdapter implements ModelSourcePort {
                 + skeleton;
 
         List<AiChatMessage> messages = new ArrayList<>();
-        messages.add(new AiChatMessage("system", system));
-        messages.add(new AiChatMessage("user", request.prompt()));
+        messages.add(new AiChatMessage(AiChatMessage.ROLE_SYSTEM, system));
+        messages.add(new AiChatMessage(AiChatMessage.ROLE_USER, request.prompt()));
 
         String lastError = null;
 
@@ -117,8 +118,8 @@ public class AiSourceAdapter implements ModelSourcePort {
                 return parse(outcome.content(), request);
             } catch (RuntimeException ex) {
                 lastError = ex.getMessage();
-                messages.add(new AiChatMessage("assistant", outcome.content()));
-                messages.add(new AiChatMessage("user",
+                messages.add(new AiChatMessage(AiChatMessage.ROLE_ASSISTANT, outcome.content()));
+                messages.add(new AiChatMessage(AiChatMessage.ROLE_USER,
                         "Invalid result: " + lastError + ". Return ONLY corrected JSON per the skeleton."));
             }
         }

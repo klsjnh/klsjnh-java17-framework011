@@ -16,6 +16,7 @@ package com.klsjnh.application.lowcode011;
 
 import com.klsjnh.common.exception.BusinessException;
 
+import com.klsjnh.domain.lowcode011.ModelSourceKind011;
 import com.klsjnh.domain.lowcode011.ModelSourcePort;
 import com.klsjnh.domain.lowcode011.SourceRequest;
 import com.klsjnh.domain.lowcode011.records.MetadataContent;
@@ -48,7 +49,7 @@ public class CopySourceAdapter implements ModelSourcePort {
     /** {@inheritDoc} */
     @Override
     public String kind() {
-        return "copy";
+        return ModelSourceKind011.COPY;
     }
 
     /** {@inheritDoc} */

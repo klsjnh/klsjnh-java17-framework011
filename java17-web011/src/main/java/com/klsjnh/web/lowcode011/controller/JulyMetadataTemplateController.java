@@ -19,6 +19,8 @@ import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.lowcode011.JulyMetadataTemplateUseCase;
+import com.klsjnh.domain.lowcode011.enums.TemplateFormat011;
+import com.klsjnh.domain.lowcode011.records.IntakeKey011;
 
 import com.klsjnh.web.global.audit.AuditLog;
 
@@ -150,11 +152,12 @@ public class JulyMetadataTemplateController {
     public Response011<Map<String, Object>> deployObject(@RequestBody Map<String, Object> body) {
         String funcName = "deploy object";
 
-        Map<String, Object> template = body.get("template") instanceof Map
-                ? (Map<String, Object>) body.get("template")
+        Map<String, Object> template = body.get(IntakeKey011.TEMPLATE) instanceof Map
+                ? (Map<String, Object>) body.get(IntakeKey011.TEMPLATE)
                 : null;
-        String objectName = body.get("objectName") == null ? null : String.valueOf(body.get("objectName"));
-        boolean overwrite = Boolean.TRUE.equals(body.get("overwrite"));
+        String objectName = body.get(IntakeKey011.OBJECT_NAME) == null ? null
+                : String.valueOf(body.get(IntakeKey011.OBJECT_NAME));
+        boolean overwrite = Boolean.TRUE.equals(body.get(IntakeKey011.OVERWRITE));
 
         return Response011.success(funcName, useCase.deployObject(template, objectName, overwrite));
     }
@@ -166,7 +169,8 @@ public class JulyMetadataTemplateController {
      * @return true for csv/xlsx
      */
     private boolean isFileFormat(String format) {
-        return format != null && !format.isBlank() && !"json".equalsIgnoreCase(format.trim());
+        return format != null && !format.isBlank()
+                && !TemplateFormat011.JSON.getCode().equalsIgnoreCase(format.trim());
     }
 
     /**
@@ -176,13 +180,9 @@ public class JulyMetadataTemplateController {
      * @return lower-case code, json by default
      */
     private String extension(String format) {
-        if (format == null || format.isBlank()) {
-            return "json";
-        }
+        TemplateFormat011 resolved = TemplateFormat011.fromString(format);
 
-        String value = format.trim().toLowerCase();
-
-        return "markdown".equals(value) ? "md" : value;
+        return (resolved == null ? TemplateFormat011.JSON : resolved).getCode();
     }
 
     /**
@@ -194,12 +194,12 @@ public class JulyMetadataTemplateController {
      * @return response entity
      */
     private ResponseEntity<Object> file(byte[] body, String format, String filename) {
-        String value = format.trim().toLowerCase();
+        TemplateFormat011 resolved = TemplateFormat011.fromString(format);
         MediaType mediaType;
 
-        if ("csv".equals(value)) {
+        if (resolved == TemplateFormat011.CSV) {
             mediaType = new MediaType("text", "csv");
-        } else if ("md".equals(value) || "markdown".equals(value)) {
+        } else if (resolved == TemplateFormat011.MARKDOWN) {
             mediaType = new MediaType("text", "markdown");
         } else {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;

@@ -58,7 +58,7 @@ public class JulyMetadataTemplateUseCase {
     /**
      * Supported template version.
      */
-    private static final String TEMPLATE_VERSION = "1.0";
+    static final String TEMPLATE_VERSION = "1.0";
 
 
     /**

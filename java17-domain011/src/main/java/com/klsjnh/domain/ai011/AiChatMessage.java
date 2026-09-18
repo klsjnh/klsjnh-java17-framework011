@@ -23,6 +23,15 @@ package com.klsjnh.domain.ai011;
 
 public record AiChatMessage(String role, String content) {
 
+    /** System role. */
+    public static final String ROLE_SYSTEM = "system";
+
+    /** User role. */
+    public static final String ROLE_USER = "user";
+
+    /** Assistant role. */
+    public static final String ROLE_ASSISTANT = "assistant";
+
     /**
      * Normalize and validate.
      */

@@ -24,16 +24,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
  * CSV template codec: a sectioned single file. Each section starts with
  * {@code ##<name>} ({@code metaData} / {@code fieldData} / {@code displayData} /
  * {@code serviceData} / {@code source}) and holds CSV rows; {@code metaData} and
- * {@code source} are {@code key,value} pairs, the children use a fixed header.
- * Export is UTF-8 with BOM (Excel friendly); import tolerates BOM and maps
- * typed columns back to the MetaDTO shape.
+ * {@code source} are key/value pairs, the children use the shared column layout.
+ * Export is UTF-8 with BOM (Excel friendly); import tolerates BOM.
  */
 
 @Component
@@ -45,35 +43,9 @@ public class CsvTemplateCodec implements TemplateCodec {
     private static final String BOM = "\uFEFF";
 
     /**
-     * fieldData columns.
+     * Section marker.
      */
-    private static final String[] FIELD_COLUMNS = { "code", "name", "fieldType", "length", "notNull", "defaultValue",
-            "sort" };
-
-    /**
-     * displayData columns.
-     */
-    private static final String[] DISPLAY_COLUMNS = { "code", "name", "align", "width", "componentType", "displayType",
-            "param011", "sort" };
-
-    /**
-     * serviceData columns.
-     */
-    private static final String[] SERVICE_COLUMNS = { "code", "name", "description", "objectType", "paramType",
-            "serviceContent", "enabled", "sort" };
-
-    /**
-     * Canonical child column keys by lower-case name.
-     */
-    private static final Map<String, String> COLUMN_KEYS = Map.ofEntries(
-            Map.entry("code", "code"), Map.entry("name", "name"), Map.entry("fieldtype", "fieldType"),
-            Map.entry("length", "length"), Map.entry("notnull", "notNull"),
-            Map.entry("defaultvalue", "defaultValue"), Map.entry("sort", "sort"), Map.entry("align", "align"),
-            Map.entry("width", "width"), Map.entry("componenttype", "componentType"),
-            Map.entry("displaytype", "displayType"), Map.entry("param011", "param011"),
-            Map.entry("description", "description"), Map.entry("objecttype", "objectType"),
-            Map.entry("paramtype", "paramType"), Map.entry("servicecontent", "serviceContent"),
-            Map.entry("enabled", "enabled"));
+    private static final String SECTION_PREFIX = "##";
 
     /** {@inheritDoc} */
     @Override
@@ -87,29 +59,25 @@ public class CsvTemplateCodec implements TemplateCodec {
         StringBuilder sb = new StringBuilder();
         Map<String, Object> metaData = asMap(template.get(MetaDtoKey011.META_DATA));
 
-        sb.append("##").append(MetaDtoKey011.META_DATA).append('\n');
+        sb.append(SECTION_PREFIX).append(MetaDtoKey011.META_DATA).append('\n');
 
-        if (metaData != null) {
-            for (Map.Entry<String, Object> entry : metaData.entrySet()) {
-                if (MetaDtoKey011.SOURCE.equals(entry.getKey()) || entry.getValue() instanceof Map
-                        || entry.getValue() instanceof List) {
-                    continue;
-                }
-
-                sb.append(csvRow(entry.getKey(), str(entry.getValue()))).append('\n');
-            }
+        for (List<String> row : TemplateChildSupport.keyValues(metaData, true)) {
+            sb.append(csvRow(row)).append('\n');
         }
 
-        appendSection(sb, MetaDtoKey011.FIELD_DATA, FIELD_COLUMNS, asList(template.get(MetaDtoKey011.FIELD_DATA)));
-        appendSection(sb, MetaDtoKey011.DISPLAY_DATA, DISPLAY_COLUMNS, asList(template.get(MetaDtoKey011.DISPLAY_DATA)));
-        appendSection(sb, MetaDtoKey011.SERVICE_DATA, SERVICE_COLUMNS, asList(template.get(MetaDtoKey011.SERVICE_DATA)));
+        appendSection(sb, MetaDtoKey011.FIELD_DATA, TemplateChildSupport.FIELD_COLUMNS,
+                asList(template.get(MetaDtoKey011.FIELD_DATA)));
+        appendSection(sb, MetaDtoKey011.DISPLAY_DATA, TemplateChildSupport.DISPLAY_COLUMNS,
+                asList(template.get(MetaDtoKey011.DISPLAY_DATA)));
+        appendSection(sb, MetaDtoKey011.SERVICE_DATA, TemplateChildSupport.SERVICE_COLUMNS,
+                asList(template.get(MetaDtoKey011.SERVICE_DATA)));
 
         Map<String, Object> source = metaData == null ? null : asMap(metaData.get(MetaDtoKey011.SOURCE));
 
         if (source != null && !source.isEmpty()) {
-            sb.append("##").append(MetaDtoKey011.SOURCE).append('\n');
-            for (Map.Entry<String, Object> entry : source.entrySet()) {
-                sb.append(csvRow(entry.getKey(), str(entry.getValue()))).append('\n');
+            sb.append(SECTION_PREFIX).append(MetaDtoKey011.SOURCE).append('\n');
+            for (List<String> row : TemplateChildSupport.keyValues(source, false)) {
+                sb.append(csvRow(row)).append('\n');
             }
         }
 
@@ -140,52 +108,32 @@ public class CsvTemplateCodec implements TemplateCodec {
                 continue;
             }
 
-            if (line.startsWith("##")) {
-                section = line.substring(2).trim().toLowerCase(Locale.ROOT);
+            if (line.startsWith(SECTION_PREFIX)) {
+                section = line.substring(SECTION_PREFIX.length()).trim();
                 header = null;
                 continue;
             }
-
-            List<String> cells = parseRow(line);
 
             if (section == null) {
                 continue;
             }
 
-            switch (section) {
-                case "metadata":
-                    if (cells.size() >= 2 && !cells.get(0).isBlank()) {
-                        putMeta(metaData, cells.get(0).trim(), cells.get(1));
-                    }
-                    break;
-                case "source":
-                    if (cells.size() >= 2 && !cells.get(0).isBlank()) {
-                        source.put(cells.get(0).trim(), blankToNull(cells.get(1)));
-                    }
-                    break;
-                case "fielddata":
-                    if (header == null) {
-                        header = canonicalHeader(cells);
-                    } else {
-                        addChild(fields, header, cells);
-                    }
-                    break;
-                case "displaydata":
-                    if (header == null) {
-                        header = canonicalHeader(cells);
-                    } else {
-                        addChild(displays, header, cells);
-                    }
-                    break;
-                case "servicedata":
-                    if (header == null) {
-                        header = canonicalHeader(cells);
-                    } else {
-                        addChild(services, header, cells);
-                    }
-                    break;
-                default:
-                    break;
+            List<String> cells = parseRow(line);
+
+            if (MetaDtoKey011.META_DATA.equalsIgnoreCase(section)) {
+                if (cells.size() >= 2 && !cells.get(0).isBlank()) {
+                    TemplateChildSupport.putMeta(metaData, cells.get(0), cells.get(1));
+                }
+            } else if (MetaDtoKey011.SOURCE.equalsIgnoreCase(section)) {
+                if (cells.size() >= 2 && !cells.get(0).isBlank()) {
+                    source.put(cells.get(0).trim(), TemplateChildSupport.blankToNull(cells.get(1)));
+                }
+            } else if (MetaDtoKey011.FIELD_DATA.equalsIgnoreCase(section)) {
+                header = sectionRows(fields, header, cells);
+            } else if (MetaDtoKey011.DISPLAY_DATA.equalsIgnoreCase(section)) {
+                header = sectionRows(displays, header, cells);
+            } else if (MetaDtoKey011.SERVICE_DATA.equalsIgnoreCase(section)) {
+                header = sectionRows(services, header, cells);
             }
         }
 
@@ -203,6 +151,24 @@ public class CsvTemplateCodec implements TemplateCodec {
     }
 
     /**
+     * Feed a child section row (first row is the header).
+     *
+     * @param target target list
+     * @param header current header, nullable
+     * @param cells  row cells
+     * @return (possibly new) header
+     */
+    private List<String> sectionRows(List<Map<String, Object>> target, List<String> header, List<String> cells) {
+        if (header == null) {
+            return TemplateChildSupport.canonicalHeader(cells);
+        }
+
+        TemplateChildSupport.addChild(target, header, cells);
+
+        return header;
+    }
+
+    /**
      * Append a section (header + rows).
      *
      * @param sb      target
@@ -210,123 +176,19 @@ public class CsvTemplateCodec implements TemplateCodec {
      * @param columns column keys
      * @param rows    rows
      */
-    private void appendSection(StringBuilder sb, String name, String[] columns, List<Map<String, Object>> rows) {
-        sb.append("##").append(name).append('\n');
+    private void appendSection(StringBuilder sb, String name, List<String> columns, List<Map<String, Object>> rows) {
+        sb.append(SECTION_PREFIX).append(name).append('\n');
         sb.append(csvRow(columns)).append('\n');
 
         for (Map<String, Object> row : rows) {
-            String[] cells = new String[columns.length];
+            List<String> cells = new ArrayList<>();
 
-            for (int i = 0; i < columns.length; i++) {
-                cells[i] = str(row.get(columns[i]));
+            for (String column : columns) {
+                cells.add(TemplateChildSupport.str(row.get(column)));
             }
 
             sb.append(csvRow(cells)).append('\n');
         }
-    }
-
-    /**
-     * Add one child row using the header mapping and typed coercion.
-     *
-     * @param target target list
-     * @param header lower-case header cells
-     * @param cells  row cells
-     */
-    private void addChild(List<Map<String, Object>> target, List<String> header, List<String> cells) {
-        Map<String, Object> row = new LinkedHashMap<>();
-
-        for (int i = 0; i < header.size() && i < cells.size(); i++) {
-            row.put(header.get(i), coerce(header.get(i), cells.get(i)));
-        }
-
-        target.add(row);
-    }
-
-    /**
-     * Coerce a CSV cell to the JSON value type expected by the validator.
-     *
-     * @param key   column key (lower case)
-     * @param value raw cell
-     * @return typed value
-     */
-    private Object coerce(String key, String value) {
-        String v = value == null ? "" : value.trim();
-
-        switch (key == null ? "" : key.toLowerCase(Locale.ROOT)) {
-            case "length":
-            case "width":
-            case "sort":
-                return v.isEmpty() ? null : Integer.valueOf(v);
-            case "notnull":
-            case "enabled":
-                return "true".equalsIgnoreCase(v) || "1".equals(v) || "yes".equalsIgnoreCase(v)
-                        || "y".equalsIgnoreCase(v);
-            default:
-                return blankToNull(v);
-        }
-    }
-
-    /**
-     * Put a metaData pair, canonicalising known keys and types.
-     *
-     * @param metaData target
-     * @param key      raw key
-     * @param value    raw value
-     */
-    private void putMeta(Map<String, Object> metaData, String key, String value) {
-        String lower = key.toLowerCase(Locale.ROOT);
-
-        if (MetaDtoKey011.SORT_ORDER.toLowerCase(Locale.ROOT).equals(lower)) {
-            String v = value == null ? "" : value.trim();
-            metaData.put(MetaDtoKey011.SORT_ORDER, v.isEmpty() ? null : Integer.valueOf(v));
-            return;
-        }
-
-        for (String canonical : new String[] { MetaDtoKey011.OBJECT_NAME, MetaDtoKey011.OBJECT_TYPE,
-                MetaDtoKey011.DESCRIPTION, MetaDtoKey011.BUSINESS_FIELD, MetaDtoKey011.PACKAGE_NAME,
-                MetaDtoKey011.ROUTER_PATH, MetaDtoKey011.REMARK }) {
-            if (canonical.toLowerCase(Locale.ROOT).equals(lower)) {
-                metaData.put(canonical, blankToNull(value));
-                return;
-            }
-        }
-    }
-
-    /**
-     * Whether a value is blank.
-     *
-     * @param value value
-     * @return value or null when blank
-     */
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value;
-    }
-
-    /**
-     * Map header cells to canonical child column keys (case-insensitive).
-     *
-     * @param cells header cells
-     * @return canonical keys
-     */
-    private List<String> canonicalHeader(List<String> cells) {
-        List<String> out = new ArrayList<>();
-
-        for (String cell : cells) {
-            String lower = cell == null ? "" : cell.trim().toLowerCase(Locale.ROOT);
-            out.add(COLUMN_KEYS.getOrDefault(lower, lower));
-        }
-
-        return out;
-    }
-
-    /**
-     * String form of a value (null becomes empty).
-     *
-     * @param value value
-     * @return string
-     */
-    private String str(Object value) {
-        return value == null ? "" : String.valueOf(value);
     }
 
     /**
@@ -335,15 +197,15 @@ public class CsvTemplateCodec implements TemplateCodec {
      * @param cells cells
      * @return row text
      */
-    private String csvRow(String... cells) {
+    private String csvRow(List<String> cells) {
         StringBuilder sb = new StringBuilder();
 
-        for (int i = 0; i < cells.length; i++) {
+        for (int i = 0; i < cells.size(); i++) {
             if (i > 0) {
                 sb.append(',');
             }
 
-            sb.append(csvCell(cells[i]));
+            sb.append(csvCell(cells.get(i)));
         }
 
         return sb.toString();

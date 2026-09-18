@@ -21,8 +21,11 @@ import com.klsjnh.application.dataservice011.JulyBusinessModelingUseCase;
 import com.klsjnh.domain.lowcode011.JulyMetadataDisplay;
 import com.klsjnh.domain.lowcode011.JulyMetadataField;
 import com.klsjnh.domain.lowcode011.JulyMetadataService;
+import com.klsjnh.domain.lowcode011.ModelSourceKind011;
 import com.klsjnh.domain.lowcode011.ModelSourcePort;
 import com.klsjnh.domain.lowcode011.SourceRequest;
+import com.klsjnh.domain.lowcode011.enums.DisplayType011;
+import com.klsjnh.domain.lowcode011.enums.ObjectType011;
 import com.klsjnh.domain.lowcode011.records.MetadataContent;
 
 import org.springframework.stereotype.Component;
@@ -38,6 +41,41 @@ import java.util.List;
 
 @Component
 public class SqlSourceAdapter implements ModelSourcePort {
+
+    /**
+     * Default object type.
+     */
+    private static final String DEFAULT_OBJECT_TYPE = ObjectType011.TYPE011.getCode();
+
+    /**
+     * Default display align.
+     */
+    private static final String DEFAULT_ALIGN = "left";
+
+    /**
+     * Default display component.
+     */
+    private static final String DEFAULT_COMPONENT = "input";
+
+    /**
+     * Default display scene.
+     */
+    private static final String DEFAULT_DISPLAY_TYPE = DisplayType011.ALL.getCode();
+
+    /**
+     * Default service code.
+     */
+    private static final String DEFAULT_SERVICE_CODE = "query";
+
+    /**
+     * Default service param type.
+     */
+    private static final String DEFAULT_SERVICE_PARAM_TYPE = "query";
+
+    /**
+     * Runtime route prefix.
+     */
+    private static final String ROUTE_PREFIX = "/runtime/";
 
     /**
      * Business modeling use case (probe inference).
@@ -56,7 +94,7 @@ public class SqlSourceAdapter implements ModelSourcePort {
     /** {@inheritDoc} */
     @Override
     public String kind() {
-        return "sql";
+        return ModelSourceKind011.SQL;
     }
 
     /** {@inheritDoc} */
@@ -96,17 +134,18 @@ public class SqlSourceAdapter implements ModelSourcePort {
 
         for (JulyMetadataField field : fields) {
             int sort = field.sortOrder() == null ? fallbackSort : field.sortOrder();
-            displays.add(new JulyMetadataDisplay(field.fieldCode(), field.fieldName(), "left", 0, "input", "all", null,
-                    sort));
+            displays.add(new JulyMetadataDisplay(field.fieldCode(), field.fieldName(), DEFAULT_ALIGN, 0,
+                    DEFAULT_COMPONENT, DEFAULT_DISPLAY_TYPE, null, sort));
             fallbackSort++;
         }
 
         List<JulyMetadataService> services = new ArrayList<>();
-        services.add(new JulyMetadataService("query", "query", "", "type011", "query", "", true, 1));
+        services.add(new JulyMetadataService(DEFAULT_SERVICE_CODE, DEFAULT_SERVICE_CODE, "", DEFAULT_OBJECT_TYPE,
+                DEFAULT_SERVICE_PARAM_TYPE, "", true, 1));
 
-        return MetadataContent.reconstitute(request.objectName(), or(request.objectType(), "type011"),
+        return MetadataContent.reconstitute(request.objectName(), or(request.objectType(), DEFAULT_OBJECT_TYPE),
                 request.description(), request.businessField(), request.packageName(),
-                or(request.routerPath(), "/runtime/" + request.objectName()), fields, displays, services);
+                or(request.routerPath(), ROUTE_PREFIX + request.objectName()), fields, displays, services);
     }
 
     /**

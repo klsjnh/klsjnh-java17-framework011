@@ -18,6 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.dataservice011.JulyBusinessModelingUseCase;
 import com.klsjnh.domain.dataservice011.JulyBusinessModeling;
+import com.klsjnh.domain.lowcode011.ModelSourceKind011;
 import com.klsjnh.domain.lowcode011.ModelSourcePort;
 import com.klsjnh.domain.lowcode011.SourceRequest;
 import com.klsjnh.domain.lowcode011.records.MetadataContent;
@@ -49,7 +50,7 @@ public class ModelingSourceAdapter implements ModelSourcePort {
     /** {@inheritDoc} */
     @Override
     public String kind() {
-        return "modeling";
+        return ModelSourceKind011.MODELING;
     }
 
     /** {@inheritDoc} */

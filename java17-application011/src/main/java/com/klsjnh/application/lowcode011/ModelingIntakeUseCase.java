@@ -16,6 +16,7 @@ package com.klsjnh.application.lowcode011;
 
 import com.klsjnh.common.exception.BusinessException;
 
+import com.klsjnh.domain.lowcode011.ModelSourceKind011;
 import com.klsjnh.domain.lowcode011.ModelSourcePort;
 import com.klsjnh.domain.lowcode011.SourceRequest;
 import com.klsjnh.domain.lowcode011.records.MetaDtoKey011;
@@ -123,7 +124,8 @@ public class ModelingIntakeUseCase {
             throw BusinessException.badRequest(ex.getMessage());
         }
 
-        if (!"ai".equals(kind) && (content.businessField() == null || content.businessField().isBlank())) {
+        if (!ModelSourceKind011.AI.equals(kind) && (content.businessField() == null
+                || content.businessField().isBlank())) {
             throw BusinessException.badRequest("businessField required (business key) for source kind: " + kind);
         }
 
@@ -141,7 +143,7 @@ public class ModelingIntakeUseCase {
     @SuppressWarnings("unchecked")
     private Map<String, Object> toTemplate(MetadataContent content, SourceRequest request) {
         Map<String, Object> template = new LinkedHashMap<>(MetadataContentCodec.toMetaDto(content));
-        template.put(MetaDtoKey011.TEMPLATE_VERSION, "1.0");
+        template.put(MetaDtoKey011.TEMPLATE_VERSION, JulyMetadataTemplateUseCase.TEMPLATE_VERSION);
 
         Map<String, Object> metaData = (Map<String, Object>) template.get(MetaDtoKey011.META_DATA);
         Map<String, Object> source = new LinkedHashMap<>();
