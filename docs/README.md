@@ -72,7 +72,10 @@
 
 | 050 | 在用 | **低代码模板多格式导入导出**（[req011/050](requirement011/050.topic-template-formats.md) · [req013/050](requirement013/050.topic-template-formats.md)；2026-09-18 **已裁决·P1 已实现并 E2E**（JSON/CSV/Markdown；XLSX 占位））。模板是**低代码模块的一部分**（不独立域）、**只为导入后发布、不落库**；格式 JSON（现有）/ **CSV（分段单文件，A 方案）** / **Markdown（分段表格）** / XLSX（占位后做）；任意格式解析成 MetaDTO 后复用现有 validate/review/deploy；非 AI 必须有 `businessField`（045） |
 
-**下一可用编号：051。**（044/046/048/049 含 4，跳过）
+| 051 | 未裁决 | **同步抽象（方向无关）**（[req011/051](requirement011/051.topic-sync-abstraction.md) · [req013/051](requirement013/051.topic-sync-abstraction.md)；2026-09-18 **提案·本期不做，只留口子**）。命题：同步=抽象能力，指定 `source`/`sink` 端点 + **动态规则**，支持内↔外/一对多；**暂放 `datasource`**（强耦合），低代码只是使用者；本期只把 `importDataFromSql` 视为第一种特化 |
+| 052 | 在用 | **目标库方言适配（自动适配）**（[req011/052](requirement011/052.topic-db-dialect.md) · [req013/052](requirement013/052.topic-db-dialect.md)；2026-09-18 **方向已裁决·本期做端口+自动路由+MySQL**）。目标 DDL/写入/schema 写死 MySQL；抽方言族端口（DDL/Writer/Schema/TypeMapper）+ 按 `DatabaseType011` 自动路由，现有 MySQL 降为方言，Oracle/SQLServer 未来 |
+
+**下一可用编号：053。**（044/046/048/049 含 4，跳过）
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。

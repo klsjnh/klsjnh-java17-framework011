@@ -17,7 +17,7 @@ package com.klsjnh.web.lowcode011.controller;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.response.Response011;
 
-import com.klsjnh.application.lowcode011.JulyMetadataDesignerUseCase;
+import com.klsjnh.application.lowcode011.designer.JulyMetadataDesignerUseCase;
 
 import com.klsjnh.web.global.audit.AuditLog;
 

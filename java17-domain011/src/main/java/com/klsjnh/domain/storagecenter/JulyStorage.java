@@ -249,13 +249,9 @@ public class JulyStorage {
      */
     private static void validate(String storageCode, String storageName, String provider, String basePath,
             String endpoint, String accessKey, String secretKey, String defaultBucket, String remark) {
-        if (StringUtil011.isMissing(storageCode, 60)) {
-            throw new IllegalArgumentException("storage code is required (max 60)");
-        }
+        StringUtil011.requirePresent(storageCode, "storage code", 60);
 
-        if (StringUtil011.isMissing(storageName, 100)) {
-            throw new IllegalArgumentException("storage name is required (max 100)");
-        }
+        StringUtil011.requirePresent(storageName, "storage name", 100);
 
         StorageType011 type = StorageType011.of(provider);
 

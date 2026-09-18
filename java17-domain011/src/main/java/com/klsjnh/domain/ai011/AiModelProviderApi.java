@@ -120,9 +120,7 @@ public class AiModelProviderApi {
             String apiKey, String remark, AuditInfo audit) {
         validate(pkMt, apiCode, apiName, remark);
 
-        if (StringUtil011.isMissing(apiKey, 300)) {
-            throw new IllegalArgumentException("api key is required (max 300)");
-        }
+        StringUtil011.requirePresent(apiKey, "api key", 300);
 
         return new AiModelProviderApi(id, pkMt, sortOrder, apiCode, apiName, apiKey, Status011.ENABLED.getCode(),
                 remark, audit);
@@ -141,9 +139,7 @@ public class AiModelProviderApi {
     public void update(String apiName, Integer sortOrder, String apiKey, String status, String remark) {
         validate(this.pkMt, this.apiCode, apiName, remark);
 
-        if (StringUtil011.isOver(apiKey, 300)) {
-            throw new IllegalArgumentException("api key is over 300");
-        }
+        StringUtil011.requireMax(apiKey, "api key", 300);
 
         this.apiName = apiName;
         this.remark = remark;
@@ -170,21 +166,13 @@ public class AiModelProviderApi {
      * @param remark  remark
      */
     private static void validate(String pkMt, String apiCode, String apiName, String remark) {
-        if (StringUtil011.isMissing(pkMt, 33)) {
-            throw new IllegalArgumentException("provider link is required");
-        }
+        StringUtil011.requirePresent(pkMt, "provider link", 33);
 
-        if (StringUtil011.isMissing(apiCode, 60)) {
-            throw new IllegalArgumentException("api code is required (max 60)");
-        }
+        StringUtil011.requirePresent(apiCode, "api code", 60);
 
-        if (StringUtil011.isMissing(apiName, 100)) {
-            throw new IllegalArgumentException("api name is required (max 100)");
-        }
+        StringUtil011.requirePresent(apiName, "api name", 100);
 
-        if (StringUtil011.isOver(remark, 300)) {
-            throw new IllegalArgumentException("remark is over 300");
-        }
+        StringUtil011.requireMax(remark, "remark", 300);
     }
 
     /**

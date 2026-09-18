@@ -158,13 +158,9 @@ public class JulyRole {
      * @param roleName role name
      */
     private static void validate(String roleCode, String roleName) {
-        if (StringUtil011.isMissing(roleCode, 30)) {
-            throw new IllegalArgumentException("role code is required (max 30)");
-        }
+        StringUtil011.requirePresent(roleCode, "role code", 30);
 
-        if (StringUtil011.isMissing(roleName, 60)) {
-            throw new IllegalArgumentException("role name is required (max 60)");
-        }
+        StringUtil011.requirePresent(roleName, "role name", 60);
     }
 
     /**

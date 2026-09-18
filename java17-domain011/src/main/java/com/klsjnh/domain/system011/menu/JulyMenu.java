@@ -196,17 +196,11 @@ public class JulyMenu {
      * @param menuType menu type
      */
     private static void validateBasics(String menuCode, String menuName, String menuType) {
-        if (StringUtil011.isMissing(menuCode, 30)) {
-            throw new IllegalArgumentException("menu code is required (max 30)");
-        }
+        StringUtil011.requirePresent(menuCode, "menu code", 30);
 
-        if (StringUtil011.isMissing(menuName, 60)) {
-            throw new IllegalArgumentException("menu name is required (max 60)");
-        }
+        StringUtil011.requirePresent(menuName, "menu name", 60);
 
-        if (StringUtil011.isMissing(menuType, 3)) {
-            throw new IllegalArgumentException("menu type is required");
-        }
+        StringUtil011.requirePresent(menuType, "menu type", 3);
     }
 
     /**

@@ -41,7 +41,7 @@ web ──► application ──► domain ◄── infrastructure
 
 | 模块 | 层 | 内容 |
 |------|-----|------|
-| java17-common011 | common | 枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011 / StorageType011 / AuditType011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 / AuthAttribute011 |
+| java17-common011 | common | 枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011 / StorageType011 / AuditType011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 / AuthAttribute011 · 工具（DateUtil011 / MarkdownUtil011） |
 | java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源 Port）· storagecenter（ObjectStoragePort / JulyStorage / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· dataservice011（JulyDatasource / JulyBusinessModeling + 探针/推断/Guard）· ai011（AiModelProvider + Api + Probe）· lowcode011（MetadataContent 契约 + JulyMetadata 组合聚合 + ObjectTablePolicy/Gateway + 端口）· platform011（export / backup Port） |
 | java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· dataservice011（datasource / business modeling）· ai011 · storagecenter（实例 / 桶 / 对象 + 在线编辑）· lowcode011 · platform011（export / backup） |
 | java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / dataservice011 / ai011 / lowcode011 / storagecenter 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
@@ -101,7 +101,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | dataservice011：数据源管理（031，表驱动 + 双向驱动 + 测试连接 + 排序）· 业务建模（033，探针推断 + 执行/分页 SQL + 交接产物） |
 | ✅ | ai011：模型接入（036，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 模型调用 chat（041，OpenAI 兼容，id/code 解析） |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
-| ✅ | lowcode011：低代码核心（038）· 设计器与运行时（039）· 元数据模板（040）· 内核重构（042，`MetadataContent` 契约 + 内核抽取） |
+| ✅ | lowcode011：低代码核心（038）· 设计器与运行时（039）· 元数据模板（040）· 内核重构（042）· 业务字段口径（045）· 模板多格式 JSON/CSV/Markdown（050） |
 | ◐ | lowcode011 挂起项（用户口径：价值有限，不再扩展）：运行时权限模型 · 真字段映射 · 开放 API 限流 · `syncData` · 模板批量 · `/runtime` 运行页（前端） |
 | ◐ | 043 多入口建模（P1+P2 部分实现：`/lowcode011/intake/v1/{review,create}`，kind=`sql/template/copy/modeling/ai`；**AI 一句话开发已通**；`table`/P3/P4 未做） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 审计切面 |

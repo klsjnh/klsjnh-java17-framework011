@@ -163,29 +163,19 @@ public class AiModelProvider {
      */
     private static void validate(String providerCode, String providerName, String baseUrl, String models,
             String remark) {
-        if (StringUtil011.isMissing(providerCode, 60)) {
-            throw new IllegalArgumentException("provider code is required (max 60)");
-        }
+        StringUtil011.requirePresent(providerCode, "provider code", 60);
 
-        if (StringUtil011.isMissing(providerName, 100)) {
-            throw new IllegalArgumentException("provider name is required (max 100)");
-        }
+        StringUtil011.requirePresent(providerName, "provider name", 100);
 
-        if (StringUtil011.isMissing(baseUrl, 300)) {
-            throw new IllegalArgumentException("base url is required (max 300)");
-        }
+        StringUtil011.requirePresent(baseUrl, "base url", 300);
 
         if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
             throw new IllegalArgumentException("base url must start with http:// or https://");
         }
 
-        if (StringUtil011.isOver(models, 500)) {
-            throw new IllegalArgumentException("models is over 500");
-        }
+        StringUtil011.requireMax(models, "models", 500);
 
-        if (StringUtil011.isOver(remark, 300)) {
-            throw new IllegalArgumentException("remark is over 300");
-        }
+        StringUtil011.requireMax(remark, "remark", 300);
     }
 
     /**

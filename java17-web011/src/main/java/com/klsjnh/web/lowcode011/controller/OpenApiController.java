@@ -18,7 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.lowcode011.ObjectQueryCommand;
-import com.klsjnh.application.lowcode011.OpenApiUseCase;
+import com.klsjnh.application.lowcode011.runtime.OpenApiUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

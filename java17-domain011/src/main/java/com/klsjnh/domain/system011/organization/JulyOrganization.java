@@ -170,13 +170,9 @@ public class JulyOrganization {
      * @param orgName organization name
      */
     private static void validateBasics(String orgCode, String orgName) {
-        if (StringUtil011.isMissing(orgCode, 30)) {
-            throw new IllegalArgumentException("org code is required (max 30)");
-        }
+        StringUtil011.requirePresent(orgCode, "org code", 30);
 
-        if (StringUtil011.isMissing(orgName, 60)) {
-            throw new IllegalArgumentException("org name is required (max 60)");
-        }
+        StringUtil011.requirePresent(orgName, "org name", 60);
     }
 
     /**

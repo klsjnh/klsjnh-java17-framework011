@@ -296,9 +296,7 @@ public class JulyMetadata {
      */
     private static void validate(String objectName, String objectType, String description, String businessField,
             String packageName, String routerPath, String remark) {
-        if (StringUtil011.isMissing(objectName, NAME_MAX)) {
-            throw new IllegalArgumentException("object name is required (max 60)");
-        }
+        StringUtil011.requirePresent(objectName, "object name", NAME_MAX);
 
         if (!StringUtil011.isBlank(objectType) && ObjectType011.fromString(objectType) == null) {
             throw new IllegalArgumentException("unknown object type: " + objectType);

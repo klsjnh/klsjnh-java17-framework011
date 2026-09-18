@@ -36,17 +36,11 @@ public record JulyMetadataService(String serviceCode, String serviceName, String
      * Normalize and validate.
      */
     public JulyMetadataService {
-        if (StringUtil011.isMissing(serviceCode, 60)) {
-            throw new IllegalArgumentException("service code is required (max 60)");
-        }
+        StringUtil011.requirePresent(serviceCode, "service code", 60);
 
-        if (StringUtil011.isMissing(serviceName, 60)) {
-            throw new IllegalArgumentException("service name is required (max 60)");
-        }
+        StringUtil011.requirePresent(serviceName, "service name", 60);
 
-        if (StringUtil011.isOver(serviceDescription, 300)) {
-            throw new IllegalArgumentException("service description is too long (max 300)");
-        }
+        StringUtil011.requireMax(serviceDescription, "service description", 300);
 
         if (StringUtil011.isBlank(objectType)) {
             objectType = "global_method";
@@ -56,9 +50,7 @@ public record JulyMetadataService(String serviceCode, String serviceName, String
             paramType = "none";
         }
 
-        if (StringUtil011.isOver(serviceContent, 20000)) {
-            throw new IllegalArgumentException("service content is too long (max 20000)");
-        }
+        StringUtil011.requireMax(serviceContent, "service content", 20000);
 
         if (sortOrder == null) {
             sortOrder = 9999;

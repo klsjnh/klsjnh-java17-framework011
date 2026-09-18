@@ -58,9 +58,9 @@ public record ConnectionInfo(String dsCode, String dsName, String dsType, String
      * @param poolConfig  pool config json, optional
      */
     public ConnectionInfo {
-        schemaName = blankToNull(schemaName);
-        driverClass = blankToNull(driverClass);
-        poolConfig = blankToNull(poolConfig);
+        schemaName = StringUtil011.blankToNull(schemaName);
+        driverClass = StringUtil011.blankToNull(driverClass);
+        poolConfig = StringUtil011.blankToNull(poolConfig);
     }
 
     /**
@@ -93,30 +93,10 @@ public record ConnectionInfo(String dsCode, String dsName, String dsType, String
             return false;
         }
 
-        return eq(dsUrl, other.dsUrl)
-                && eq(username, other.username)
-                && eq(password, other.password)
-                && eq(dsType, other.dsType);
+        return StringUtil011.eq(dsUrl, other.dsUrl)
+                && StringUtil011.eq(username, other.username)
+                && StringUtil011.eq(password, other.password)
+                && StringUtil011.eq(dsType, other.dsType);
     }
 
-    /**
-     * Null-safe string equality.
-     *
-     * @param left  left value
-     * @param right right value
-     * @return true when both null or both equal
-     */
-    private static boolean eq(String left, String right) {
-        return left == null ? right == null : left.equals(right);
-    }
-
-    /**
-     * Normalize a blank optional string to null.
-     *
-     * @param value raw value
-     * @return trimmed value or null when blank
-     */
-    private static String blankToNull(String value) {
-        return StringUtil011.isBlank(value) ? null : value.trim();
-    }
 }

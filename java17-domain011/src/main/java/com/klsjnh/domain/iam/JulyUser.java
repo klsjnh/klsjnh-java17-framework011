@@ -197,17 +197,11 @@ public class JulyUser {
      * @param password    password hash
      */
     private static void validate(String userAccount, String userName, String password) {
-        if (StringUtil011.isMissing(userAccount, 30)) {
-            throw new IllegalArgumentException("user account is required (max 30)");
-        }
+        StringUtil011.requirePresent(userAccount, "user account", 30);
 
-        if (StringUtil011.isMissing(userName, 60)) {
-            throw new IllegalArgumentException("user name is required (max 60)");
-        }
+        StringUtil011.requirePresent(userName, "user name", 60);
 
-        if (StringUtil011.isMissing(password, 100)) {
-            throw new IllegalArgumentException("password hash is required (max 100)");
-        }
+        StringUtil011.requirePresent(password, "password hash", 100);
     }
 
     /**

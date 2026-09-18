@@ -35,8 +35,8 @@ public record JulyStorageQuerySpec(String keyword, String provider, String statu
      * @param status   row status filter, nullable for all
      */
     public JulyStorageQuerySpec {
-        keyword = blankToNull(keyword);
-        provider = blankToNull(provider);
+        keyword = StringUtil011.blankToNull(keyword);
+        provider = StringUtil011.blankToNull(provider);
     }
 
     /**
@@ -66,13 +66,4 @@ public record JulyStorageQuerySpec(String keyword, String provider, String statu
         return !StringUtil011.isBlank(status);
     }
 
-    /**
-     * Treat a blank text as absent.
-     *
-     * @param value raw value
-     * @return trimmed value, or null when blank
-     */
-    private static String blankToNull(String value) {
-        return StringUtil011.isBlank(value) ? null : value.trim();
-    }
 }

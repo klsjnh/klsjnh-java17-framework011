@@ -139,17 +139,11 @@ public class JulyDictionary {
      * @param remark         remark
      */
     private static void validate(String dictionaryCode, String dictionaryName, String remark) {
-        if (StringUtil011.isMissing(dictionaryCode, 60)) {
-            throw new IllegalArgumentException("dictionary code is required (max 60)");
-        }
+        StringUtil011.requirePresent(dictionaryCode, "dictionary code", 60);
 
-        if (StringUtil011.isMissing(dictionaryName, 100)) {
-            throw new IllegalArgumentException("dictionary name is required (max 100)");
-        }
+        StringUtil011.requirePresent(dictionaryName, "dictionary name", 100);
 
-        if (StringUtil011.isOver(remark, 300)) {
-            throw new IllegalArgumentException("remark is over 300");
-        }
+        StringUtil011.requireMax(remark, "remark", 300);
     }
 
     /**

@@ -37,13 +37,9 @@ public record JulyMetadataDisplay(String displayCode, String displayName, String
      * Normalize and validate.
      */
     public JulyMetadataDisplay {
-        if (StringUtil011.isMissing(displayCode, 60)) {
-            throw new IllegalArgumentException("display code is required (max 60)");
-        }
+        StringUtil011.requirePresent(displayCode, "display code", 60);
 
-        if (StringUtil011.isMissing(displayName, 60)) {
-            throw new IllegalArgumentException("display name is required (max 60)");
-        }
+        StringUtil011.requirePresent(displayName, "display name", 60);
 
         if (StringUtil011.isBlank(align) || !(align.equals("left") || align.equals("center") || align.equals("right"))) {
             align = "left";
@@ -53,9 +49,7 @@ public record JulyMetadataDisplay(String displayCode, String displayName, String
             width = 0;
         }
 
-        if (StringUtil011.isMissing(componentType, 30)) {
-            throw new IllegalArgumentException("component type is required (max 30)");
-        }
+        StringUtil011.requirePresent(componentType, "component type", 30);
 
         if (StringUtil011.isBlank(displayType)) {
             displayType = "all";

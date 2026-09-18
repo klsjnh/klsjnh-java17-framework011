@@ -18,7 +18,7 @@ package com.klsjnh.web.lowcode011.controller;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.response.Response011;
 
-import com.klsjnh.application.lowcode011.JulyMetadataTemplateUseCase;
+import com.klsjnh.application.lowcode011.template.JulyMetadataTemplateUseCase;
 import com.klsjnh.domain.lowcode011.enums.TemplateFormat011;
 import com.klsjnh.domain.lowcode011.records.IntakeKey011;
 

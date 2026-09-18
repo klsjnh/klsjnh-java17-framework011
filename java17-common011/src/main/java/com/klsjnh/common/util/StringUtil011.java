@@ -73,4 +73,54 @@ public final class StringUtil011 {
 
         return normalizedLeft == null ? normalizedRight == null : normalizedLeft.equals(normalizedRight);
     }
+
+    /**
+     * Null-safe string equality (no trimming).
+     *
+     * @param left  left value
+     * @param right right value
+     * @return true when both null or both equal
+     */
+    public static boolean eq(String left, String right) {
+        return left == null ? right == null : left.equals(right);
+    }
+
+    /**
+     * Normalize a blank optional string to null.
+     *
+     * @param value raw value
+     * @return trimmed value or null when blank
+     */
+    public static String blankToNull(String value) {
+        return isBlank(value) ? null : value.trim();
+    }
+
+    /**
+     * Require a value to be within a maximum length, else fail with a readable
+     * message. The single home for the "check length then throw" pattern.
+     *
+     * @param value value, nullable
+     * @param label human label used in the message, e.g. {@code driver class}
+     * @param max   maximum length
+     */
+    public static void requireMax(String value, String label, int max) {
+        if (isOver(value, max)) {
+            throw new IllegalArgumentException(label + " is over " + max);
+        }
+    }
+
+    /**
+     * Require a value to be present (non-blank) and within a maximum length,
+     * else fail with a readable message. The single home for the "check present
+     * then throw" pattern.
+     *
+     * @param value value, nullable
+     * @param label human label used in the message, e.g. {@code user account}
+     * @param max   maximum length
+     */
+    public static void requirePresent(String value, String label, int max) {
+        if (isMissing(value, max)) {
+            throw new IllegalArgumentException(label + " is required (max " + max + ")");
+        }
+    }
 }

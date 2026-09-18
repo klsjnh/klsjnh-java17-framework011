@@ -147,21 +147,13 @@ public class JulyDictionaryItem {
      * @param remark    remark
      */
     private static void validate(String pkMt, String itemCode, String itemLabel, String remark) {
-        if (StringUtil011.isMissing(pkMt, 33)) {
-            throw new IllegalArgumentException("dictionary link is required");
-        }
+        StringUtil011.requirePresent(pkMt, "dictionary link", 33);
 
-        if (StringUtil011.isMissing(itemCode, 60)) {
-            throw new IllegalArgumentException("item code is required (max 60)");
-        }
+        StringUtil011.requirePresent(itemCode, "item code", 60);
 
-        if (StringUtil011.isMissing(itemLabel, 100)) {
-            throw new IllegalArgumentException("item label is required (max 100)");
-        }
+        StringUtil011.requirePresent(itemLabel, "item label", 100);
 
-        if (StringUtil011.isOver(remark, 300)) {
-            throw new IllegalArgumentException("remark is over 300");
-        }
+        StringUtil011.requireMax(remark, "remark", 300);
     }
 
     /**

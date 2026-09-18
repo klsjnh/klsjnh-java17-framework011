@@ -16,7 +16,7 @@ package com.klsjnh.web.lowcode011.controller;
 
 import com.klsjnh.common.response.Response011;
 
-import com.klsjnh.application.lowcode011.JulyMetadataOpenApiUseCase;
+import com.klsjnh.application.lowcode011.runtime.JulyMetadataOpenApiUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -14,6 +14,8 @@ package com.klsjnh.infrastructure.lowcode011.template;
  *
  */
 
+import com.klsjnh.common.util.StringUtil011;
+
 import com.klsjnh.domain.lowcode011.records.MetaDtoKey011;
 
 import java.util.ArrayList;
@@ -120,7 +122,7 @@ final class TemplateChildSupport {
             return "true".equalsIgnoreCase(v) || "1".equals(v) || "yes".equalsIgnoreCase(v) || "y".equalsIgnoreCase(v);
         }
 
-        return blankToNull(v);
+        return StringUtil011.blankToNull(v);
     }
 
     /**
@@ -154,7 +156,7 @@ final class TemplateChildSupport {
             String v = value == null ? "" : value.trim();
             metaData.put(canonical, v.isEmpty() ? null : Integer.valueOf(v));
         } else {
-            metaData.put(canonical, blankToNull(value));
+            metaData.put(canonical, StringUtil011.blankToNull(value));
         }
     }
 
@@ -183,16 +185,6 @@ final class TemplateChildSupport {
         }
 
         return rows;
-    }
-
-    /**
-     * Whether a value is blank.
-     *
-     * @param value value
-     * @return value or null when blank
-     */
-    static String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value;
     }
 
     /**

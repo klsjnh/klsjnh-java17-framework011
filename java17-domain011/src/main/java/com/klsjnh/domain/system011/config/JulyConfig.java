@@ -107,13 +107,9 @@ public class JulyConfig {
      * @param data config value
      */
     private static void validate(String code, String data) {
-        if (StringUtil011.isMissing(code, 60)) {
-            throw new IllegalArgumentException("config code is required (max 60)");
-        }
+        StringUtil011.requirePresent(code, "config code", 60);
 
-        if (StringUtil011.isMissing(data, 300)) {
-            throw new IllegalArgumentException("config data is required (max 300)");
-        }
+        StringUtil011.requirePresent(data, "config data", 300);
     }
 
     /**

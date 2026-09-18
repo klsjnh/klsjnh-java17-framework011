@@ -152,21 +152,13 @@ public class JulyScheduler {
      * @param cron    cron expression
      */
     private static void validateBasics(String code, String name, String handler, String cron) {
-        if (StringUtil011.isMissing(code, 30)) {
-            throw new IllegalArgumentException("scheduler code is required (max 30)");
-        }
+        StringUtil011.requirePresent(code, "scheduler code", 30);
 
-        if (StringUtil011.isMissing(name, 60)) {
-            throw new IllegalArgumentException("scheduler name is required (max 60)");
-        }
+        StringUtil011.requirePresent(name, "scheduler name", 60);
 
-        if (StringUtil011.isMissing(handler, 300)) {
-            throw new IllegalArgumentException("scheduler handler is required (max 300)");
-        }
+        StringUtil011.requirePresent(handler, "scheduler handler", 300);
 
-        if (StringUtil011.isMissing(cron, 30)) {
-            throw new IllegalArgumentException("scheduler cron is required (max 30)");
-        }
+        StringUtil011.requirePresent(cron, "scheduler cron", 30);
     }
 
     /**

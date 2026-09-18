@@ -15,6 +15,7 @@ package com.klsjnh.infrastructure.lowcode011.template;
  */
 
 import com.klsjnh.common.util.MarkdownUtil011;
+import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.domain.lowcode011.TemplateCodec;
 import com.klsjnh.domain.lowcode011.enums.TemplateFormat011;
@@ -122,7 +123,7 @@ public class MarkdownTemplateCodec implements TemplateCodec {
                 }
             } else if (MetaDtoKey011.SOURCE.equalsIgnoreCase(section)) {
                 if (cells.size() >= 2 && !cells.get(0).isBlank()) {
-                    source.put(cells.get(0).trim(), TemplateChildSupport.blankToNull(cells.get(1)));
+                    source.put(cells.get(0).trim(), StringUtil011.blankToNull(cells.get(1)));
                 }
             } else if (MetaDtoKey011.FIELD_DATA.equalsIgnoreCase(section)) {
                 header = sectionRows(fields, header, cells);

@@ -91,9 +91,7 @@ public class Demo011 {
      * @param name demo name
      */
     public void updateName(String name) {
-        if (StringUtil011.isMissing(name, 60)) {
-            throw new IllegalArgumentException("demo name is required (max 60)");
-        }
+        StringUtil011.requirePresent(name, "demo name", 60);
 
         this.name = name;
     }
@@ -105,13 +103,8 @@ public class Demo011 {
      * @param name demo name
      */
     private static void validate(String code, String name) {
-        if (StringUtil011.isMissing(code, 30)) {
-            throw new IllegalArgumentException("demo code is required (max 30)");
-        }
-
-        if (StringUtil011.isMissing(name, 60)) {
-            throw new IllegalArgumentException("demo name is required (max 60)");
-        }
+        StringUtil011.requirePresent(code, "demo code", 30);
+        StringUtil011.requirePresent(name, "demo name", 60);
     }
 
     /**

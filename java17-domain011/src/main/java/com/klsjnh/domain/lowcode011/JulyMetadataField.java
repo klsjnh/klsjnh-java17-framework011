@@ -37,13 +37,9 @@ public record JulyMetadataField(String fieldCode, String fieldName, String field
      * Normalize and validate.
      */
     public JulyMetadataField {
-        if (StringUtil011.isMissing(fieldCode, 60)) {
-            throw new IllegalArgumentException("field code is required (max 60)");
-        }
+        StringUtil011.requirePresent(fieldCode, "field code", 60);
 
-        if (StringUtil011.isMissing(fieldName, 60)) {
-            throw new IllegalArgumentException("field name is required (max 60)");
-        }
+        StringUtil011.requirePresent(fieldName, "field name", 60);
 
         if (!FieldType011.isKnown(fieldType)) {
             throw new IllegalArgumentException("unknown field type: " + fieldType);

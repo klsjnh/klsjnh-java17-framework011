@@ -44,7 +44,7 @@ import java.util.Locale;
  * attribute is deliberately not tightened to the enum type, so rehydrating
  * metadata from an external source is never blocked by an unknown code.
  * Validation happens at the boundary — see
- * {@code com.klsjnh.domain.dataservice011}.
+ * {@code com.klsjnh.domain.lowcode011.modeling}.
  * </p>
  */
 
