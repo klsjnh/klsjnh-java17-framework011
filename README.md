@@ -103,7 +103,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
 | ✅ | lowcode011：低代码核心（038）· 设计器与运行时（039）· 元数据模板（040）· 内核重构（042，`MetadataContent` 契约 + 内核抽取） |
 | ◐ | lowcode011 挂起项（用户口径：价值有限，不再扩展）：运行时权限模型 · 真字段映射 · 开放 API 限流 · `syncData` · 模板批量 · `/runtime` 运行页（前端） |
-| ⏳ | 043 多入口建模与数据同步（提案，待评审；`ModelSourcePort` + N 入口 → 统一契约） |
+| ◐ | 043 多入口建模（P1+P2 部分实现：`/lowcode011/intake/v1/{review,create}`，kind=`sql/template/copy/modeling/ai`；**AI 一句话开发已通**；`table`/P3/P4 未做） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 审计切面 |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插） |
 | ✅ | 容器化部署（docker compose + ubuntu 26.04 基镜像 + mount/bake，见 020） |

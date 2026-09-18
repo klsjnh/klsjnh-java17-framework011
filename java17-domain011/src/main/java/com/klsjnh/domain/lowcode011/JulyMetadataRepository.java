@@ -88,9 +88,8 @@ public interface JulyMetadataRepository {
      * @param publishStatus publish status (DRAFT / PUBLISHED)
      * @param version       current published version
      * @param physicalTable physical table name
-     * @param backupTable   backup table name, nullable
      */
-    void updatePublishState(String id, String publishStatus, String version, String physicalTable, String backupTable);
+    void updatePublishState(String id, String publishStatus, String version, String physicalTable);
 
     /**
      * Mark an object's data as initialized and stamp the last sync time.

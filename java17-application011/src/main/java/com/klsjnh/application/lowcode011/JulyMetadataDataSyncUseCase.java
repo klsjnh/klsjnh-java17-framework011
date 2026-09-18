@@ -20,6 +20,7 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.application.dataservice011.BusinessModelingExecuteCommand;
 import com.klsjnh.application.dataservice011.JulyBusinessModelingUseCase;
 import com.klsjnh.domain.lowcode011.JulyMetadata;
+import com.klsjnh.domain.lowcode011.records.ResultKey011;
 import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersionRepository;
@@ -153,18 +154,18 @@ public class JulyMetadataDataSyncUseCase {
 
         boolean hasMore = page < source.totalPages();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("objectName", objectName);
-        result.put("mode", init ? "init" : "sync");
-        result.put("pageNum", page);
-        result.put("pageSize", size);
-        result.put("hasMore", hasMore);
-        result.put("nextPageNum", hasMore ? page + 1 : null);
-        result.put("inserted", processed);
-        result.put("updated", 0);
-        result.put("unchanged", 0);
-        result.put("skipped", 0);
-        result.put("processed", processed);
-        result.put("dataInitialized", true);
+        result.put(ResultKey011.OBJECT_NAME, objectName);
+        result.put(ResultKey011.MODE, init ? "init" : "sync");
+        result.put(ResultKey011.PAGE_NUM, page);
+        result.put(ResultKey011.PAGE_SIZE, size);
+        result.put(ResultKey011.HAS_MORE, hasMore);
+        result.put(ResultKey011.NEXT_PAGE_NUM, hasMore ? page + 1 : null);
+        result.put(ResultKey011.INSERTED, processed);
+        result.put(ResultKey011.UPDATED, 0);
+        result.put(ResultKey011.UNCHANGED, 0);
+        result.put(ResultKey011.SKIPPED, 0);
+        result.put(ResultKey011.PROCESSED, processed);
+        result.put(ResultKey011.DATA_INITIALIZED, true);
 
         return result;
     }
@@ -214,10 +215,10 @@ public class JulyMetadataDataSyncUseCase {
         JulyMetadataVersion latest = versionRepository.findLatest(objectName);
 
         Map<String, Object> status = new LinkedHashMap<>();
-        status.put("objectName", objectName);
-        status.put("dataInitialized", metadataRepository.isSynced(objectName));
-        status.put("physicalTable", latest == null ? null : latest.physicalTable());
-        status.put("publishStatus", latest == null ? "draft" : "published");
+        status.put(ResultKey011.OBJECT_NAME, objectName);
+        status.put(ResultKey011.DATA_INITIALIZED, metadataRepository.isSynced(objectName));
+        status.put(ResultKey011.PHYSICAL_TABLE, latest == null ? null : latest.physicalTable());
+        status.put(ResultKey011.PUBLISH_STATUS, latest == null ? "draft" : "published");
 
         return status;
     }

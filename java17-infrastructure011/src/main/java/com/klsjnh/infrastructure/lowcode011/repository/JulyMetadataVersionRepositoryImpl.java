@@ -63,7 +63,6 @@ public class JulyMetadataVersionRepositoryImpl implements JulyMetadataVersionRep
         po.setVersion(version.version());
         po.setPayloadJson(version.payloadJson());
         po.setPhysicalTable(version.physicalTable());
-        po.setBackupTable(version.backupTable());
         po.setDdlText(version.ddlText());
         po.setPublishStatus(version.publishStatus());
         po.setPublishedBy(version.publishedBy());
@@ -142,7 +141,7 @@ public class JulyMetadataVersionRepositoryImpl implements JulyMetadataVersionRep
         }
 
         return new JulyMetadataVersion(po.getId(), po.getObjectName(), po.getVersion(), po.getPayloadJson(),
-                po.getPhysicalTable(), po.getBackupTable(), po.getDdlText(), po.getPublishStatus(),
+                po.getPhysicalTable(), po.getDdlText(), po.getPublishStatus(),
                 po.getPublishedBy(), po.getPublishedAt());
     }
 }

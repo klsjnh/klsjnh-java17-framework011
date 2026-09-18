@@ -18,6 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 
 import com.klsjnh.domain.lowcode011.CurrentOperatorPort;
+import com.klsjnh.domain.lowcode011.records.ResultKey011;
 import com.klsjnh.domain.lowcode011.JulyMetadata;
 import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
@@ -133,10 +134,10 @@ public class ObjectTableGateway {
                 page[1]).stream().map(RowView::of).toList();
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("pageIndex", page[0]);
-        result.put("pageSize", page[1]);
-        result.put("total", total);
-        result.put("rows", rows);
+        result.put(ResultKey011.PAGE_INDEX, page[0]);
+        result.put(ResultKey011.PAGE_SIZE, page[1]);
+        result.put(ResultKey011.TOTAL, total);
+        result.put(ResultKey011.ROWS, rows);
 
         return result;
     }

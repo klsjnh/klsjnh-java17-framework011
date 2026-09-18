@@ -161,17 +161,14 @@ public class JulyMetadataRepositoryImpl extends BaseRepository<JulyMetadataPo, J
      * @param publishStatus publish status
      * @param version       published version
      * @param physicalTable physical table name
-     * @param backupTable   backup table name, nullable
      */
     @Override
-    public void updatePublishState(String id, String publishStatus, String version, String physicalTable,
-            String backupTable) {
+    public void updatePublishState(String id, String publishStatus, String version, String physicalTable) {
         mapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<JulyMetadataPo>()
                 .eq("id", id)
                 .set("publish_status", publishStatus)
                 .set("version", version)
-                .set("physical_table", physicalTable)
-                .set("backup_table", backupTable));
+                .set("physical_table", physicalTable));
     }
 
     /**

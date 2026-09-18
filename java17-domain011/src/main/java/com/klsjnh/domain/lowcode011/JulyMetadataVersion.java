@@ -26,14 +26,13 @@ import java.time.LocalDateTime;
  * @param version       version string (e.g. 0.0.1)
  * @param payloadJson   MetaDTO snapshot JSON
  * @param physicalTable produced physical table name
- * @param backupTable   backup table name when data was migrated, nullable
  * @param ddlText       DDL executed by this publish, nullable for legacy
- * @param publishStatus snapshot status (PENDING / PUBLISHED)
+ * @param publishStatus snapshot status (PUBLISHED; the flow is stateless, no PENDING)
  * @param publishedBy   publisher id, nullable
- * @param publishedAt   publish time, nullable while PENDING
+ * @param publishedAt   publish time, nullable
  */
 
 public record JulyMetadataVersion(String id, String objectName, String version, String payloadJson,
-        String physicalTable, String backupTable, String ddlText, String publishStatus, String publishedBy,
+        String physicalTable, String ddlText, String publishStatus, String publishedBy,
         LocalDateTime publishedAt) {
 }

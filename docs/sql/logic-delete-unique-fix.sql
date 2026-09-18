@@ -109,3 +109,8 @@ ALTER TABLE july_user_role
     ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, pk_role), NULL)) STORED,
     DROP INDEX uk_user_role,
     ADD UNIQUE KEY uk_user_role (alive_key);
+
+ALTER TABLE july_demo011
+    ADD COLUMN alive_code VARCHAR(30) GENERATED ALWAYS AS (IF(dr = '0', code, NULL)) STORED,
+    DROP INDEX uk_code,
+    ADD UNIQUE KEY uk_code (alive_code);

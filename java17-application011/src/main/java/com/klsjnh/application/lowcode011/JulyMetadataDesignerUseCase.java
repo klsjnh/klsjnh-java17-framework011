@@ -25,6 +25,7 @@ import com.klsjnh.domain.lowcode011.MetadataDdlGeneratorPort;
 import com.klsjnh.domain.lowcode011.records.MetaDtoKey011;
 import com.klsjnh.domain.lowcode011.records.MetadataContent;
 import com.klsjnh.domain.lowcode011.records.MetadataContentCodec;
+import com.klsjnh.domain.lowcode011.records.ResultKey011;
 import com.klsjnh.domain.lowcode011.records.MetadataContentMapper;
 
 import org.springframework.stereotype.Service;
@@ -44,10 +45,6 @@ import java.util.Map;
 @Service
 public class JulyMetadataDesignerUseCase {
 
-    /**
-     * Physical table prefix for generated objects.
-     */
-    private static final String TABLE_PREFIX = "lc_";
 
     /**
      * Metadata CRUD use case (one master + three children).
@@ -89,11 +86,11 @@ public class JulyMetadataDesignerUseCase {
 
         for (JulyMetadata item : page.rows()) {
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("objectName", item.objectName());
-            row.put("description", item.description());
-            row.put("objectType", item.objectType());
-            row.put("publishStatus", "draft");
-            row.put("version", "");
+            row.put(ResultKey011.OBJECT_NAME, item.objectName());
+            row.put(ResultKey011.DESCRIPTION, item.description());
+            row.put(ResultKey011.OBJECT_TYPE, item.objectType());
+            row.put(ResultKey011.PUBLISH_STATUS, "draft");
+            row.put(ResultKey011.VERSION, "");
             rows.add(row);
         }
 
@@ -168,7 +165,7 @@ public class JulyMetadataDesignerUseCase {
         JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
 
         try {
-            return ddlGenerator.generateCreate(TABLE_PREFIX + metadata.objectName(), metadata.description(),
+            return ddlGenerator.generateCreate(metadata.objectName(), metadata.description(),
                     metadata.fields(), metadata.businessField());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());

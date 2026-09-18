@@ -11,11 +11,11 @@ package com.klsjnh.web.lowcode011.controller;
  *          modify history
  *
  *      2026.09.17  metadata template controller class
+ *      2026.09.18  multi-format (json/csv/xlsx) export + upload
  *
  */
 
 import com.klsjnh.common.enums.AuditType011;
-import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.lowcode011.JulyMetadataTemplateUseCase;
@@ -25,7 +25,10 @@ import com.klsjnh.web.global.audit.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,14 +37,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Map;
 
 /**
- * Metadata template HTTP adapter: default skeleton, export, upload review
- * (validate + preview, no persistence) and deploy (save + publish). Upload is a
- * single file (multipart) or a raw JSON body.
+ * Metadata template HTTP adapter: skeleton, export, upload review (validate +
+ * preview, no persistence) and deploy (save + publish). Export defaults to the
+ * JSON envelope; {@code format=csv|xlsx} returns a file stream. Upload accepts
+ * a single file (multipart, format by extension) or a raw JSON body.
  */
 
 @Tag(name = "低代码011 - 元数据模板")
@@ -55,11 +57,6 @@ public class JulyMetadataTemplateController {
     private final JulyMetadataTemplateUseCase useCase;
 
     /**
-     * JSON mapper for the multipart body.
-     */
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    /**
      * Create the controller.
      *
      * @param useCase metadata template use case
@@ -69,46 +66,59 @@ public class JulyMetadataTemplateController {
     }
 
     /**
-     * Default annotated skeleton template.
+     * Default skeleton template (JSON envelope, or a file for csv/xlsx).
      *
-     * @return skeleton template
+     * @param format optional format code (json / csv / xlsx)
+     * @return envelope or file
      */
     @GetMapping("/getTemplate011")
-    @Operation(summary = "取默认模板（合法 JSON，_guide 内为说明）")
-    public Response011<Map<String, Object>> getTemplate011() {
+    @Operation(summary = "取默认模板（默认 JSON；format=csv|xlsx 返回文件流）")
+    public ResponseEntity<Object> getTemplate011(@RequestParam(value = "format", required = false) String format) {
         String funcName = "get template";
 
-        return Response011.success(funcName, useCase.blankTemplate());
+        if (isFileFormat(format)) {
+            return file(useCase.blankFile(format), format, "template011." + extension(format));
+        }
+
+        return ResponseEntity.ok(Response011.success(funcName, useCase.blankTemplate()));
     }
 
     /**
-     * Export an existing object as a template (1 master + 3 children + source).
+     * Export an existing object as a template (JSON envelope, or a file).
      *
      * @param objectName object name, query parameter
-     * @return template
+     * @param format     optional format code (json / csv / xlsx)
+     * @return envelope or file
      */
     @GetMapping("/downloadTemplate011")
-    @Operation(summary = "导出对象模板（1 主 3 子 + source；objectName 走 query）")
-    public Response011<Map<String, Object>> downloadTemplate011(@RequestParam("objectName") String objectName) {
+    @Operation(summary = "导出对象模板（默认 JSON；format=csv|xlsx 返回文件流）")
+    public ResponseEntity<Object> downloadTemplate011(@RequestParam("objectName") String objectName,
+            @RequestParam(value = "format", required = false) String format) {
         String funcName = "download template";
 
-        return Response011.success(funcName, useCase.downloadTemplate(objectName));
+        if (isFileFormat(format)) {
+            return file(useCase.downloadFile(objectName, format), format, objectName + "." + extension(format));
+        }
+
+        return ResponseEntity.ok(Response011.success(funcName, useCase.downloadTemplate(objectName)));
     }
 
     /**
-     * Upload a template file (multipart) and review it (no persistence).
+     * Upload a template file (multipart, format by extension) and review it.
      *
-     * @param file template json file
+     * @param file template file (json / csv)
      * @return review report
-     * @throws Exception parse failure
+     * @throws Exception read failure
      */
     @PostMapping(value = "/uploadTemplate011", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "上传模板文件并审核（不落库，返回校验 + previewDdl）")
+    @Operation(summary = "上传模板文件并审核（json/csv 按扩展名识别；不落库）")
     public Response011<Map<String, Object>> uploadTemplate011(@RequestParam("file") MultipartFile file)
             throws Exception {
         String funcName = "upload template";
 
-        return Response011.success(funcName, useCase.reviewTemplate(parse(file.getBytes())));
+        Map<String, Object> template = useCase.parseFile(file.getBytes(), file.getOriginalFilename(), null);
+
+        return Response011.success(funcName, useCase.reviewTemplate(template));
     }
 
     /**
@@ -150,18 +160,55 @@ public class JulyMetadataTemplateController {
     }
 
     /**
-     * Parse an uploaded template file.
+     * Whether the requested format needs a file stream (anything but json).
      *
-     * @param bytes file bytes
-     * @return template map
-     * @throws Exception parse failure
+     * @param format format code, nullable
+     * @return true for csv/xlsx
      */
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> parse(byte[] bytes) throws Exception {
-        try {
-            return objectMapper.readValue(bytes, Map.class);
-        } catch (Exception ex) {
-            throw BusinessException.badRequest("template file is not valid json: " + ex.getMessage());
+    private boolean isFileFormat(String format) {
+        return format != null && !format.isBlank() && !"json".equalsIgnoreCase(format.trim());
+    }
+
+    /**
+     * Normalise a format code for a filename.
+     *
+     * @param format format code, nullable
+     * @return lower-case code, json by default
+     */
+    private String extension(String format) {
+        if (format == null || format.isBlank()) {
+            return "json";
         }
+
+        String value = format.trim().toLowerCase();
+
+        return "markdown".equals(value) ? "md" : value;
+    }
+
+    /**
+     * Build a file download response.
+     *
+     * @param body     bytes
+     * @param format   format code
+     * @param filename download filename
+     * @return response entity
+     */
+    private ResponseEntity<Object> file(byte[] body, String format, String filename) {
+        String value = format.trim().toLowerCase();
+        MediaType mediaType;
+
+        if ("csv".equals(value)) {
+            mediaType = new MediaType("text", "csv");
+        } else if ("md".equals(value) || "markdown".equals(value)) {
+            mediaType = new MediaType("text", "markdown");
+        } else {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(mediaType);
+        headers.setContentDispositionFormData("attachment", filename);
+
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
     }
 }

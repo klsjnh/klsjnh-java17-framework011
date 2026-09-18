@@ -108,6 +108,24 @@ public final class MetaDtoKey011 {
     /** Service: enabled. */
     public static final String ENABLED = "enabled";
 
+    /** Template: _guide. */
+    public static final String GUIDE = "_guide";
+
+    /** Template: templateVersion. */
+    public static final String TEMPLATE_VERSION = "templateVersion";
+
+    /** metaData.source: section. */
+    public static final String SOURCE = "source";
+
+    /** metaData.source: kind. */
+    public static final String KIND = "kind";
+
+    /** metaData.source: dataSourceCode. */
+    public static final String DATA_SOURCE_CODE = "dataSourceCode";
+
+    /** metaData.source: probeSql. */
+    public static final String PROBE_SQL = "probeSql";
+
     /**
      * Utility: no instances.
      */

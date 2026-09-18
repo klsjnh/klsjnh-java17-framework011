@@ -80,6 +80,10 @@ public class JulyMetadataUseCase {
     public String insert(String objectName, Integer sortOrder, String objectType, String description,
             String businessField, String packageName, String routerPath, String remark, List<JulyMetadataField> fields,
             List<JulyMetadataDisplay> displays, List<JulyMetadataService> services) {
+        if (businessField == null || businessField.isBlank()) {
+            throw BusinessException.badRequest("businessField required (business key)");
+        }
+
         if (repository.findByObjectName(objectName) != null) {
             throw BusinessException.badRequest("object name already exists: " + objectName);
         }
@@ -119,6 +123,10 @@ public class JulyMetadataUseCase {
     public String update(String id, String objectType, String description, String businessField, String packageName,
             String routerPath, Integer sortOrder, String status, String remark, List<JulyMetadataField> fields,
             List<JulyMetadataDisplay> displays, List<JulyMetadataService> services) {
+        if (businessField == null || businessField.isBlank()) {
+            throw BusinessException.badRequest("businessField required (business key)");
+        }
+
         JulyMetadata metadata = require(id);
         requireStatus(status);
 

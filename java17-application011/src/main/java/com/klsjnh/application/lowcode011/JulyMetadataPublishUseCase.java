@@ -15,8 +15,11 @@ package com.klsjnh.application.lowcode011;
  */
 
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.util.DateUtil011;
 
+import com.klsjnh.domain.lowcode011.CurrentOperatorPort;
+import com.klsjnh.domain.lowcode011.records.ResultKey011;
 import com.klsjnh.domain.lowcode011.JulyMetadata;
 import com.klsjnh.domain.lowcode011.JulyMetadataField;
 import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
@@ -24,6 +27,7 @@ import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersionRepository;
 import com.klsjnh.domain.lowcode011.MetadataDdlExecutorPort;
 import com.klsjnh.domain.lowcode011.MetadataDdlGeneratorPort;
+import com.klsjnh.domain.lowcode011.records.MetaDtoKey011;
 import com.klsjnh.domain.shared.EntityId;
 
 import org.springframework.stereotype.Service;
@@ -48,10 +52,6 @@ import java.util.Set;
 @Service
 public class JulyMetadataPublishUseCase {
 
-    /**
-     * Physical table prefix.
-     */
-    private static final String TABLE_PREFIX = "lc_";
 
     /**
      * First published version.
@@ -84,6 +84,11 @@ public class JulyMetadataPublishUseCase {
     private final MetadataDdlExecutorPort ddlExecutor;
 
     /**
+     * Current operator port (snapshot publisher).
+     */
+    private final CurrentOperatorPort currentOperatorPort;
+
+    /**
      * JSON mapper for the snapshot payload.
      */
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -99,12 +104,13 @@ public class JulyMetadataPublishUseCase {
      */
     public JulyMetadataPublishUseCase(JulyMetadataUseCase metadataUseCase, JulyMetadataRepository metadataRepository,
             JulyMetadataVersionRepository versionRepository, MetadataDdlGeneratorPort ddlGenerator,
-            MetadataDdlExecutorPort ddlExecutor) {
+            MetadataDdlExecutorPort ddlExecutor, CurrentOperatorPort currentOperatorPort) {
         this.metadataUseCase = metadataUseCase;
         this.metadataRepository = metadataRepository;
         this.versionRepository = versionRepository;
         this.ddlGenerator = ddlGenerator;
         this.ddlExecutor = ddlExecutor;
+        this.currentOperatorPort = currentOperatorPort;
     }
 
     /**
@@ -118,7 +124,7 @@ public class JulyMetadataPublishUseCase {
      */
     public Map<String, Object> publish(String objectName, boolean migrateData, boolean includeDeleted) {
         JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
-        String table = TABLE_PREFIX + metadata.objectName();
+        String table = metadata.objectName();
         String version = nextVersion(versionRepository.findLatest(objectName));
         String ddl = buildDdl(table, metadata);
 
@@ -133,18 +139,28 @@ public class JulyMetadataPublishUseCase {
         }
 
         versionRepository.insert(new JulyMetadataVersion(EntityId.generate().value(), objectName, version,
-                toPayload(metadata), table, null, ddl, "PUBLISHED", null, DateUtil011.now()));
-        metadataRepository.updatePublishState(metadata.id().value(), "PUBLISHED", version, table, null);
+                toPayload(metadata), table, ddl, "PUBLISHED", currentOperatorId(), DateUtil011.now()));
+        metadataRepository.updatePublishState(metadata.id().value(), "PUBLISHED", version, table);
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("objectName", objectName);
-        result.put("version", version);
-        result.put("publishStatus", "published");
-        result.put("physicalTable", table);
-        result.put("backupTable", null);
-        result.put("ddl", ddl);
+        result.put(ResultKey011.OBJECT_NAME, objectName);
+        result.put(ResultKey011.VERSION, version);
+        result.put(ResultKey011.PUBLISH_STATUS, "published");
+        result.put(ResultKey011.PHYSICAL_TABLE, table);
+        result.put(ResultKey011.DDL, ddl);
 
         return result;
+    }
+
+    /**
+     * Current operator id for the snapshot publisher, nullable.
+     *
+     * @return operator id or null
+     */
+    private String currentOperatorId() {
+        Operator011 operator = currentOperatorPort.current();
+
+        return operator == null ? null : operator.id();
     }
 
     /**
@@ -204,14 +220,14 @@ public class JulyMetadataPublishUseCase {
      */
     private String toPayload(JulyMetadata metadata) {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("objectName", metadata.objectName());
-        payload.put("objectType", metadata.objectType());
-        payload.put("description", metadata.description());
-        payload.put("businessField", metadata.businessField());
-        payload.put("routerPath", metadata.routerPath());
-        payload.put("fields", metadata.fields());
-        payload.put("displays", metadata.displays());
-        payload.put("services", metadata.services());
+        payload.put(MetaDtoKey011.OBJECT_NAME, metadata.objectName());
+        payload.put(MetaDtoKey011.OBJECT_TYPE, metadata.objectType());
+        payload.put(MetaDtoKey011.DESCRIPTION, metadata.description());
+        payload.put(MetaDtoKey011.BUSINESS_FIELD, metadata.businessField());
+        payload.put(MetaDtoKey011.ROUTER_PATH, metadata.routerPath());
+        payload.put(ResultKey011.FIELDS, metadata.fields());
+        payload.put(ResultKey011.DISPLAYS, metadata.displays());
+        payload.put(ResultKey011.SERVICES, metadata.services());
 
         try {
             return objectMapper.writeValueAsString(payload);

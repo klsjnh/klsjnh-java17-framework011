@@ -18,6 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.domain.lowcode011.JulyMetadataOpenApi;
+import com.klsjnh.domain.lowcode011.records.ResultKey011;
 import com.klsjnh.domain.lowcode011.JulyMetadataOpenApiRepository;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -78,13 +79,13 @@ public class JulyMetadataOpenApiUseCase {
 
         if (config == null) {
             Map<String, Object> view = new LinkedHashMap<>();
-            view.put("objectName", objectName);
-            view.put("enabled", false);
-            view.put("authMode", "closed");
-            view.put("allowedOps", List.of("query"));
-            view.put("apiKeyConfigured", false);
-            view.put("apiKeyHint", null);
-            view.put("openApiBasePath", BASE_PATH + objectName);
+            view.put(ResultKey011.OBJECT_NAME, objectName);
+            view.put(ResultKey011.ENABLED, false);
+            view.put(ResultKey011.AUTH_MODE, "closed");
+            view.put(ResultKey011.ALLOWED_OPS, List.of("query"));
+            view.put(ResultKey011.API_KEY_CONFIGURED, false);
+            view.put(ResultKey011.API_KEY_HINT, null);
+            view.put(ResultKey011.OPEN_API_BASE_PATH, BASE_PATH + objectName);
             return view;
         }
 
@@ -99,15 +100,15 @@ public class JulyMetadataOpenApiUseCase {
      * @return configuration view (may carry the clear api key)
      */
     public Map<String, Object> saveConfig(Map<String, Object> payload) {
-        String objectName = text(payload.get("objectName"));
+        String objectName = text(payload.get(ResultKey011.OBJECT_NAME));
 
         if (objectName == null || objectName.isBlank()) {
             throw BusinessException.badRequest("objectName required");
         }
 
-        boolean enabled = Boolean.TRUE.equals(payload.get("enabled"));
-        String authMode = defaultIfBlank(text(payload.get("authMode")), "closed");
-        String allowedOps = joinOps(payload.get("allowedOps"));
+        boolean enabled = Boolean.TRUE.equals(payload.get(ResultKey011.ENABLED));
+        String authMode = defaultIfBlank(text(payload.get(ResultKey011.AUTH_MODE)), "closed");
+        String allowedOps = joinOps(payload.get(ResultKey011.ALLOWED_OPS));
 
         JulyMetadataOpenApi existing = repository.findByObjectName(objectName);
         String apiKey = existing == null ? null : existing.apiKey();
@@ -161,19 +162,19 @@ public class JulyMetadataOpenApiUseCase {
      */
     private Map<String, Object> toView(JulyMetadataOpenApi config, String clearKey) {
         Map<String, Object> view = new LinkedHashMap<>();
-        view.put("objectName", config.objectName());
-        view.put("enabled", config.enabled());
-        view.put("authMode", config.authMode());
-        view.put("allowedOps", splitOps(config.allowedOps()));
-        view.put("apiKeyConfigured", config.apiKey() != null && !config.apiKey().isBlank());
-        view.put("apiKeyHint", config.apiKey() == null || config.apiKey().length() < 4
+        view.put(ResultKey011.OBJECT_NAME, config.objectName());
+        view.put(ResultKey011.ENABLED, config.enabled());
+        view.put(ResultKey011.AUTH_MODE, config.authMode());
+        view.put(ResultKey011.ALLOWED_OPS, splitOps(config.allowedOps()));
+        view.put(ResultKey011.API_KEY_CONFIGURED, config.apiKey() != null && !config.apiKey().isBlank());
+        view.put(ResultKey011.API_KEY_HINT, config.apiKey() == null || config.apiKey().length() < 4
                 ? null
                 : "****" + config.apiKey().substring(config.apiKey().length() - 4));
-        view.put("apiKeyUpdatedAt", config.apiKeyUpdatedAt());
-        view.put("openApiBasePath", BASE_PATH + config.objectName());
+        view.put(ResultKey011.API_KEY_UPDATED_AT, config.apiKeyUpdatedAt());
+        view.put(ResultKey011.OPEN_API_BASE_PATH, BASE_PATH + config.objectName());
 
         if (clearKey != null) {
-            view.put("apiKey", clearKey);
+            view.put(ResultKey011.API_KEY, clearKey);
         }
 
         return view;

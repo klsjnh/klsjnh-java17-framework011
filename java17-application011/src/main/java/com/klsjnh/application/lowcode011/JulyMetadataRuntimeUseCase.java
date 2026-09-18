@@ -21,6 +21,8 @@ import com.klsjnh.common.identity.Operator011;
 
 import com.klsjnh.domain.iam.UserAuditPort;
 import com.klsjnh.domain.lowcode011.CurrentOperatorPort;
+import com.klsjnh.domain.lowcode011.records.ResultKey011;
+import com.klsjnh.domain.lowcode011.records.MetaDtoKey011;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersion;
 import com.klsjnh.domain.lowcode011.JulyMetadataVersionRepository;
 import com.klsjnh.domain.shared.AuditInfo;
@@ -117,10 +119,11 @@ public class JulyMetadataRuntimeUseCase {
         }
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> metaData = (Map<String, Object>) metadata.get("metaData");
-        String menuName = metaData.get("description") == null || String.valueOf(metaData.get("description")).isBlank()
+        Map<String, Object> metaData = (Map<String, Object>) metadata.get(MetaDtoKey011.META_DATA);
+        String menuName = metaData.get(MetaDtoKey011.DESCRIPTION) == null
+                || String.valueOf(metaData.get(MetaDtoKey011.DESCRIPTION)).isBlank()
                 ? objectName
-                : String.valueOf(metaData.get("description"));
+                : String.valueOf(metaData.get(MetaDtoKey011.DESCRIPTION));
         String menuCode = "rt_" + objectName;
         String route = ROUTE_PREFIX + objectName;
         String parentId = "";
@@ -144,11 +147,11 @@ public class JulyMetadataRuntimeUseCase {
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("objectName", objectName);
-        result.put("menuCode", menuCode);
-        result.put("menuName", menuName);
-        result.put("routerPath", route);
-        result.put("parentMenuCode", parentMenuCode);
+        result.put(ResultKey011.OBJECT_NAME, objectName);
+        result.put(ResultKey011.MENU_CODE, menuCode);
+        result.put(ResultKey011.MENU_NAME, menuName);
+        result.put(ResultKey011.ROUTER_PATH, route);
+        result.put(ResultKey011.PARENT_MENU_CODE, parentMenuCode);
 
         return result;
     }
@@ -171,12 +174,12 @@ public class JulyMetadataRuntimeUseCase {
             String objectName = route.substring(ROUTE_PREFIX.length());
             JulyMetadataVersion latest = versionRepository.findLatest(objectName);
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("objectName", objectName);
-            row.put("menuCode", menu.menuCode());
-            row.put("menuName", menu.menuName());
-            row.put("routerPath", route);
-            row.put("version", latest == null ? null : latest.version());
-            row.put("publishStatus", latest == null ? "draft" : "published");
+            row.put(ResultKey011.OBJECT_NAME, objectName);
+            row.put(ResultKey011.MENU_CODE, menu.menuCode());
+            row.put(ResultKey011.MENU_NAME, menu.menuName());
+            row.put(ResultKey011.ROUTER_PATH, route);
+            row.put(ResultKey011.VERSION, latest == null ? null : latest.version());
+            row.put(ResultKey011.PUBLISH_STATUS, latest == null ? "draft" : "published");
             rows.add(row);
         }
 

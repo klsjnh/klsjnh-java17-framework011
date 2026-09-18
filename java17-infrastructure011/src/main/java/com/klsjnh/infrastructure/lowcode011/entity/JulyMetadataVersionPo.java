@@ -44,18 +44,15 @@ public class JulyMetadataVersionPo extends BasePo011 {
     /** Produced physical table name. */
     private String physicalTable;
 
-    /** Backup table name, nullable. */
-    private String backupTable;
-
     /** Executed DDL text, nullable. */
     private String ddlText;
 
-    /** Snapshot status (PENDING / PUBLISHED). */
+    /** Snapshot status (PUBLISHED). */
     private String publishStatus;
 
     /** Publisher id, nullable. */
     private String publishedBy;
 
-    /** Publish time, nullable while PENDING. */
+    /** Publish time, nullable. */
     private LocalDateTime publishedAt;
 }
