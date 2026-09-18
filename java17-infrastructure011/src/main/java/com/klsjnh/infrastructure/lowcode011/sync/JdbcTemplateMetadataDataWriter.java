@@ -18,6 +18,7 @@ import com.klsjnh.common.util.DateUtil011;
 
 import com.klsjnh.domain.lowcode011.MetadataDataWriterPort;
 import com.klsjnh.domain.lowcode011.MetadataDdlExecutorPort;
+import com.klsjnh.domain.lowcode011.records.BaseColumn011;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -49,6 +50,11 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
      * Accepted identifier shape.
      */
     private static final Pattern IDENTIFIER = Pattern.compile("^[A-Za-z_][A-Za-z0-9_]{0,59}$");
+
+    /**
+     * Internal marker for a base column bound to a generated default.
+     */
+    private static final String DEFAULT_PREFIX = "#default:";
 
     /**
      * Primary datasource jdbc template.
@@ -126,8 +132,8 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
 
             for (int i = 0; i < sourceKeys.size(); i++) {
                 String key = sourceKeys.get(i);
-                values[i] = key.startsWith("#default:")
-                        ? defaultValue(key.substring("#default:".length()))
+                values[i] = key.startsWith(DEFAULT_PREFIX)
+                        ? defaultValue(key.substring(DEFAULT_PREFIX.length()))
                         : row.get(key);
             }
 
@@ -156,11 +162,11 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
             }
         }
 
-        addDefault(mapping, existing, "id");
-        addDefault(mapping, existing, "status");
-        addDefault(mapping, existing, "create_time");
-        addDefault(mapping, existing, "update_time");
-        addDefault(mapping, existing, "dr");
+        addDefault(mapping, existing, BaseColumn011.ID);
+        addDefault(mapping, existing, BaseColumn011.STATUS);
+        addDefault(mapping, existing, BaseColumn011.CREATE_TIME);
+        addDefault(mapping, existing, BaseColumn011.UPDATE_TIME);
+        addDefault(mapping, existing, BaseColumn011.DR);
 
         return mapping;
     }
@@ -174,7 +180,7 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
      */
     private void addDefault(Map<String, String> mapping, Set<String> existing, String column) {
         if (existing.contains(column) && mapping.values().stream().noneMatch(c -> c.equalsIgnoreCase(column))) {
-            mapping.put("#default:" + column, column);
+            mapping.put(DEFAULT_PREFIX + column, column);
         }
     }
 
@@ -186,14 +192,14 @@ public class JdbcTemplateMetadataDataWriter implements MetadataDataWriterPort {
      */
     private Object defaultValue(String column) {
         switch (column) {
-            case "id":
+            case BaseColumn011.ID:
                 return UUID.randomUUID().toString().replace("-", "");
-            case "status":
+            case BaseColumn011.STATUS:
                 return "1";
-            case "dr":
+            case BaseColumn011.DR:
                 return "0";
-            case "create_time":
-            case "update_time":
+            case BaseColumn011.CREATE_TIME:
+            case BaseColumn011.UPDATE_TIME:
                 return Timestamp.valueOf(DateUtil011.now());
             default:
                 return null;

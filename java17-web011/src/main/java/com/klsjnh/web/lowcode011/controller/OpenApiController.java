@@ -17,6 +17,7 @@ package com.klsjnh.web.lowcode011.controller;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.response.Response011;
 
+import com.klsjnh.application.lowcode011.ObjectQueryCommand;
 import com.klsjnh.application.lowcode011.OpenApiUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -95,7 +96,32 @@ public class OpenApiController {
             @RequestBody Map<String, Object> body) {
         String funcName = "open query";
 
-        return Response011.success(funcName, useCase.query(objectName(body), apiKey, body));
+        return Response011.success(funcName, useCase.query(objectName(body), apiKey, command(body)));
+    }
+
+    /**
+     * Build the typed query command from the request body.
+     *
+     * @param body request body
+     * @return query command
+     */
+    @SuppressWarnings("unchecked")
+    private ObjectQueryCommand command(Map<String, Object> body) {
+        Object filters = body.get("filters");
+        Map<String, Object> where = filters instanceof Map ? (Map<String, Object>) filters : Map.of();
+
+        return new ObjectQueryCommand(objectName(body), where, integer(body.get("pageIndex")),
+                integer(body.get("pageSize")));
+    }
+
+    /**
+     * Read an optional int body value.
+     *
+     * @param value raw value
+     * @return integer or null
+     */
+    private Integer integer(Object value) {
+        return value instanceof Number ? ((Number) value).intValue() : null;
     }
 
     /**

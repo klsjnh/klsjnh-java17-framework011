@@ -32,8 +32,8 @@ import com.klsjnh.domain.dataservice011.ModelingSqlGuard;
 import com.klsjnh.domain.dataservice011.ProbeOutcome;
 import com.klsjnh.domain.datasource.SqlRoutingPort;
 import com.klsjnh.domain.lowcode011.enums.ObjectType011;
-import com.klsjnh.domain.lowcode011.model.FieldInfo011;
-import com.klsjnh.domain.lowcode011.model.MetaData011;
+import com.klsjnh.domain.lowcode011.JulyMetadataField;
+import com.klsjnh.domain.lowcode011.records.MetadataContent;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -130,7 +130,7 @@ public class JulyBusinessModelingUseCase {
     @Transactional
     public String insert(String modelCode, String modelName, String dataSourceCode, String sqlContent, String objectName,
             String objectType, String objectDescription, String packageName, String businessField, String routerPath,
-            String remark, List<FieldInfo011> fields) {
+            String remark, List<JulyMetadataField> fields) {
         requireEnabledDatasource(dataSourceCode);
 
         if (repository.findByCode(modelCode) != null) {
@@ -167,7 +167,7 @@ public class JulyBusinessModelingUseCase {
     @Transactional
     public String update(String id, String modelName, String dataSourceCode, String sqlContent, String objectType,
             String objectDescription, String packageName, String businessField, String routerPath, String remark,
-            List<FieldInfo011> fields) {
+            List<JulyMetadataField> fields) {
         JulyBusinessModeling modeling = require(id);
         requireEnabledDatasource(dataSourceCode);
 
@@ -494,16 +494,13 @@ public class JulyBusinessModelingUseCase {
      */
     private JulyBusinessModeling newModeling(String modelCode, String modelName, String dataSourceCode, String sqlContent,
             String objectName, String objectType, String objectDescription, String packageName, String businessField,
-            String routerPath, String remark, List<FieldInfo011> fields) {
+            String routerPath, String remark, List<JulyMetadataField> fields) {
         try {
-            MetaData011 metaData = MetaData011.create(objectName, ObjectType011.fromString(objectType),
-                    objectDescription, businessField, packageName, routerPath);
+            MetadataContent content = MetadataContent.reconstitute(objectName, objectType, objectDescription,
+                    businessField, packageName, routerPath, fields == null ? List.of() : fields, List.of(),
+                    List.of());
 
-            for (FieldInfo011 field : fields == null ? List.<FieldInfo011>of() : fields) {
-                metaData.addField(field);
-            }
-
-            return JulyBusinessModeling.create(EntityId.generate(), modelCode, modelName, metaData, dataSourceCode,
+            return JulyBusinessModeling.create(EntityId.generate(), modelCode, modelName, content, dataSourceCode,
                     sqlContent, remark, AuditInfo.empty());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());

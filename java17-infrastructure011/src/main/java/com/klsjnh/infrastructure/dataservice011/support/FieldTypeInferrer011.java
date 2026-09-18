@@ -16,7 +16,7 @@ package com.klsjnh.infrastructure.dataservice011.support;
 
 import com.klsjnh.domain.dataservice011.FieldInferencePort;
 import com.klsjnh.domain.dataservice011.ProbeOutcome;
-import com.klsjnh.domain.lowcode011.model.FieldInfo011;
+import com.klsjnh.domain.lowcode011.JulyMetadataField;
 
 import org.springframework.stereotype.Component;
 
@@ -88,8 +88,8 @@ public class FieldTypeInferrer011 implements FieldInferencePort {
      * @return final field list with common columns completed
      */
     @Override
-    public List<FieldInfo011> infer(ProbeOutcome outcome) {
-        Map<String, FieldInfo011> probed = new LinkedHashMap<>();
+    public List<JulyMetadataField> infer(ProbeOutcome outcome) {
+        Map<String, JulyMetadataField> probed = new LinkedHashMap<>();
 
         for (ProbeOutcome.ProbeColumn column : outcome.columns()) {
             if (column.code() != null && !column.code().isBlank() && !probed.containsKey(column.code())) {
@@ -97,10 +97,10 @@ public class FieldTypeInferrer011 implements FieldInferencePort {
             }
         }
 
-        List<FieldInfo011> result = new ArrayList<>();
+        List<JulyMetadataField> result = new ArrayList<>();
         result.add(orSynth(probed, "id"));
 
-        for (Map.Entry<String, FieldInfo011> entry : probed.entrySet()) {
+        for (Map.Entry<String, JulyMetadataField> entry : probed.entrySet()) {
             if (!STRUCTURAL.contains(entry.getKey())) {
                 result.add(entry.getValue());
             }
@@ -122,13 +122,13 @@ public class FieldTypeInferrer011 implements FieldInferencePort {
      * @param column probed column
      * @return field definition
      */
-    private FieldInfo011 toField(ProbeOutcome.ProbeColumn column) {
+    private JulyMetadataField toField(ProbeOutcome.ProbeColumn column) {
         String code = column.code();
         String special = COMMON_TYPE.get(code);
         String type = special != null ? special : jdbcTypeToFieldType(column.jdbcType(), column.length());
         String name = COMMON_NAME.getOrDefault(code, code);
 
-        return FieldInfo011.create(code, name, type, lengthFor(type, column.length()), !column.nullable(), null);
+        return new JulyMetadataField(code, name, type, lengthFor(type, column.length()), !column.nullable(), null, null);
     }
 
     /**
@@ -138,8 +138,8 @@ public class FieldTypeInferrer011 implements FieldInferencePort {
      * @param code   common column code
      * @return field definition
      */
-    private FieldInfo011 orSynth(Map<String, FieldInfo011> probed, String code) {
-        FieldInfo011 existing = probed.get(code);
+    private JulyMetadataField orSynth(Map<String, JulyMetadataField> probed, String code) {
+        JulyMetadataField existing = probed.get(code);
 
         return existing != null ? existing : synth(code);
     }
@@ -150,11 +150,11 @@ public class FieldTypeInferrer011 implements FieldInferencePort {
      * @param code common column code
      * @return field definition
      */
-    private FieldInfo011 synth(String code) {
+    private JulyMetadataField synth(String code) {
         String type = COMMON_TYPE.get(code);
         boolean required = !"create_by".equals(code) && !"update_by".equals(code);
 
-        return FieldInfo011.create(code, COMMON_NAME.get(code), type, nominalLength(type), required, null);
+        return new JulyMetadataField(code, COMMON_NAME.get(code), type, nominalLength(type), required, null, null);
     }
 
     /**

@@ -122,16 +122,15 @@ public class ObjectTableGateway {
      * @param pageSize   page size, nullable (clamped [1,500])
      * @return page result map
      */
-    public Map<String, Object> query(String objectName, Map<String, Object> filters, Integer pageIndex,
-            Integer pageSize) {
-        String table = physicalTable(objectName);
+    public Map<String, Object> query(ObjectQueryCommand command) {
+        String table = physicalTable(command.objectName());
         Set<String> columns = ddlExecutor.columnsOf(table);
-        Map<String, Object> where = ObjectTablePolicy.filter(filters, columns);
+        Map<String, Object> where = ObjectTablePolicy.filter(command.filters(), columns);
         ObjectTablePolicy.withDrFilter(where, columns);
-        int[] page = ObjectTablePolicy.page(pageIndex, pageSize);
+        int[] page = ObjectTablePolicy.page(command.pageIndex(), command.pageSize());
         long total = dataAccess.count(table, where);
-        List<Map<String, Object>> rows = dataAccess.select(table, new ArrayList<>(columns), where, "id",
-                (page[0] - 1) * page[1], page[1]);
+        List<RowView> rows = dataAccess.select(table, new ArrayList<>(columns), where, "id", (page[0] - 1) * page[1],
+                page[1]).stream().map(RowView::of).toList();
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("pageIndex", page[0]);

@@ -19,11 +19,13 @@ import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 
 import com.klsjnh.domain.lowcode011.JulyMetadata;
-import com.klsjnh.domain.lowcode011.JulyMetadataDisplay;
 import com.klsjnh.domain.lowcode011.JulyMetadataField;
 import com.klsjnh.domain.lowcode011.JulyMetadataRepository;
-import com.klsjnh.domain.lowcode011.JulyMetadataService;
 import com.klsjnh.domain.lowcode011.MetadataDdlGeneratorPort;
+import com.klsjnh.domain.lowcode011.records.MetaDtoKey011;
+import com.klsjnh.domain.lowcode011.records.MetadataContent;
+import com.klsjnh.domain.lowcode011.records.MetadataContentCodec;
+import com.klsjnh.domain.lowcode011.records.MetadataContentMapper;
 
 import org.springframework.stereotype.Service;
 
@@ -104,8 +106,17 @@ public class JulyMetadataDesignerUseCase {
      * @param objectName object name
      * @return MetaDTO map
      */
+    @SuppressWarnings("unchecked")
     public Map<String, Object> load(String objectName) {
-        return toMetaDto(metadataUseCase.getByObjectName(objectName));
+        JulyMetadata metadata = metadataUseCase.getByObjectName(objectName);
+        Map<String, Object> dto = MetadataContentCodec.toMetaDto(MetadataContentMapper.from(metadata));
+        Map<String, Object> metaData = (Map<String, Object>) dto.get(MetaDtoKey011.META_DATA);
+        metaData.put(MetaDtoKey011.REMARK, metadata.remark());
+        metaData.put(MetaDtoKey011.SORT_ORDER, metadata.sortOrder());
+        metaData.put(MetaDtoKey011.PUBLISH_STATUS, "draft");
+        metaData.put(MetaDtoKey011.VERSION, "");
+
+        return dto;
     }
 
     /**
@@ -117,40 +128,34 @@ public class JulyMetadataDesignerUseCase {
      * @return object id
      */
     public String save(Map<String, Object> body, String sourceType) {
-        Map<String, Object> metaData = asMap(body.get("metaData"));
-
-        if (metaData == null) {
+        if (body == null) {
             throw BusinessException.badRequest("metaData required");
         }
 
-        String objectName = text(metaData.get("objectName"));
+        MetadataContent content;
 
-        if (objectName == null || objectName.isBlank()) {
-            throw BusinessException.badRequest("objectName required in metaData");
+        try {
+            content = MetadataContentCodec.fromMetaDto(body);
+        } catch (IllegalArgumentException ex) {
+            throw BusinessException.badRequest(ex.getMessage());
         }
 
-        List<JulyMetadataField> fields = toFields(asList(body.get("fieldData")));
-        List<JulyMetadataDisplay> displays = toDisplays(asList(body.get("displayData")));
-        List<JulyMetadataService> services = toServices(asList(body.get("serviceData")));
-
-        String objectType = text(metaData.get("objectType"));
-        String description = text(metaData.get("description"));
-        String businessField = text(metaData.get("businessField"));
-        fields = normalizeBusinessField(fields, businessField);
-        String packageName = text(metaData.get("packageName"));
-        String routerPath = text(metaData.get("routerPath"));
-        String remark = text(metaData.get("remark"));
-        Integer sortOrder = integer(metaData.get("sortOrder"));
-
-        JulyMetadata existing = repository.findByObjectName(objectName);
+        Map<String, Object> metaData = asMap(body.get(MetaDtoKey011.META_DATA));
+        String businessField = content.businessField();
+        List<JulyMetadataField> fields = normalizeBusinessField(content.fields(), businessField);
+        String remark = text(metaData == null ? null : metaData.get(MetaDtoKey011.REMARK));
+        Integer sortOrder = integer(metaData == null ? null : metaData.get(MetaDtoKey011.SORT_ORDER));
+        JulyMetadata existing = repository.findByObjectName(content.objectName());
 
         if (existing == null) {
-            return metadataUseCase.insert(objectName, sortOrder, objectType, description, businessField, packageName,
-                    routerPath, remark, fields, displays, services);
+            return metadataUseCase.insert(content.objectName(), sortOrder, content.objectType(), content.description(),
+                    businessField, content.packageName(), content.routerPath(), remark, fields, content.displays(),
+                    content.services());
         }
 
-        return metadataUseCase.update(existing.id().value(), objectType, description, businessField, packageName,
-                routerPath, sortOrder, null, remark, fields, displays, services);
+        return metadataUseCase.update(existing.id().value(), content.objectType(), content.description(), businessField,
+                content.packageName(), content.routerPath(), sortOrder, null, remark, fields, content.displays(),
+                content.services());
     }
 
     /**
@@ -170,74 +175,6 @@ public class JulyMetadataDesignerUseCase {
         }
     }
 
-    /**
-     * Build the legacy MetaDTO shape from the aggregate.
-     *
-     * @param metadata aggregate
-     * @return MetaDTO map
-     */
-    private Map<String, Object> toMetaDto(JulyMetadata metadata) {
-        Map<String, Object> metaData = new LinkedHashMap<>();
-        metaData.put("objectName", metadata.objectName());
-        metaData.put("objectType", metadata.objectType());
-        metaData.put("description", metadata.description());
-        metaData.put("businessField", metadata.businessField());
-        metaData.put("packageName", metadata.packageName());
-        metaData.put("routerPath", metadata.routerPath());
-        metaData.put("remark", metadata.remark());
-        metaData.put("sortOrder", metadata.sortOrder());
-        metaData.put("publishStatus", "draft");
-        metaData.put("version", "");
-
-        List<Map<String, Object>> fieldData = new ArrayList<>();
-        for (JulyMetadataField field : metadata.fields()) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("code", field.fieldCode());
-            row.put("name", field.fieldName());
-            row.put("fieldType", field.fieldType());
-            row.put("length", field.fieldLength());
-            row.put("notNull", field.requiredField());
-            row.put("defaultValue", field.defaultValue());
-            row.put("sort", field.sortOrder());
-            fieldData.add(row);
-        }
-
-        List<Map<String, Object>> displayData = new ArrayList<>();
-        for (JulyMetadataDisplay display : metadata.displays()) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("code", display.displayCode());
-            row.put("name", display.displayName());
-            row.put("align", display.align());
-            row.put("width", display.width());
-            row.put("componentType", display.componentType());
-            row.put("displayType", display.displayType());
-            row.put("param011", display.param011());
-            row.put("sort", display.sortOrder());
-            displayData.add(row);
-        }
-
-        List<Map<String, Object>> serviceData = new ArrayList<>();
-        for (JulyMetadataService service : metadata.services()) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("code", service.serviceCode());
-            row.put("name", service.serviceName());
-            row.put("description", service.serviceDescription());
-            row.put("objectType", service.objectType());
-            row.put("paramType", service.paramType());
-            row.put("serviceContent", service.serviceContent());
-            row.put("enabled", service.enabled());
-            row.put("sort", service.sortOrder());
-            serviceData.add(row);
-        }
-
-        Map<String, Object> dto = new LinkedHashMap<>();
-        dto.put("metaData", metaData);
-        dto.put("fieldData", fieldData);
-        dto.put("displayData", displayData);
-        dto.put("serviceData", serviceData);
-
-        return dto;
-    }
 
     /**
      * Force the business field to the platform-fixed shape: string, length 33
@@ -267,63 +204,6 @@ public class JulyMetadataDesignerUseCase {
     }
 
     /**
-     * Map fieldData rows to field records.
-     *
-     * @param rows raw rows
-     * @return field records
-     */
-    private List<JulyMetadataField> toFields(List<Map<String, Object>> rows) {
-        List<JulyMetadataField> fields = new ArrayList<>();
-
-        for (Map<String, Object> row : rows) {
-            fields.add(new JulyMetadataField(text(row.get("code")), text(row.get("name")),
-                    text(row.get("fieldType")), number(row.get("length")), bool(row.get("notNull")),
-                    text(row.get("defaultValue")), integer(row.get("sort"))));
-        }
-
-        return fields;
-    }
-
-    /**
-     * Map displayData rows to display records.
-     *
-     * @param rows raw rows
-     * @return display records
-     */
-    private List<JulyMetadataDisplay> toDisplays(List<Map<String, Object>> rows) {
-        List<JulyMetadataDisplay> displays = new ArrayList<>();
-
-        for (Map<String, Object> row : rows) {
-            String componentType = text(row.get("componentType"));
-            displays.add(new JulyMetadataDisplay(text(row.get("code")), text(row.get("name")),
-                    defaultIfBlank(text(row.get("align")), "left"), number(row.get("width")),
-                    defaultIfBlank(componentType, "input"), defaultIfBlank(text(row.get("displayType")), "all"),
-                    text(row.get("param011")), integer(row.get("sort"))));
-        }
-
-        return displays;
-    }
-
-    /**
-     * Map serviceData rows to service records.
-     *
-     * @param rows raw rows
-     * @return service records
-     */
-    private List<JulyMetadataService> toServices(List<Map<String, Object>> rows) {
-        List<JulyMetadataService> services = new ArrayList<>();
-
-        for (Map<String, Object> row : rows) {
-            services.add(new JulyMetadataService(text(row.get("code")), text(row.get("name")),
-                    defaultIfBlank(text(row.get("description")), ""), text(row.get("objectType")),
-                    text(row.get("paramType")), text(row.get("serviceContent")), bool(row.get("enabled")),
-                    integer(row.get("sort"))));
-        }
-
-        return services;
-    }
-
-    /**
      * Cast a raw value to a map.
      *
      * @param value raw value
@@ -332,17 +212,6 @@ public class JulyMetadataDesignerUseCase {
     @SuppressWarnings("unchecked")
     private Map<String, Object> asMap(Object value) {
         return value instanceof Map ? (Map<String, Object>) value : null;
-    }
-
-    /**
-     * Cast a raw value to a list of maps.
-     *
-     * @param value raw value
-     * @return list, never null
-     */
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> asList(Object value) {
-        return value instanceof List ? (List<Map<String, Object>>) value : List.of();
     }
 
     /**
@@ -356,16 +225,6 @@ public class JulyMetadataDesignerUseCase {
     }
 
     /**
-     * Read an int value.
-     *
-     * @param value raw value
-     * @return int, 0 when absent
-     */
-    private int number(Object value) {
-        return value instanceof Number ? ((Number) value).intValue() : 0;
-    }
-
-    /**
      * Read a nullable integer value.
      *
      * @param value raw value
@@ -373,26 +232,5 @@ public class JulyMetadataDesignerUseCase {
      */
     private Integer integer(Object value) {
         return value instanceof Number ? ((Number) value).intValue() : null;
-    }
-
-    /**
-     * Read a boolean value.
-     *
-     * @param value raw value
-     * @return boolean
-     */
-    private boolean bool(Object value) {
-        return value instanceof Boolean ? (Boolean) value : "true".equalsIgnoreCase(String.valueOf(value));
-    }
-
-    /**
-     * Fall back to a default when blank.
-     *
-     * @param value        raw value
-     * @param fallback     default
-     * @return value or default
-     */
-    private String defaultIfBlank(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
     }
 }

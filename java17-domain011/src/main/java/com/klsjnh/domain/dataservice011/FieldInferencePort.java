@@ -14,7 +14,7 @@ package com.klsjnh.domain.dataservice011;
  *
  */
 
-import com.klsjnh.domain.lowcode011.model.FieldInfo011;
+import com.klsjnh.domain.lowcode011.JulyMetadataField;
 
 import java.util.List;
 
@@ -33,5 +33,5 @@ public interface FieldInferencePort {
      * @param outcome probe outcome
      * @return inferred field definitions with common columns completed
      */
-    List<FieldInfo011> infer(ProbeOutcome outcome);
+    List<JulyMetadataField> infer(ProbeOutcome outcome);
 }

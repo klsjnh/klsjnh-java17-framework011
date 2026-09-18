@@ -18,7 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.dataservice011.BusinessModelingProbeResult;
 import com.klsjnh.domain.dataservice011.JulyBusinessModeling;
-import com.klsjnh.domain.lowcode011.model.FieldInfo011;
+import com.klsjnh.domain.lowcode011.JulyMetadataField;
 
 import com.klsjnh.web.dataservice011.vo.julybusinessmodeling.JulyBusinessModelingFieldVo011;
 import com.klsjnh.web.dataservice011.vo.julybusinessmodeling.JulyBusinessModelingMetaVo011;
@@ -64,13 +64,12 @@ public class JulyBusinessModelingConverter {
         vo.setUpdateTime(modeling.audit().updateTime());
 
         JulyBusinessModelingMetaVo011 meta = new JulyBusinessModelingMetaVo011();
-        meta.setObjectName(modeling.metaData().objectName());
-        meta.setDescription(modeling.metaData().objectDescription());
-        meta.setObjectType(modeling.metaData().objectType() == null ? null
-                : modeling.metaData().objectType().getCode());
-        meta.setPackageName(modeling.metaData().packageName());
-        meta.setImportField(modeling.metaData().businessField());
-        meta.setUrl(modeling.metaData().routerPath());
+        meta.setObjectName(modeling.content().objectName());
+        meta.setDescription(modeling.content().description());
+        meta.setObjectType(modeling.content().objectType());
+        meta.setPackageName(modeling.content().packageName());
+        meta.setImportField(modeling.content().businessField());
+        meta.setUrl(modeling.content().routerPath());
         meta.setFieldData(toFieldVoList(modeling.fields()));
         vo.setMetaData(meta);
 
@@ -135,18 +134,18 @@ public class JulyBusinessModelingConverter {
      * @param fieldData inbound field list, nullable
      * @return domain field definitions, never null
      */
-    public List<FieldInfo011> toFields(List<JulyBusinessModelingFieldVo011> fieldData) {
+    public List<JulyMetadataField> toFields(List<JulyBusinessModelingFieldVo011> fieldData) {
         if (fieldData == null || fieldData.isEmpty()) {
             return List.of();
         }
 
-        List<FieldInfo011> fields = new ArrayList<>();
+        List<JulyMetadataField> fields = new ArrayList<>();
 
         for (JulyBusinessModelingFieldVo011 vo : fieldData) {
             try {
-                fields.add(FieldInfo011.create(vo.getCode(), vo.getName(), vo.getFieldType(),
+                fields.add(new JulyMetadataField(vo.getCode(), vo.getName(), vo.getFieldType(),
                         vo.getLength() == null ? 0 : vo.getLength(),
-                        vo.getNotNull() != null && vo.getNotNull(), vo.getDefaultValue()));
+                        vo.getNotNull() != null && vo.getNotNull(), vo.getDefaultValue(), null));
             } catch (IllegalArgumentException ex) {
                 throw BusinessException.badRequest(ex.getMessage());
             }
@@ -161,10 +160,10 @@ public class JulyBusinessModelingConverter {
      * @param fields domain fields
      * @return field VO list
      */
-    private List<JulyBusinessModelingFieldVo011> toFieldVoList(List<FieldInfo011> fields) {
+    private List<JulyBusinessModelingFieldVo011> toFieldVoList(List<JulyMetadataField> fields) {
         List<JulyBusinessModelingFieldVo011> result = new ArrayList<>();
 
-        for (FieldInfo011 field : fields) {
+        for (JulyMetadataField field : fields) {
             JulyBusinessModelingFieldVo011 vo = new JulyBusinessModelingFieldVo011();
             vo.setCode(field.fieldCode());
             vo.setName(field.fieldName());

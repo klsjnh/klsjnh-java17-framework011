@@ -279,7 +279,7 @@ public class JulyBusinessModelingRepositoryImpl
         po.setObjectName(modeling.objectName());
         po.setDataSourceCode(modeling.dataSourceCode());
         po.setSqlContent(modeling.sqlContent());
-        po.setModelData(codec.encode(modeling.metaData()));
+        po.setModelData(codec.encode(modeling.content()));
         po.setRemark(modeling.remark());
         po.setStatus(modeling.status());
 

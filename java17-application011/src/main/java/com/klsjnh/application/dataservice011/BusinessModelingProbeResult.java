@@ -14,7 +14,7 @@ package com.klsjnh.application.dataservice011;
  *
  */
 
-import com.klsjnh.domain.lowcode011.model.FieldInfo011;
+import com.klsjnh.domain.lowcode011.JulyMetadataField;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ import java.util.List;
  * @param fields  inferred field definitions, never null
  */
 
-public record BusinessModelingProbeResult(boolean success, String message, List<FieldInfo011> fields) {
+public record BusinessModelingProbeResult(boolean success, String message, List<JulyMetadataField> fields) {
 
     /**
      * Normalize the field list so a caller never has to null-check it.
@@ -47,7 +47,7 @@ public record BusinessModelingProbeResult(boolean success, String message, List<
      * @param fields inferred field definitions
      * @return success result
      */
-    public static BusinessModelingProbeResult ok(List<FieldInfo011> fields) {
+    public static BusinessModelingProbeResult ok(List<JulyMetadataField> fields) {
         return new BusinessModelingProbeResult(true, "probe success", fields);
     }
 

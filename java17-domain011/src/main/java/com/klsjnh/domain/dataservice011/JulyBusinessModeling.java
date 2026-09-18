@@ -11,19 +11,21 @@ package com.klsjnh.domain.dataservice011;
  *          modify history
  *
  *      2026.09.15  july business modeling class
+ *      2026.09.17  own the shared MetadataContent contract (was MetaData011)
  *
  */
 
 import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.util.StringUtil011;
 
+import com.klsjnh.domain.lowcode011.JulyMetadataField;
 import com.klsjnh.domain.lowcode011.enums.FieldType011;
 import com.klsjnh.domain.lowcode011.enums.ObjectType011;
-import com.klsjnh.domain.lowcode011.model.FieldInfo011;
-import com.klsjnh.domain.lowcode011.model.MetaData011;
+import com.klsjnh.domain.lowcode011.records.MetadataContent;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,28 +36,9 @@ import java.util.Set;
  * it. This is the definition source feeding the low-code context — the module
  * hands the description over and never builds a physical table itself.
  * <p>
- * Boundary and invariants:
- * </p>
- * <ul>
- *   <li>{@code modelCode} is immutable after create, as is
- *       {@code metaData.objectName()} — identity must not be renamed under a
- *       handed-over description.</li>
- *   <li>{@code dataSourceCode} is mandatory: an unbound SQL cannot be probed
- *       or executed. The reference implementation allowed a blank datasource,
- *       which is a defect this module does not repeat.</li>
- *   <li>The description itself lives in the owned {@link MetaData011}, which
- *       already owns the {@link FieldInfo011} list. This root deliberately
- *       keeps no second field list — one owner, one source of truth.</li>
- *   <li>{@code sqlContent} is optional (a draft may carry no SQL yet), but when
- *       present it must pass {@link ModelingSqlGuard}: read-only, single
- *       statement.</li>
- *   <li>Every field type must resolve through {@link FieldType011}, the single
- *       validation authority. The attribute on {@code FieldInfo011} stays a
- *       String so external metadata is never blocked from rehydrating.</li>
- * </ul>
- * <p>
- * There are no setters: mutation is only possible through the intent methods,
- * which is what keeps the invariants true at all times.
+ * The description is the shared contract {@link MetadataContent} (owned here as
+ * the conforming downstream of lowcode011); mutations rebuild the immutable
+ * content (copy-on-write).
  * </p>
  */
 
@@ -97,10 +80,9 @@ public class JulyBusinessModeling {
     private String modelName;
 
     /**
-     * Low-code description owned by this root: the object metadata plus the
-     * field definitions it holds.
+     * Low-code description owned by this root (shared contract).
      */
-    private final MetaData011 metaData;
+    private MetadataContent content;
 
     /**
      * Datasource code the SQL runs against, mandatory.
@@ -128,30 +110,29 @@ public class JulyBusinessModeling {
     private AuditInfo audit;
 
     /**
-     * Full constructor, also the rehydration path from persistence. Replays the
-     * shared validation so a corrupted row cannot enter the domain silently.
+     * Full constructor, also the rehydration path from persistence.
      *
      * @param id             primary key
      * @param modelCode      modeling code, unique
      * @param modelName      modeling name
-     * @param metaData       low-code description, required
+     * @param content        low-code description, required
      * @param dataSourceCode datasource code, required
-     * @param sqlContent        take-out sql, optional
+     * @param sqlContent     take-out sql, optional
      * @param remark         remark, optional
      * @param status         row status
      * @param audit          audit info
      */
-    public JulyBusinessModeling(EntityId id, String modelCode, String modelName, MetaData011 metaData,
+    public JulyBusinessModeling(EntityId id, String modelCode, String modelName, MetadataContent content,
             String dataSourceCode, String sqlContent, String remark, String status, AuditInfo audit) {
         validateBasics(modelCode, modelName, dataSourceCode, remark);
-        validateMetaData(metaData);
-        validateFieldTypes(metaData.fields());
+        validateContent(content);
+        validateFieldTypes(content.fields());
         validateSql(sqlContent);
 
         this.id = id;
         this.modelCode = modelCode;
         this.modelName = modelName;
-        this.metaData = metaData;
+        this.content = content;
         this.dataSourceCode = dataSourceCode;
         this.sqlContent = blankToNull(sqlContent);
         this.remark = remark;
@@ -165,26 +146,26 @@ public class JulyBusinessModeling {
      * @param id             primary key
      * @param modelCode      modeling code, required, max 60
      * @param modelName      modeling name, required, max 100
-     * @param metaData       low-code description, required
+     * @param content        low-code description, required
      * @param dataSourceCode datasource code, required, max 60
-     * @param sqlContent        take-out sql, optional, read-only when present
+     * @param sqlContent     take-out sql, optional, read-only when present
      * @param remark         remark, optional, max 300
      * @param audit          audit info
      * @return new aggregate
      */
-    public static JulyBusinessModeling create(EntityId id, String modelCode, String modelName, MetaData011 metaData,
-            String dataSourceCode, String sqlContent, String remark, AuditInfo audit) {
-        return new JulyBusinessModeling(id, modelCode, modelName, metaData, dataSourceCode, sqlContent, remark,
+    public static JulyBusinessModeling create(EntityId id, String modelCode, String modelName,
+            MetadataContent content, String dataSourceCode, String sqlContent, String remark, AuditInfo audit) {
+        return new JulyBusinessModeling(id, modelCode, modelName, content, dataSourceCode, sqlContent, remark,
                 Status011.ENABLED.getCode(), audit);
     }
 
     /**
      * Update the mutable descriptive attributes; the modeling code and the
-     * object name are immutable after create.
+     * object name stay immutable.
      *
      * @param modelName      modeling name, required, max 100
      * @param dataSourceCode datasource code, required, max 60
-     * @param sqlContent        take-out sql, optional, read-only when present
+     * @param sqlContent     take-out sql, optional, read-only when present
      * @param remark         remark, optional, max 300
      */
     public void updateBasics(String modelName, String dataSourceCode, String sqlContent, String remark) {
@@ -201,7 +182,7 @@ public class JulyBusinessModeling {
      * Update the mutable attributes of the owned description; the object name
      * stays immutable.
      *
-     * @param objectType        object type, defaults to type011 when null
+     * @param objectType        object type, nullable
      * @param objectDescription object description, max 300
      * @param businessField     business field mapping, max 300
      * @param packageName       target package name, max 300
@@ -209,27 +190,30 @@ public class JulyBusinessModeling {
      */
     public void updateMetaBasics(ObjectType011 objectType, String objectDescription, String businessField,
             String packageName, String routerPath) {
-        metaData.updateBasics(objectType, objectDescription, businessField, packageName, routerPath);
+        this.content = rebuild(content.fields(), objectType == null ? null : objectType.getCode(), objectDescription,
+                businessField, packageName, routerPath);
     }
 
     /**
-     * Add a field definition to the owned description. The field code must be
-     * unique inside the description and the field type must be a known
-     * {@link FieldType011} code.
+     * Add a field definition (code unique, type known).
      *
      * @param field field definition to add, required
      */
-    public void addField(FieldInfo011 field) {
+    public void addField(JulyMetadataField field) {
         validateFieldType(field == null ? null : field.fieldType());
-        metaData.addField(field);
+
+        List<JulyMetadataField> next = new ArrayList<>(content.fields());
+        next.add(field);
+        this.content = rebuild(next, content.objectType(), content.description(), content.businessField(),
+                content.packageName(), content.routerPath());
     }
 
     /**
      * Update an existing field definition; the field code is immutable.
      *
-     * @param fieldCode     field code to update, required
-     * @param fieldName     new field name, required, max 60
-     * @param fieldType     new field type, required, must be a known code
+     * @param fieldCode     field code to update
+     * @param fieldName     new field name
+     * @param fieldType     new field type, must be a known code
      * @param fieldLength   new maximum length, negative falls back to 0
      * @param requiredField whether the field is required
      * @param defaultValue  new default value, nullable
@@ -237,7 +221,20 @@ public class JulyBusinessModeling {
     public void updateField(String fieldCode, String fieldName, String fieldType, int fieldLength,
             boolean requiredField, String defaultValue) {
         validateFieldType(fieldType);
-        metaData.updateField(fieldCode, fieldName, fieldType, fieldLength, requiredField, defaultValue);
+
+        List<JulyMetadataField> next = new ArrayList<>();
+
+        for (JulyMetadataField field : content.fields()) {
+            if (field.fieldCode().equals(fieldCode)) {
+                next.add(new JulyMetadataField(fieldCode, fieldName, fieldType, fieldLength, requiredField,
+                        defaultValue, field.sortOrder()));
+            } else {
+                next.add(field);
+            }
+        }
+
+        this.content = rebuild(next, content.objectType(), content.description(), content.businessField(),
+                content.packageName(), content.routerPath());
     }
 
     /**
@@ -246,34 +243,45 @@ public class JulyBusinessModeling {
      * @param fieldCode field code to remove, required
      */
     public void removeField(String fieldCode) {
-        metaData.removeField(fieldCode);
+        List<JulyMetadataField> next = content.fields().stream()
+                .filter(field -> !field.fieldCode().equals(fieldCode))
+                .toList();
+
+        this.content = rebuild(next, content.objectType(), content.description(), content.businessField(),
+                content.packageName(), content.routerPath());
     }
 
     /**
-     * Replace every field definition at once — the re-probe overwrite path:
-     * after the SQL is re-inferred the description carries the fresh columns
-     * and the stale ones are dropped.
-     * <p>
-     * The replacement is validated in full BEFORE anything is removed: a
-     * rejected batch would otherwise leave the aggregate with its old fields
-     * already gone and the new ones half added.
-     * </p>
+     * Replace every field definition at once (re-probe overwrite), validated
+     * before the swap.
      *
-     * @param fields new field definitions, nullable for an empty description
+     * @param fields new field definitions, nullable for empty
      */
-    public void replaceFields(List<FieldInfo011> fields) {
-        List<FieldInfo011> incoming = nullToEmpty(fields);
+    public void replaceFields(List<JulyMetadataField> fields) {
+        List<JulyMetadataField> incoming = nullToEmpty(fields);
 
         validateFieldTypes(incoming);
         validateUniqueCodes(incoming);
 
-        for (FieldInfo011 existing : metaData.fields()) {
-            metaData.removeField(existing.fieldCode());
-        }
+        this.content = rebuild(incoming, content.objectType(), content.description(), content.businessField(),
+                content.packageName(), content.routerPath());
+    }
 
-        for (FieldInfo011 field : incoming) {
-            metaData.addField(field);
-        }
+    /**
+     * Rebuild the immutable content with new fields / scalars.
+     *
+     * @param fields        new fields
+     * @param objectType    object type code
+     * @param description   description
+     * @param businessField business field
+     * @param packageName   package name
+     * @param routerPath    route path
+     * @return new content
+     */
+    private MetadataContent rebuild(List<JulyMetadataField> fields, String objectType, String description,
+            String businessField, String packageName, String routerPath) {
+        return new MetadataContent(content.objectName(), objectType, description, businessField, packageName,
+                routerPath, fields, content.displays(), content.services());
     }
 
     /**
@@ -305,10 +313,10 @@ public class JulyBusinessModeling {
     /**
      * Validate the owned description.
      *
-     * @param metaData description to check
+     * @param content description to check
      */
-    private static void validateMetaData(MetaData011 metaData) {
-        if (metaData == null) {
+    private static void validateContent(MetadataContent content) {
+        if (content == null) {
             throw new IllegalArgumentException("meta data is required");
         }
     }
@@ -329,22 +337,21 @@ public class JulyBusinessModeling {
      *
      * @param fields fields to check, nullable
      */
-    private static void validateFieldTypes(List<FieldInfo011> fields) {
-        for (FieldInfo011 field : nullToEmpty(fields)) {
+    private static void validateFieldTypes(List<JulyMetadataField> fields) {
+        for (JulyMetadataField field : nullToEmpty(fields)) {
             validateFieldType(field == null ? null : field.fieldType());
         }
     }
 
     /**
-     * Validate that a batch carries no duplicate code, before any mutation is
-     * attempted on the owned description.
+     * Validate that a batch carries no duplicate code.
      *
      * @param fields fields to check
      */
-    private static void validateUniqueCodes(List<FieldInfo011> fields) {
+    private static void validateUniqueCodes(List<JulyMetadataField> fields) {
         Set<String> codes = new HashSet<>();
 
-        for (FieldInfo011 field : fields) {
+        for (JulyMetadataField field : fields) {
             if (field == null || !codes.add(field.fieldCode())) {
                 throw new IllegalArgumentException("duplicate field code in batch: "
                         + (field == null ? "null" : field.fieldCode()));
@@ -364,8 +371,7 @@ public class JulyBusinessModeling {
     }
 
     /**
-     * Treat a blank text as absent, so "no sql yet" has exactly one
-     * representation.
+     * Treat a blank text as absent.
      *
      * @param value raw value
      * @return trimmed value, or null when blank
@@ -380,7 +386,7 @@ public class JulyBusinessModeling {
      * @param source source collection
      * @return the source when non null, otherwise an empty list
      */
-    private static List<FieldInfo011> nullToEmpty(List<FieldInfo011> source) {
+    private static List<JulyMetadataField> nullToEmpty(List<JulyMetadataField> source) {
         return source == null ? List.of() : source;
     }
 
@@ -412,12 +418,12 @@ public class JulyBusinessModeling {
     }
 
     /**
-     * Get the owned low-code description.
+     * Get the owned low-code description contract.
      *
-     * @return description, never null
+     * @return content, never null
      */
-    public MetaData011 metaData() {
-        return metaData;
+    public MetadataContent content() {
+        return content;
     }
 
     /**
@@ -426,7 +432,7 @@ public class JulyBusinessModeling {
      * @return object name
      */
     public String objectName() {
-        return metaData.objectName();
+        return content.objectName();
     }
 
     /**
@@ -434,8 +440,8 @@ public class JulyBusinessModeling {
      *
      * @return immutable field list
      */
-    public List<FieldInfo011> fields() {
-        return metaData.fields();
+    public List<JulyMetadataField> fields() {
+        return content.fields();
     }
 
     /**

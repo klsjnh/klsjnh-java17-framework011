@@ -18,20 +18,21 @@ import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.domain.lowcode011.enums.ObjectType011;
+import com.klsjnh.domain.lowcode011.records.MetadataContent;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * JulyMetadata aggregate root (low-code core context): one business object
- * metadata owning three child collections — fields, display columns and
- * services. Their lifecycle is bound to this root; the repository persists the
- * whole aggregate (replace strategy).
+ * JulyMetadata aggregate root (low-code core context): one business object's
+ * lifecycle plus the {@link MetadataContent} contract it composes. The three
+ * child collections (fields / display columns / services) live inside that
+ * contract — the single schema source — and are rebuilt on every children
+ * change; the repository persists the whole aggregate (replace strategy).
  */
 
 public class JulyMetadata {
@@ -107,19 +108,10 @@ public class JulyMetadata {
     private AuditInfo audit;
 
     /**
-     * Fields owned by this object.
+     * The content contract owns the three child collections (single schema
+     * source); it is rebuilt on every children change.
      */
-    private final List<JulyMetadataField> fields = new ArrayList<>();
-
-    /**
-     * Display columns owned by this object.
-     */
-    private final List<JulyMetadataDisplay> displays = new ArrayList<>();
-
-    /**
-     * Services owned by this object.
-     */
-    private final List<JulyMetadataService> services = new ArrayList<>();
+    private MetadataContent content;
 
     /**
      * Full constructor (also the rehydration path).
@@ -152,6 +144,8 @@ public class JulyMetadata {
         this.remark = remark;
         this.status = status == null ? Status011.ENABLED.getCode() : status;
         this.audit = audit == null ? AuditInfo.empty() : audit;
+        this.content = new MetadataContent(objectName, objectType, description, businessField, packageName,
+                routerPath, List.of(), List.of(), List.of());
     }
 
     /**
@@ -205,11 +199,14 @@ public class JulyMetadata {
         if (!StringUtil011.isBlank(status)) {
             this.status = status;
         }
+
+        this.content = new MetadataContent(this.objectName, this.objectType, this.description, this.businessField,
+                this.packageName, this.routerPath, content.fields(), content.displays(), content.services());
     }
 
     /**
-     * Replace all three child collections (validate-then-swap, so a rejected
-     * batch never leaves a half-updated aggregate).
+     * Replace the content's three child collections (validate-then-rebuild, so a
+     * rejected batch never leaves a half-updated aggregate).
      *
      * @param newFields   fields, nullable for none
      * @param newDisplays displays, nullable for none
@@ -219,21 +216,18 @@ public class JulyMetadata {
             List<JulyMetadataService> newServices) {
         validateChildren(newFields, newDisplays, newServices);
 
-        fields.clear();
-        displays.clear();
-        services.clear();
+        this.content = new MetadataContent(this.objectName, this.objectType, this.description, this.businessField,
+                this.packageName, this.routerPath, nullToEmpty(newFields), nullToEmpty(newDisplays),
+                nullToEmpty(newServices));
+    }
 
-        for (JulyMetadataField field : nullToEmpty(newFields)) {
-            fields.add(field);
-        }
-
-        for (JulyMetadataDisplay display : nullToEmpty(newDisplays)) {
-            displays.add(display);
-        }
-
-        for (JulyMetadataService service : nullToEmpty(newServices)) {
-            services.add(service);
-        }
+    /**
+     * The content contract (single schema source).
+     *
+     * @return content
+     */
+    public MetadataContent content() {
+        return content;
     }
 
     /**
@@ -247,12 +241,12 @@ public class JulyMetadata {
             return Optional.empty();
         }
 
-        return fields.stream().filter(field -> field.fieldCode().equals(fieldCode)).findFirst();
+        return content.fields().stream().filter(field -> field.fieldCode().equals(fieldCode)).findFirst();
     }
 
     /**
-     * Validate the three child collections: unique codes inside each, and every
-     * display must bind an existing field.
+     * Validate the child collections: unique codes inside each, and every display
+     * must bind an existing field.
      *
      * @param newFields   fields
      * @param newDisplays displays
@@ -433,7 +427,7 @@ public class JulyMetadata {
      * @return fields
      */
     public List<JulyMetadataField> fields() {
-        return List.copyOf(fields);
+        return content.fields();
     }
 
     /**
@@ -442,7 +436,7 @@ public class JulyMetadata {
      * @return displays
      */
     public List<JulyMetadataDisplay> displays() {
-        return List.copyOf(displays);
+        return content.displays();
     }
 
     /**
@@ -451,6 +445,6 @@ public class JulyMetadata {
      * @return services
      */
     public List<JulyMetadataService> services() {
-        return List.copyOf(services);
+        return content.services();
     }
 }

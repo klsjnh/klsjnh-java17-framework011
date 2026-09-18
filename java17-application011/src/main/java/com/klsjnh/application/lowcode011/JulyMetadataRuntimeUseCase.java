@@ -200,13 +200,8 @@ public class JulyMetadataRuntimeUseCase {
      * @param body       query body (filters, pageIndex, pageSize)
      * @return page result
      */
-    public Map<String, Object> query(String objectName, Map<String, Object> body) {
-        Object filters = body.get("filters");
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> where = filters instanceof Map ? (Map<String, Object>) filters : Map.of();
-
-        return tableGateway.query(objectName, where, integer(body.get("pageIndex")), integer(body.get("pageSize")));
+    public Map<String, Object> query(ObjectQueryCommand command) {
+        return tableGateway.query(command);
     }
 
     /**

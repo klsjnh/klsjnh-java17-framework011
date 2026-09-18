@@ -95,15 +95,10 @@ public class OpenApiUseCase {
      * @param body       query body (filters, pageIndex, pageSize)
      * @return page result
      */
-    public Map<String, Object> query(String objectName, String apiKey, Map<String, Object> body) {
+    public Map<String, Object> query(String objectName, String apiKey, ObjectQueryCommand command) {
         authorize(objectName, apiKey, "query");
 
-        Object filters = body.get("filters");
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> where = filters instanceof Map ? (Map<String, Object>) filters : Map.of();
-
-        return tableGateway.query(objectName, where, integer(body.get("pageIndex")), integer(body.get("pageSize")));
+        return tableGateway.query(command);
     }
 
     /**
