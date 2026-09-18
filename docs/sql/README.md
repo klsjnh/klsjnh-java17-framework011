@@ -10,7 +10,7 @@
    | 域 | 文件 |
    |----|------|
    | system011 | `july_config` · `july_menu` · `july_organization` · `july_user` · `july_role` · `july_scheduler` · `july_dictionary` |
-   | dataservice011 | `july_datasource` · `july_business_modeling` |
+   | datasource | `july_datasource` · `july_business_modeling` |
    | ai011 | `july_ai_model_provider` |
    | storagecenter | `july_storage` |
    | demo | `july_demo011` |

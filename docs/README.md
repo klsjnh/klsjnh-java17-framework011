@@ -67,4 +67,4 @@
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。
-> 📌 **号位口径（用户裁定 2026-09-14）：跨目录不算同号位。** 顶层文档号与专题目录号**各自成位**，故 `017.tech-debt-redlines.md` 与 `infrastructure011/017.topic-dynamic-datasource.md` **不构成冲突**，无需避让；`019.backend-api-review.md` 与 `infrastructure011/019.topic-storage-center.md` 同理。判重只在**同一目录、同一序列**内进行。
+> 📌 **号位口径（用户裁定 2026-09-14）：跨目录不算同号位。** 顶层文档号与专题目录号**各自成位**，故 `017.tech-debt-redlines.md` 与 `infrastructure011/017.topic-datasource.md` **不构成冲突**，无需避让；`019.backend-api-review.md` 与 `infrastructure011/019.topic-storage-center.md` 同理。判重只在**同一目录、同一序列**内进行。

@@ -1,8 +1,8 @@
 -- ============================================================
 -- july_datasource — 数据服务-数据源管理（运行时可变业务库连接注册）
 -- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
--- 设计：docs/requirement011/031.topic-dataservice011.md
--- 方案：docs/requirement013/031.topic-dataservice011.md
+-- 设计：docs/requirement011/031.topic-datasource.md
+-- 方案：docs/requirement013/031.topic-datasource.md
 -- 边界：krt.ci011（yaml）为引导数据源；同一 dsCode 只允许一个家
 -- ============================================================
 
