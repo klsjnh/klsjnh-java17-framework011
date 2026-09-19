@@ -37,7 +37,7 @@ public class AiChatRequestVo011 {
     private String api;
 
     /** Model name; blank for the provider's first model. */
-    @Schema(description = "模型名（留空用 provider 首个模型）")
+    @Schema(description = "模型名（必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String model;
 
     /** Chat messages. */

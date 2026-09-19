@@ -171,28 +171,19 @@ public class AiInvokeUseCase {
     }
 
     /**
-     * Resolve the model: blank falls back to the provider's first model.
+     * Require an explicit model: the caller must name it (a provider serves
+     * many models, so there is no safe default). Blank is a 400.
      *
      * @param provider provider
-     * @param model    model name, nullable
-     * @return model name
+     * @param model    model name, required
+     * @return trimmed model name
      */
     private String resolveModel(AiModelProvider provider, String model) {
-        if (model != null && !model.isBlank()) {
-            return model.trim();
+        if (model == null || model.isBlank()) {
+            throw BusinessException.badRequest("model is required for provider: " + provider.providerCode());
         }
 
-        String models = provider.models();
-
-        if (models != null && !models.isBlank()) {
-            for (String candidate : models.split(",")) {
-                if (!candidate.isBlank()) {
-                    return candidate.trim();
-                }
-            }
-        }
-
-        throw BusinessException.badRequest("no model configured for provider: " + provider.providerCode());
+        return model.trim();
     }
 
     /**

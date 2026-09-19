@@ -67,7 +67,7 @@ public class AiChatController {
      * @return chat response (key masked)
      */
     @PostMapping("/chat")
-    @Operation(summary = "AI 对话（provider/api 支持 id 或 code；缺省用默认密钥与首个模型）")
+    @Operation(summary = "AI 对话（provider/api 支持 id 或 code；model 必传）")
     public Response011<AiChatResponseVo011> chat(@RequestBody AiChatRequestVo011 vo) {
         String funcName = "ai chat";
 
