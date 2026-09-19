@@ -14,7 +14,8 @@
    | datasource | `july_datasource` |
    | ai011 | `july_ai_model_provider` |
    | storagecenter | `july_storage_provider` · `july_storage_provider_bucket` |
-   | messagecenter | `july_message_channel` · `july_message_template` · `july_message` |
+   | messagecenter（出站） | `july_message_outbound_channel` · `july_message_outbound_template` · `july_message_outbound` |
+   | messagecenter（入站） | `july_message_inbound_channel` · `july_message_inbound_template` · `july_message_inbound` |
    | demo | `july_demo011` |
 
 2. **逻辑删除唯一键迁移**：`logic-delete-unique-fix.sql` —— 把业务唯一键切到 `alive_*` 生成列，**必须在对应表建好之后执行一次**。

@@ -60,14 +60,23 @@ public final class AuditObjectCodes011 {
     /** july_user. */
     public static final String JULY_USER = "julyUser";
 
-    /** july_message. */
-    public static final String JULY_MESSAGE = "julyMessage";
+    /** july_message_outbound. */
+    public static final String JULY_MESSAGE_OUTBOUND = "julyMessageOutbound";
 
-    /** july_message_channel. */
-    public static final String JULY_MESSAGE_CHANNEL = "julyMessageChannel";
+    /** july_message_outbound_channel. */
+    public static final String JULY_MESSAGE_OUTBOUND_CHANNEL = "julyMessageOutboundChannel";
 
-    /** july_message_template. */
-    public static final String JULY_MESSAGE_TEMPLATE = "julyMessageTemplate";
+    /** july_message_outbound_template. */
+    public static final String JULY_MESSAGE_OUTBOUND_TEMPLATE = "julyMessageOutboundTemplate";
+
+    /** july_message_inbound. */
+    public static final String JULY_MESSAGE_INBOUND = "julyMessageInbound";
+
+    /** july_message_inbound_channel. */
+    public static final String JULY_MESSAGE_INBOUND_CHANNEL = "julyMessageInboundChannel";
+
+    /** july_message_inbound_template. */
+    public static final String JULY_MESSAGE_INBOUND_TEMPLATE = "julyMessageInboundTemplate";
 
     /**
      * Constant holder, no instances.

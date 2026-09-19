@@ -15,8 +15,8 @@ package com.klsjnh.common.constant;
  */
 
 /**
- * Built-in message channel provider types: the SPI {@code channelCode} a
- * {@code july_message_channel} row binds to. Plain string constants, not an
+ * Built-in message channel provider types: the SPI {@code channelCode} an
+ * outbound / inbound channel row binds to. Plain string constants, not an
  * enum — a consumer may implement any other code through the
  * {@code MessageChannelPort} SPI without extending the platform (016 §6.5).
  */

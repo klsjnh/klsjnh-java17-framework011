@@ -102,7 +102,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | datasource：数据源管理（026，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页 + **分页方言开放 SPI**，内置 mysql/postgresql/oracle/sqlserver） |
 | ✅ | ai011：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 模型调用 chat（030，OpenAI 兼容，id/code 解析） |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（029，**主子表** `july_storage_provider` + `_bucket` + 桶/对象 + readText/saveText + 预签名 + **provider 注册表**） |
-| ✅ | messagecenter：消息中心（021，**实现型 SPI** + 注册表 + 三表 + send/分页/重发 + 内置 inapp/webhook，2026-09-19） |
+| ✅ | messagecenter：消息中心（021，**出入两套**：出站 `MessageChannelPort` + 入站 `MessageInboundPort`/监听 + 6 表 + send/接收回调/去重/分发 + 内置出站 inapp/webhook，2026-09-19） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 切面 + 平台事件（EXPORT/BACKUP 在 use case 写，独立事务）；`objectCode` 统一 `AuditObjectCodes011` |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插）；批量删除**全有或全无**（原子） |
 | ✅ | 扩展点开放化：存储 provider / 分页方言 / 消息渠道 = 开放字符串 + 注册表（禁封闭枚举做路由键） |
