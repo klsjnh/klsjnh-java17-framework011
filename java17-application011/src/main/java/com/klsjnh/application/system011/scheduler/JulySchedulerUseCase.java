@@ -18,7 +18,6 @@ import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
-import com.klsjnh.common.vo.BatchDeleteErrorVo011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
 import com.klsjnh.domain.system011.scheduler.JulyScheduler;
@@ -146,35 +145,38 @@ public class JulySchedulerUseCase {
     }
 
     /**
-     * Logic delete tasks in batch; running tasks are removed from the engine
-     * first. Per-id failure is reported, not thrown.
+     * Logic delete tasks in batch, all-or-nothing: a missing id fails the whole
+     * batch (404) so the transaction rolls back. On success each task is first
+     * removed from the engine, then the rows are deleted in one statement.
      *
      * @param ids task ids
-     * @return per-id success/failure summary
+     * @return batch delete summary
      */
     @Transactional
     public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
-        BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
         List<String> normalized = ids == null ? List.of()
                 : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
-        result.setTotal(normalized.size());
+
+        if (normalized.isEmpty()) {
+            throw BusinessException.badRequest("batch logic delete: ids is required");
+        }
 
         for (String id : normalized) {
-            JulyScheduler scheduler = repository.findById(id);
-
-            if (scheduler == null) {
-                result.setFailed(result.getFailed() + 1);
-                BatchDeleteErrorVo011 error = new BatchDeleteErrorVo011();
-                error.setId(id);
-                error.setMessage("record not found");
-                result.getErrors().add(error);
-                continue;
+            if (repository.findById(id) == null) {
+                throw BusinessException.recordNotFound(id);
             }
-
-            schedulerPort.remove(id);
-            repository.logicDeleteById(id);
-            result.setSuccess(result.getSuccess() + 1);
         }
+
+        for (String id : normalized) {
+            schedulerPort.remove(id);
+        }
+
+        repository.logicDeleteByIds(normalized);
+
+        BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
+        result.setTotal(normalized.size());
+        result.setSuccess(normalized.size());
+        result.setFailed(0);
 
         return result;
     }

@@ -61,6 +61,14 @@ public interface JulySchedulerRepository {
      */
     boolean logicDeleteById(String id);
 
+/**
+     * Logic delete many aggregates, all-or-nothing: a single missing id fails
+     * the whole call (throws) so the caller transaction rolls back.
+     *
+     * @param ids primary keys
+     */
+    void logicDeleteByIds(List<String> ids);
+
     /**
      * Offset based page query with optional keyword filters.
      *

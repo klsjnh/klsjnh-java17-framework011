@@ -40,7 +40,7 @@ import java.util.List;
  * third-party business systems that embed the framework (their own group,
  * excluding the /klsjnh/** framework paths).
  * <p>
- * Groups: system011 / storagecenter / datasource / ai011
+ * Groups: system011 / iam / storagecenter / datasource / ai011
  * (the low-code group also covers {@code /klsjnh/open/**}) / app (optional,
  * yml driven). Document tags are prefixed with the group's 011 domain name.
  * Doc meta (title / version / description) is driven by {@code krt.springdoc}.
@@ -82,6 +82,21 @@ public class SpringDocConfig011 {
                 .group("system011")
                 .displayName("系统管理011")
                 .pathsToMatch("/klsjnh/system011/**")
+                .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
+                .build();
+    }
+
+    /**
+     * IAM group (identity / access: user, role, audit).
+     *
+     * @return grouped open api
+     */
+    @Bean
+    public GroupedOpenApi iamGroupedOpenApi() {
+        return GroupedOpenApi.builder()
+                .group("iam")
+                .displayName("IAM011")
+                .pathsToMatch("/klsjnh/iam/**")
                 .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
                 .build();
     }

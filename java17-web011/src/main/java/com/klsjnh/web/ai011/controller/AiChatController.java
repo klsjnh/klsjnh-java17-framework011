@@ -16,9 +16,9 @@ package com.klsjnh.web.ai011.controller;
 
 import com.klsjnh.common.response.Response011;
 
-import com.klsjnh.application.ai011.AiInvokeOutcome;
-import com.klsjnh.application.ai011.AiInvokeUseCase;
-import com.klsjnh.domain.ai011.AiChatMessage;
+import com.klsjnh.application.ai011.chat.AiInvokeOutcome;
+import com.klsjnh.application.ai011.chat.AiInvokeUseCase;
+import com.klsjnh.domain.ai011.chat.AiChatMessage;
 
 import com.klsjnh.web.ai011.vo.aichat.AiChatMessageVo011;
 import com.klsjnh.web.ai011.vo.aichat.AiChatRequestVo011;
@@ -49,15 +49,15 @@ public class AiChatController {
     /**
      * AI invoke use case (the service-layer capability).
      */
-    private final AiInvokeUseCase useCase;
+    private final AiInvokeUseCase aiInvokeUseCase;
 
     /**
      * Create the controller.
      *
-     * @param useCase ai invoke use case
+     * @param aiInvokeUseCase ai invoke use case
      */
-    public AiChatController(AiInvokeUseCase useCase) {
-        this.useCase = useCase;
+    public AiChatController(AiInvokeUseCase aiInvokeUseCase) {
+        this.aiInvokeUseCase = aiInvokeUseCase;
     }
 
     /**
@@ -79,7 +79,7 @@ public class AiChatController {
             }
         }
 
-        AiInvokeOutcome outcome = useCase.chat(vo.getProvider(), vo.getApi(), vo.getModel(), messages,
+        AiInvokeOutcome outcome = aiInvokeUseCase.chat(vo.getProvider(), vo.getApi(), vo.getModel(), messages,
                 vo.getTemperature(), vo.getMaxTokens());
 
         return Response011.success(funcName, toVo(outcome));

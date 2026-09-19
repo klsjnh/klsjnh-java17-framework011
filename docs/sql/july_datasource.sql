@@ -1,8 +1,8 @@
 -- ============================================================
 -- july_datasource — 数据服务-数据源管理（运行时可变业务库连接注册）
 -- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
--- 设计：docs/requirement011/031.topic-datasource.md
--- 方案：docs/requirement013/031.topic-datasource.md
+-- 设计：docs/requirement011/026.topic-datasource.md
+-- 方案：docs/requirement013/026.topic-datasource.md
 -- 边界：krt.ci011（yaml）为引导数据源；同一 dsCode 只允许一个家
 -- ============================================================
 
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS july_datasource (
     schema_name   VARCHAR(60)  NULL                    COMMENT '库名或 Schema',
     username      VARCHAR(100) NULL                    COMMENT '用户名',
     password      VARCHAR(300) NULL                    COMMENT '密码（出参不回显，由 Converter 收口剔除）',
-    driver_class  VARCHAR(200) NULL                    COMMENT '驱动类名（为空时按 db_type 取 DatabaseType011 默认值）',
+    driver_class  VARCHAR(200) NULL                    COMMENT '驱动类名（为空时按 db_type 取 DatabaseTypes011 默认值）',
     pool_config   VARCHAR(500) NULL                    COMMENT '连接池 JSON（本期预留，不解析，走代码默认值）',
     remark        VARCHAR(300) NULL                    COMMENT '备注',
     sort_order    INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
@@ -28,4 +28,4 @@ CREATE TABLE IF NOT EXISTS july_datasource (
     PRIMARY KEY (id),
     UNIQUE KEY uk_ds_code (ds_code),
     KEY idx_ds_code_status (ds_code, status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据服务011 - 数据源管理';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据源011 - 数据源管理';

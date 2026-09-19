@@ -195,11 +195,13 @@ public abstract class BaseRepository<T extends BasePo, M extends BaseMapper<T>> 
     }
 
     /**
-     * Batch logic delete by primary keys in two statements: one select for
-     * existence, one batch delete. Missing ids land in the error list.
+     * Batch logic delete by primary keys, all-or-nothing: one select for
+     * existence, then one batch delete. A single missing id fails the whole
+     * batch with a 404, so the caller's transaction rolls back and nothing is
+     * deleted.
      *
      * @param ids primary keys
-     * @return per-id success/failure summary
+     * @return single-id success summary
      */
     public BatchDeleteResultVo011 batchLogicDelete(List<String> ids) {
         String funcName = "batch logic delete";
@@ -210,31 +212,26 @@ public abstract class BaseRepository<T extends BasePo, M extends BaseMapper<T>> 
             throw BusinessException.badRequest(funcName + ": ids is required");
         }
 
-        List<T> found = mapper.selectByIds(normalized);
         Set<String> foundIds = new HashSet<>();
 
-        for (T po : found) {
+        for (T po : mapper.selectByIds(normalized)) {
             foundIds.add(po.getId());
         }
 
-        int deleted = 0;
-        if (!found.isEmpty()) {
-            deleted = mapper.deleteBatchIds(foundIds);
+        for (String id : normalized) {
+            if (!foundIds.contains(id)) {
+                throw BusinessException.recordNotFound(id);
+            }
         }
+
+        int deleted = mapper.deleteBatchIds(normalized);
 
         BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
         result.setTotal(normalized.size());
         result.setSuccess(deleted);
-        result.setFailed(normalized.size() - foundIds.size());
+        result.setFailed(0);
 
-        for (String id : normalized) {
-            if (!foundIds.contains(id)) {
-                result.getErrors().add(batchError(id, "record not found"));
-            }
-        }
-
-        logger.info("{} {} total {} success {} failed {} ...",
-                funcName, getTableName(), result.getTotal(), result.getSuccess(), result.getFailed());
+        logger.info("{} {} total {} success {} ...", funcName, getTableName(), result.getTotal(), deleted);
 
         return result;
     }

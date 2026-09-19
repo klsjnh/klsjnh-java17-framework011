@@ -14,6 +14,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
@@ -66,20 +67,16 @@ import java.util.List;
 @RequestMapping("/klsjnh/system011/julyDictionary/v1")
 public class JulyDictionaryController {
 
-    /**
-     * Object code this controller exports under.
-     */
-    private static final String OBJECT_CODE = "julyDictionary";
 
     /**
      * JulyDictionary use case.
      */
-    private final JulyDictionaryUseCase useCase;
+    private final JulyDictionaryUseCase julyDictionaryUseCase;
 
     /**
-     * Response converter.
+     * Response julyDictionaryConverter.
      */
-    private final JulyDictionaryConverter converter;
+    private final JulyDictionaryConverter julyDictionaryConverter;
 
     /**
      * Export use case.
@@ -89,14 +86,14 @@ public class JulyDictionaryController {
     /**
      * Create the controller.
      *
-     * @param useCase       july dictionary use case
-     * @param converter     response converter
+     * @param julyDictionaryUseCase       july dictionary use case
+     * @param julyDictionaryConverter     response julyDictionaryConverter
      * @param exportUseCase export use case
      */
-    public JulyDictionaryController(JulyDictionaryUseCase useCase, JulyDictionaryConverter converter,
+    public JulyDictionaryController(JulyDictionaryUseCase julyDictionaryUseCase, JulyDictionaryConverter julyDictionaryConverter,
             ExportUseCase exportUseCase) {
-        this.useCase = useCase;
-        this.converter = converter;
+        this.julyDictionaryUseCase = julyDictionaryUseCase;
+        this.julyDictionaryConverter = julyDictionaryConverter;
         this.exportUseCase = exportUseCase;
     }
 
@@ -106,13 +103,13 @@ public class JulyDictionaryController {
      * @param vo insert request
      * @return envelope with the new dictionary id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyDictionary")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/insert")
     @Operation(summary = "新增字典（dictionaryCode 查重）")
     public Response011<IdVo011> insert(@RequestBody JulyDictionaryInsertVo011 vo) {
         String funcName = "insert";
 
-        return Response011.successId(funcName, useCase.insert(vo.getDictionaryCode(), vo.getSortOrder(),
+        return Response011.successId(funcName, julyDictionaryUseCase.insert(vo.getDictionaryCode(), vo.getSortOrder(),
                 vo.getDictionaryName(), vo.getRemark()));
     }
 
@@ -122,13 +119,13 @@ public class JulyDictionaryController {
      * @param vo update request
      * @return envelope with the dictionary id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDictionary")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/update")
     @Operation(summary = "修改字典（dictionaryCode 不可变）")
     public Response011<IdVo011> update(@RequestBody JulyDictionaryUpdateVo011 vo) {
         String funcName = "update";
 
-        return Response011.successId(funcName, useCase.update(vo.getId(), vo.getDictionaryName(), vo.getSortOrder(),
+        return Response011.successId(funcName, julyDictionaryUseCase.update(vo.getId(), vo.getDictionaryName(), vo.getSortOrder(),
                 vo.getStatus(), vo.getRemark()));
     }
 
@@ -138,13 +135,13 @@ public class JulyDictionaryController {
      * @param idVo request with the dictionary id
      * @return envelope with the deleted dictionary id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDictionary")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除字典（仍有字典项则拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
+        return Response011.successId(funcName, julyDictionaryUseCase.logicDelete(idVo.getId()));
     }
 
     /**
@@ -158,7 +155,7 @@ public class JulyDictionaryController {
     public Response011<JulyDictionaryVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getByIdWithItems(id)));
+        return Response011.success(funcName, julyDictionaryConverter.toVo(julyDictionaryUseCase.getByIdWithItems(id)));
     }
 
     /**
@@ -172,7 +169,7 @@ public class JulyDictionaryController {
     public Response011<JulyDictionaryVo011> getByCode(@RequestParam("code") String code) {
         String funcName = "get by code";
 
-        return Response011.success(funcName, converter.toVo(useCase.getByCodeWithItems(code)));
+        return Response011.success(funcName, julyDictionaryConverter.toVo(julyDictionaryUseCase.getByCodeWithItems(code)));
     }
 
     /**
@@ -188,10 +185,10 @@ public class JulyDictionaryController {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyDictionary> page = useCase.selectListByPage(pageQuery,
+        PageResult011<JulyDictionary> page = julyDictionaryUseCase.selectListByPage(pageQuery,
                 new JulyDictionaryQuerySpec(vo.getKeyword(), vo.getStatus()));
 
-        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+        return Response011.success(funcName, page.withRows(julyDictionaryConverter.toVoList(page.rows())));
     }
 
     /**
@@ -200,13 +197,13 @@ public class JulyDictionaryController {
      * @param vo insert request
      * @return envelope with the new item id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyDictionary")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/insertItem")
     @Operation(summary = "新增字典项（同字典内 itemCode 查重）")
     public Response011<IdVo011> insertItem(@RequestBody JulyDictionaryItemInsertVo011 vo) {
         String funcName = "insert item";
 
-        return Response011.successId(funcName, useCase.insertItem(vo.getDictionaryCode(), vo.getSortOrder(),
+        return Response011.successId(funcName, julyDictionaryUseCase.insertItem(vo.getDictionaryCode(), vo.getSortOrder(),
                 vo.getItemCode(), vo.getItemLabel(), vo.getRemark()));
     }
 
@@ -216,13 +213,13 @@ public class JulyDictionaryController {
      * @param vo update request
      * @return envelope with the item id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDictionary")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/updateItem")
     @Operation(summary = "修改字典项（itemCode 不可变）")
     public Response011<IdVo011> updateItem(@RequestBody JulyDictionaryItemUpdateVo011 vo) {
         String funcName = "update item";
 
-        return Response011.successId(funcName, useCase.updateItem(vo.getId(), vo.getItemLabel(), vo.getSortOrder(),
+        return Response011.successId(funcName, julyDictionaryUseCase.updateItem(vo.getId(), vo.getItemLabel(), vo.getSortOrder(),
                 vo.getStatus(), vo.getRemark()));
     }
 
@@ -232,13 +229,13 @@ public class JulyDictionaryController {
      * @param idVo request with the item id
      * @return envelope with the deleted item id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDictionary")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/logicDeleteItem")
     @Operation(summary = "逻辑删除字典项（单个）")
     public Response011<IdVo011> logicDeleteItem(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete item";
 
-        return Response011.successId(funcName, useCase.logicDeleteItem(idVo.getId()));
+        return Response011.successId(funcName, julyDictionaryUseCase.logicDeleteItem(idVo.getId()));
     }
 
     /**
@@ -253,9 +250,9 @@ public class JulyDictionaryController {
             @RequestBody JulyDictionaryItemQueryVo011 vo) {
         String funcName = "select item list by type";
 
-        List<JulyDictionaryItem> items = useCase.selectItemListByType(vo.getDictionaryCode(), vo.getStatus());
+        List<JulyDictionaryItem> items = julyDictionaryUseCase.selectItemListByType(vo.getDictionaryCode(), vo.getStatus());
 
-        return Response011.success(funcName, converter.toItemVoList(items));
+        return Response011.success(funcName, julyDictionaryConverter.toItemVoList(items));
     }
 
     /**
@@ -272,6 +269,6 @@ public class JulyDictionaryController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, exportUseCase.export(OBJECT_CODE, operator));
+        return Response011.success(funcName, exportUseCase.export(AuditObjectCodes011.JULY_DICTIONARY, operator));
     }
 }

@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
@@ -62,20 +63,16 @@ import java.util.List;
 @RequestMapping("/klsjnh/system011/julyOrganization/v1")
 public class JulyOrganizationController {
 
-    /**
-     * Object code this controller exports and backs up under.
-     */
-    private static final String OBJECT_CODE = "julyOrganization";
 
     /**
      * JulyOrganization use case.
      */
-    private final JulyOrganizationUseCase useCase;
+    private final JulyOrganizationUseCase julyOrganizationUseCase;
 
     /**
-     * Response converter.
+     * Response julyOrganizationConverter.
      */
-    private final JulyOrganizationConverter converter;
+    private final JulyOrganizationConverter julyOrganizationConverter;
 
     /**
      * Export use case (platform capability).
@@ -90,15 +87,15 @@ public class JulyOrganizationController {
     /**
      * Create the controller.
      *
-     * @param useCase       july organization use case
-     * @param converter     response converter
+     * @param julyOrganizationUseCase       july organization use case
+     * @param julyOrganizationConverter     response julyOrganizationConverter
      * @param exportUseCase export use case
      * @param backupUseCase backup use case
      */
-    public JulyOrganizationController(JulyOrganizationUseCase useCase, JulyOrganizationConverter converter,
+    public JulyOrganizationController(JulyOrganizationUseCase julyOrganizationUseCase, JulyOrganizationConverter julyOrganizationConverter,
             ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
-        this.useCase = useCase;
-        this.converter = converter;
+        this.julyOrganizationUseCase = julyOrganizationUseCase;
+        this.julyOrganizationConverter = julyOrganizationConverter;
         this.exportUseCase = exportUseCase;
         this.backupUseCase = backupUseCase;
     }
@@ -109,14 +106,14 @@ public class JulyOrganizationController {
      * @param vo insert request
      * @return envelope with the new org id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyOrganization")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_ORGANIZATION)
     @PostMapping("/insert")
     @Operation(summary = "新增组织（层级由上级推导）")
     public Response011<IdVo011> insert(@RequestBody JulyOrganizationInsertVo011 vo) {
         String funcName = "insert";
 
         return Response011.successId(funcName,
-                useCase.insert(vo.getOrgCode(), vo.getOrgName(), vo.getPkUser(), vo.getParentId(), vo.getSortOrder()));
+                julyOrganizationUseCase.insert(vo.getOrgCode(), vo.getOrgName(), vo.getPkUser(), vo.getParentId(), vo.getSortOrder()));
     }
 
     /**
@@ -125,13 +122,13 @@ public class JulyOrganizationController {
      * @param vo update request
      * @return envelope with the org id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyOrganization")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_ORGANIZATION)
     @PostMapping("/update")
     @Operation(summary = "修改组织（编码不可改，可移动上级并重排层级）")
     public Response011<IdVo011> update(@RequestBody JulyOrganizationUpdateVo011 vo) {
         String funcName = "update";
 
-        useCase.update(vo.getId(), vo.getOrgName(), vo.getPkUser(), vo.getParentId(), vo.getSortOrder());
+        julyOrganizationUseCase.update(vo.getId(), vo.getOrgName(), vo.getPkUser(), vo.getParentId(), vo.getSortOrder());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -142,13 +139,13 @@ public class JulyOrganizationController {
      * @param idVo request with the org id
      * @return envelope with the org id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyOrganization")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_ORGANIZATION)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（有子组织或挂有用户拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        useCase.logicDelete(idVo.getId());
+        julyOrganizationUseCase.logicDelete(idVo.getId());
 
         return Response011.successId(funcName, idVo.getId());
     }
@@ -164,7 +161,7 @@ public class JulyOrganizationController {
     public Response011<JulyOrganizationVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+        return Response011.success(funcName, julyOrganizationConverter.toVo(julyOrganizationUseCase.getById(id)));
     }
 
     /**
@@ -178,9 +175,9 @@ public class JulyOrganizationController {
     public Response011<List<JulyOrganizationVo011>> getTree() {
         String funcName = "get tree";
 
-        JulyOrganizationUseCase.TreeWithCounts tree = useCase.getTree();
+        JulyOrganizationUseCase.TreeWithCounts tree = julyOrganizationUseCase.getTree();
 
-        return Response011.success(funcName, converter.toVoList(tree.tree(), tree.counts()));
+        return Response011.success(funcName, julyOrganizationConverter.toVoList(tree.tree(), tree.counts()));
     }
 
     /**
@@ -196,9 +193,9 @@ public class JulyOrganizationController {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(query.getPageIndex(), query.getPageSize());
-        PageResult011<JulyOrganization> page = useCase.selectListByPage(pageQuery, query.getKeyword());
+        PageResult011<JulyOrganization> page = julyOrganizationUseCase.selectListByPage(pageQuery, query.getKeyword());
 
-        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows(), null)));
+        return Response011.success(funcName, page.withRows(julyOrganizationConverter.toVoList(page.rows(), null)));
     }
 
     /**
@@ -215,7 +212,7 @@ public class JulyOrganizationController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+        ExportResult result = exportUseCase.export(AuditObjectCodes011.JULY_ORGANIZATION, operator);
 
         return Response011.success(funcName, result);
     }
@@ -234,7 +231,7 @@ public class JulyOrganizationController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        String key = backupUseCase.backup(OBJECT_CODE, operator);
+        String key = backupUseCase.backup(AuditObjectCodes011.JULY_ORGANIZATION, operator);
 
         return Response011.success(funcName, key);
     }

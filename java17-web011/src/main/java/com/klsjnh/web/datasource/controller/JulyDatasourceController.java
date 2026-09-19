@@ -14,6 +14,7 @@ package com.klsjnh.web.datasource.controller;
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.vo.IdVo011;
 import com.klsjnh.common.vo.IdsVo011;
@@ -23,11 +24,11 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.util.StringUtil011;
 
-import com.klsjnh.application.datasource.JulyDatasourceUseCase;
-import com.klsjnh.domain.datasource.JulyDatasource;
-import com.klsjnh.domain.datasource.JulyDatasourceQuerySpec;
-import com.klsjnh.domain.datasource.DataSourceProbePort;
-import com.klsjnh.domain.datasource.ReloadResult;
+import com.klsjnh.application.datasource.management.JulyDatasourceUseCase;
+import com.klsjnh.domain.datasource.management.JulyDatasource;
+import com.klsjnh.domain.datasource.management.JulyDatasourceQuerySpec;
+import com.klsjnh.domain.datasource.kernel.DataSourceProbePort;
+import com.klsjnh.domain.datasource.kernel.ReloadResult;
 
 import com.klsjnh.web.datasource.converter.JulyDatasourceConverter;
 
@@ -67,22 +68,22 @@ public class JulyDatasourceController {
     /**
      * JulyDatasource use case.
      */
-    private final JulyDatasourceUseCase useCase;
+    private final JulyDatasourceUseCase julyDatasourceUseCase;
 
     /**
-     * Response converter.
+     * Response julyDatasourceConverter.
      */
-    private final JulyDatasourceConverter converter;
+    private final JulyDatasourceConverter julyDatasourceConverter;
 
     /**
      * Create the controller.
      *
-     * @param useCase   july datasource use case
-     * @param converter response converter
+     * @param julyDatasourceUseCase   july datasource use case
+     * @param julyDatasourceConverter response julyDatasourceConverter
      */
-    public JulyDatasourceController(JulyDatasourceUseCase useCase, JulyDatasourceConverter converter) {
-        this.useCase = useCase;
-        this.converter = converter;
+    public JulyDatasourceController(JulyDatasourceUseCase julyDatasourceUseCase, JulyDatasourceConverter julyDatasourceConverter) {
+        this.julyDatasourceUseCase = julyDatasourceUseCase;
+        this.julyDatasourceConverter = julyDatasourceConverter;
     }
 
     /**
@@ -92,13 +93,13 @@ public class JulyDatasourceController {
      * @param vo insert request
      * @return envelope with the new datasource id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyDatasource")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/insert")
     @Operation(summary = "新增数据源（dsCode 查重；落库后刷新注册表）")
     public Response011<IdVo011> insert(@RequestBody JulyDatasourceInsertVo011 vo) {
         String funcName = "insert";
 
-        String id = useCase.insert(vo.getDsCode(), vo.getSortOrder(), vo.getDsName(), vo.getDbType(), vo.getJdbcUrl(),
+        String id = julyDatasourceUseCase.insert(vo.getDsCode(), vo.getSortOrder(), vo.getDsName(), vo.getDbType(), vo.getJdbcUrl(),
                 vo.getSchemaName(), vo.getUsername(), vo.getPassword(), vo.getDriverClass(), vo.getRemark());
 
         return Response011.successId(funcName, id);
@@ -111,13 +112,13 @@ public class JulyDatasourceController {
      * @param vo update request
      * @return envelope with the datasource id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDatasource")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/update")
     @Operation(summary = "修改数据源（dsCode 不可变；密码留空保持原值；落库后刷新注册表）")
     public Response011<IdVo011> update(@RequestBody JulyDatasourceUpdateVo011 vo) {
         String funcName = "update";
 
-        String id = useCase.update(vo.getId(), vo.getDsName(), vo.getSortOrder(), vo.getDbType(), vo.getJdbcUrl(),
+        String id = julyDatasourceUseCase.update(vo.getId(), vo.getDsName(), vo.getSortOrder(), vo.getDbType(), vo.getJdbcUrl(),
                 vo.getSchemaName(), vo.getUsername(), vo.getPassword(), vo.getDriverClass(), vo.getRemark());
 
         return Response011.successId(funcName, id);
@@ -129,13 +130,13 @@ public class JulyDatasourceController {
      * @param idVo request with the datasource id
      * @return envelope with the datasource id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDatasource")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（落库后刷新注册表，运行时应立即摘除该数据源）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        useCase.logicDelete(idVo.getId());
+        julyDatasourceUseCase.logicDelete(idVo.getId());
 
         return Response011.successId(funcName, idVo.getId());
     }
@@ -146,13 +147,13 @@ public class JulyDatasourceController {
      * @param idsVo request with the datasource ids
      * @return per-id summary
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyDatasource")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "批量逻辑删除（逐条判定，整批只刷新一次注册表）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
         String funcName = "logic delete batch";
 
-        return Response011.success(funcName, useCase.logicDeleteBatch(idsVo.getIds()));
+        return Response011.success(funcName, julyDatasourceUseCase.logicDeleteBatch(idsVo.getIds()));
     }
 
     /**
@@ -166,7 +167,7 @@ public class JulyDatasourceController {
     public Response011<JulyDatasourceVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+        return Response011.success(funcName, julyDatasourceConverter.toVo(julyDatasourceUseCase.getById(id)));
     }
 
     /**
@@ -182,9 +183,9 @@ public class JulyDatasourceController {
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
         JulyDatasourceQuerySpec spec = new JulyDatasourceQuerySpec(vo.getKeyword(), vo.getStatus());
-        PageResult011<JulyDatasource> page = useCase.selectListByPage(pageQuery, spec);
+        PageResult011<JulyDatasource> page = julyDatasourceUseCase.selectListByPage(pageQuery, spec);
 
-        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+        return Response011.success(funcName, page.withRows(julyDatasourceConverter.toVoList(page.rows())));
     }
 
     /**
@@ -205,11 +206,11 @@ public class JulyDatasourceController {
         String funcName = "test connection";
 
         DataSourceProbePort.ProbeResult result = StringUtil011.isBlank(vo.getId())
-                ? useCase.testDraft(vo.getDsCode(), vo.getDbType(), vo.getJdbcUrl(), vo.getUsername(),
+                ? julyDatasourceUseCase.testDraft(vo.getDsCode(), vo.getDbType(), vo.getJdbcUrl(), vo.getUsername(),
                         vo.getPassword(), vo.getDriverClass())
-                : useCase.testSaved(vo.getId(), vo.getPassword());
+                : julyDatasourceUseCase.testSaved(vo.getId(), vo.getPassword());
 
-        return Response011.success(funcName, converter.toTestResultVo(result));
+        return Response011.success(funcName, julyDatasourceConverter.toTestResultVo(result));
     }
 
     /**
@@ -218,12 +219,12 @@ public class JulyDatasourceController {
      *
      * @return reconciliation summary
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyDatasource")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/reloadRegistry")
     @Operation(summary = "重载注册表（按 july_datasource 启用行重建声明集，复用未变动的连接池）")
     public Response011<ReloadResult> reloadRegistry() {
         String funcName = "reload registry";
 
-        return Response011.success(funcName, useCase.reloadRegistry());
+        return Response011.success(funcName, julyDatasourceUseCase.reloadRegistry());
     }
 }

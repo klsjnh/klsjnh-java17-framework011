@@ -14,8 +14,8 @@ package com.klsjnh.web.datasource.converter;
  *
  */
 
-import com.klsjnh.domain.datasource.JulyDatasource;
-import com.klsjnh.domain.datasource.DataSourceProbePort;
+import com.klsjnh.domain.datasource.management.JulyDatasource;
+import com.klsjnh.domain.datasource.kernel.DataSourceProbePort;
 
 import com.klsjnh.web.datasource.vo.julydatasource.JulyDatasourceTestResultVo011;
 import com.klsjnh.web.datasource.vo.julydatasource.JulyDatasourceVo011;

@@ -446,6 +446,70 @@ export function testImportOrder(path, content, violations) {
   }
 }
 
+/**
+ * Package-by-feature rule (016 §7): domain/application sub-packages must be
+ * capability names, not technical roles (records / port / entity / ...).
+ */
+const FORBIDDEN_PACKAGE_SEGMENTS = new Set([
+  'records', 'record', 'port', 'ports', 'model', 'models', 'entity', 'entities',
+  'dto', 'dtos', 'mapper', 'mappers', 'repository', 'repositories', 'repo', 'repos',
+  'service', 'services', 'impl', 'impls',
+]);
+
+export function testPackageByFeature(path, content, violations) {
+  const m = content.match(/^package\s+([\w.]+);/m);
+  if (!m) {
+    return;
+  }
+  const p = m[1];
+  const scoped = p.startsWith('com.klsjnh.domain.') || p.startsWith('com.klsjnh.application.')
+    || p.startsWith('com.klsjnh.lowcode011.domain.') || p.startsWith('com.klsjnh.lowcode011.application.');
+  if (!scoped) {
+    return;
+  }
+  for (const seg of p.split('.')) {
+    if (FORBIDDEN_PACKAGE_SEGMENTS.has(seg)) {
+      violations.push({
+        file: path,
+        line: 1,
+        rule: 'package-by-feature',
+        detail: `technical-role package segment '${seg}' is not allowed in domain/application; use a capability package`,
+        fix: 'move the class into the capability (subdomain/aggregate) package (016 §7)',
+      });
+      return;
+    }
+  }
+}
+
+/**
+ * URL module alignment (016 §6.4): a controller's @RequestMapping first segment
+ * after /klsjnh/ must match the module segment of its package.
+ */
+export function testApiModuleUrl(path, content, violations) {
+  const m = content.match(/@RequestMapping\(\s*(?:value\s*=\s*)?\{?\s*"([^"]+)"/);
+  if (!m) {
+    return;
+  }
+  const url = m[1];
+  if (!url.startsWith('/klsjnh/') || url.startsWith('/klsjnh/open/')) {
+    return;
+  }
+  const seg = url.split('/')[2];
+  const pm = content.match(/^package\s+([\w.]+);/m);
+  if (!pm) {
+    return;
+  }
+  if (!pm[1].split('.').includes(seg)) {
+    violations.push({
+      file: path,
+      line: 1,
+      rule: 'api-module-url',
+      detail: `URL '${url}' first segment '${seg}' must match a module segment of package '${pm[1]}'`,
+      fix: 'rename the URL first segment to the module (e.g. /klsjnh/iam/...) (016 §6.4)',
+    });
+  }
+}
+
 export async function runStandardsCheck(projectRoot) {
   const files = await collectJavaSources(projectRoot);
   const violations = [];
@@ -464,7 +528,9 @@ export async function runStandardsCheck(projectRoot) {
     testDuplicateJavadocs(file, content, violations);
     testJavadocEnglish(file, content, violations);
     testImportOrder(file, content, violations);
+    testPackageByFeature(file, content, violations);
     testApiUrlStandards(file, content, violations);
+    testApiModuleUrl(file, content, violations);
     testBraceAdjacentBlankLines(file, content, violations);
     testNestedControlBlankLines(file, content, violations);
   }

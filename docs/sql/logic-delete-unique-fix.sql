@@ -55,7 +55,7 @@ ALTER TABLE july_ai_model_provider
     DROP INDEX uk_provider_code,
     ADD UNIQUE KEY uk_provider_code (alive_provider_code);
 
-ALTER TABLE july_storage
+ALTER TABLE july_storage_provider
     ADD COLUMN alive_storage_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', storage_code, NULL)) STORED,
     DROP INDEX uk_storage_code,
     ADD UNIQUE KEY uk_storage_code (alive_storage_code);
@@ -70,6 +70,11 @@ ALTER TABLE july_ai_model_provider_api
     ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, api_code), NULL)) STORED,
     DROP INDEX uk_pk_mt_api_code,
     ADD UNIQUE KEY uk_pk_mt_api_code (alive_key);
+
+ALTER TABLE july_storage_provider_bucket
+    ADD COLUMN alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, bucket_code), NULL)) STORED,
+    DROP INDEX uk_pk_mt_bucket_code,
+    ADD UNIQUE KEY uk_pk_mt_bucket_code (alive_key);
 
 ALTER TABLE july_role_permissions
     ADD COLUMN alive_key VARCHAR(300) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, pk_menu, permission_code), NULL)) STORED,

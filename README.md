@@ -42,7 +42,7 @@ web ──► application ──► domain ◄── infrastructure
 | 模块 | 层 | 内容 |
 |------|-----|------|
 | java17-common011 | common | 枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011 / StorageType011 / AuditType011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 / AuthAttribute011 · 工具（DateUtil011 / MarkdownUtil011） |
-| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源内核 Port + **JulyDatasource 管理** + 方言/探针）· storagecenter（ObjectStoragePort / JulyStorage / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· ai011（AiModelProvider + Api + Probe）· platform011（export / backup Port） |
+| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源内核 Port + **JulyDatasource 管理** + 方言/探针）· storagecenter（ObjectStoragePort / JulyStorageProvider / JulyStorageProviderBucket / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· ai011（AiModelProvider + Api + Probe）· platform011（export / backup Port） |
 | java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· ai011 · storagecenter（实例 / 桶 / 对象 + 在线编辑）· platform011（export / backup） |
 | java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / datasource / ai011 / storagecenter 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
 | java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 4 组（system011 / storagecenter / datasource / ai011） |

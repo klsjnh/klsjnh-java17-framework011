@@ -14,9 +14,9 @@ package com.klsjnh.web.ai011.converter;
  *
  */
 
-import com.klsjnh.domain.ai011.AiModelProbePort;
-import com.klsjnh.domain.ai011.AiModelProvider;
-import com.klsjnh.domain.ai011.AiModelProviderApi;
+import com.klsjnh.domain.ai011.modelprovider.AiModelProbePort;
+import com.klsjnh.domain.ai011.modelprovider.AiModelProvider;
+import com.klsjnh.domain.ai011.modelprovider.AiModelProviderApi;
 
 import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderApiVo011;
 import com.klsjnh.web.ai011.vo.aimodelprovider.AiModelProviderTestResultVo011;

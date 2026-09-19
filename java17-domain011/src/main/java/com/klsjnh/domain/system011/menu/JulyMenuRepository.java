@@ -70,6 +70,14 @@ public interface JulyMenuRepository {
      */
     boolean logicDeleteById(String id);
 
+/**
+     * Logic delete many aggregates, all-or-nothing: a single missing id fails
+     * the whole call (throws) so the caller transaction rolls back.
+     *
+     * @param ids primary keys
+     */
+    void logicDeleteByIds(List<String> ids);
+
     /**
      * Load the full alive menu tree as aggregates (children assembled,
      * ordered by sort_order / id). Named getTree to stay distinct from the

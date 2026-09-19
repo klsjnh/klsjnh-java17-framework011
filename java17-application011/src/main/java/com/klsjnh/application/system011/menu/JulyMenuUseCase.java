@@ -19,12 +19,11 @@ package com.klsjnh.application.system011.menu;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
-import com.klsjnh.common.vo.BatchDeleteErrorVo011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
-import com.klsjnh.domain.iam.JulyRole;
-import com.klsjnh.domain.iam.JulyRoleRepository;
-import com.klsjnh.domain.iam.JulyUserRoleRepository;
+import com.klsjnh.domain.iam.role.JulyRole;
+import com.klsjnh.domain.iam.role.JulyRoleRepository;
+import com.klsjnh.domain.iam.role.JulyUserRoleRepository;
 import com.klsjnh.domain.system011.menu.JulyMenu;
 import com.klsjnh.domain.system011.menu.JulyMenuRepository;
 import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
@@ -158,30 +157,33 @@ public class JulyMenuUseCase {
     }
 
     /**
-     * Logic delete menus (batch).
+     * Logic delete menus, all-or-nothing: a missing id or a menu with children
+     * fails the whole batch (404) so the transaction rolls back.
      *
      * @param ids menu ids
-     * @return per-id success/failure summary
+     * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDelete(List<String> ids) {
-        BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
+    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
         List<String> normalized = ids == null ? List.of()
                 : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
-        result.setTotal(normalized.size());
+
+        if (normalized.isEmpty()) {
+            throw BusinessException.badRequest("batch logic delete: ids is required");
+        }
 
         for (String id : normalized) {
-            try {
-                logicDelete(id);
-                result.setSuccess(result.getSuccess() + 1);
-            } catch (BusinessException ex) {
-                result.setFailed(result.getFailed() + 1);
-                BatchDeleteErrorVo011 error = new BatchDeleteErrorVo011();
-                error.setId(id);
-                error.setMessage(ex.getMessage());
-                result.getErrors().add(error);
+            if (repository.hasChildren(id)) {
+                throw BusinessException.badRequest("menu has children, delete children first");
             }
         }
+
+        repository.logicDeleteByIds(normalized);
+
+        BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
+        result.setTotal(normalized.size());
+        result.setSuccess(normalized.size());
+        result.setFailed(0);
 
         return result;
     }

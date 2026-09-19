@@ -16,7 +16,7 @@ package com.klsjnh.web.global.audit;
 
 import com.klsjnh.common.identity.Operator011;
 
-import com.klsjnh.domain.iam.UserAuditPort;
+import com.klsjnh.domain.iam.user.UserAuditPort;
 
 import com.klsjnh.web.util.Operator011Resolver;
 

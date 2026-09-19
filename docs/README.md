@@ -18,7 +18,7 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · 019 存储中心 · 020 容器化部署 |
+| [infrastructure011/](infrastructure011/) | 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · 019 存储中心 · 020 容器化部署 · 021 消息中心（多渠道可插拔，提案） |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
 | requirement011/ | 业务设计：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 021 julyScheduler（已编码）· 029 配置管理 · 030 数据导出 · 031 数据源管理（datasource 域，已编码）· 035 数据字典（已编码）· 036 AI 模型接入（新域 ai011，已编码）· 037 存储中心管理面（已编码） |
 | requirement013/ | 技术方案（021 julyScheduler 已编码完成；029 配置管理已编码；031 datasource 已编码；035 数据字典已编码；036 ai011 已编码；037 存储中心管理面已编码；IAM 各主题按 011→013→编码 推进） |
@@ -31,37 +31,27 @@
 
 | 编号 | 状态 | 当前用途 |
 |------|------|----------|
-| 011 | 在用 | 协议全集（011.agreements：铁律 / 七步流程 / 目录语义 / 编号规则 / 归档规则 / 代码先行审查）；infrastructure011/011 架构选型；requirement011/011 july-menu |
+| 011 | 在用 | 协议全集（011.agreements）；infrastructure011/011 架构选型；requirement011/011 july-menu |
 | 012 | 禁用 | — |
-| 013 | 在用 | **api-contract 已落**（2026-09-14 自 `016.api-contract` 迁入；原 `013.project-info` 迁出至 015，号不释放、不复用）；infrastructure011/013 项目结构；requirement013 阶段目录保留号；requirement011/013 july-organization |
+| 013 | 在用 | api-contract；infrastructure011/013 项目结构；requirement011/013 july-organization |
 | 014 | 禁用（含 4） | — |
-| 015 | 在用 | **project-info 已落**（2026-09-14 自 `013.project-info` 迁入，号不释放、不复用）；原「编码标准」已迁出至 016；infrastructure011/015 配置体系；requirement011/015 july-user（requirement015 已撤销，号不回收） |
-| 016 | 在用 | **coding-standards 已落**（2026-09-14 自 `015.coding-standards` 迁入）；原「API 契约」已迁出至 013；infrastructure011/016 持久化体系；requirement011/016 july-role（自 022 迁入） |
-| 017 | 在用 | **顶层** `017.tech-debt-redlines.md`（技术债红线，2026-09-14 落盘）；**专题目录** infrastructure011/017 动态数据源（2026-09-15 修订：表驱动为运行时真源）；julyScheduler 主题对已迁移至 021 |
-| 018 | 在用 | infrastructure011/018 IAM 总设计；july-menu 主题已迁移至 011 |
-| 019 | 在用 | **顶层** `019.backend-api-review.md`（后端接口质量评审，2026-09-15 已落盘）；**专题目录** infrastructure011/019 存储中心；july-user 主题已迁移至 015 |
-| 020 / 021 | 已分配后撤销 | 原独立主题已并入 019（号不回收，永不复用） |
-| 021 | 在用 | julyScheduler 主题对（requirement011/013，自 017 迁移） |
-| 022 | 已迁移 | july-role 主题已迁移至 016（号不回收） |
-| 023 | 已分配后撤销 | 原角色用户独立主题已并入 022 / 019 |
-| 025 | 已分配后撤销 | 原角色权限独立主题已并入 022 |
-| 026 | 已迁移 | july-organization 主题已迁移至 013（号不回收） |
-| 027 / 028 | 已分配后撤销 | 原 requirement011 主题，内容移入 infrastructure011/017、019（号不回收） |
-| 029 | 在用 | july-config（requirement011/013，配置管理） |
-| 030 | 在用 | export（requirement011/013，平台导出功能） |
-| 031 | 在用 | **数据源管理（datasource 域）**（requirement011/013，2026-09-15 落盘；DDL `sql/july_datasource.sql`）。本期范围：`july_datasource` 表驱动 + CRUD + 测试连接（**已落码：编译 SUCCESS / 门禁 0 违规 / 9 端点**） |
-| 035 | 在用 | **数据字典**（requirement011/013，2026-09-15 **已编码**；DDL `sql/july_dictionary.sql`）。主子表 `july_dictionary` + `july_dictionary_item`，归属 `system011`；主表/子表都带 `sort_order`（BasePo011）；明细字段 code/label/sort/status/remark；程序读入口 `getByType`/`getLabel`/`isValidItem`（无 HTTP）；接 030 导出（`julyDictionary`）；**不加缓存**；10 端点（含 `/export`） |
-| 036 | 在用 | **AI 模型接入（新域 ai011）**（requirement011/013，2026-09-15 落盘并**已编码**；DDL `sql/july_ai_model_provider.sql`）。主子表 `july_ai_model_provider` + `july_ai_model_provider_api`，归属新顶层域 `ai011`；主表/子表都带 `sort_order`（BasePo011）；`api_key` 出参不回显（类型层剔除），明文入库、加密二期；程序读入口 `getByCode`/`getApiList`/`getDefaultApi`；提供商级 + 密钥级 testConnection；**12 端点**（含 `/export`，Swagger 组 `ai011`） |
+| 015 | 在用 | project-info；infrastructure011/015 配置体系；requirement011/015 july-user |
+| 016 | 在用 | coding-standards；infrastructure011/016 持久化体系；requirement011/016 july-role |
+| 017 | 在用 | 顶层 017.tech-debt-redlines；infrastructure011/017 动态数据源 |
+| 018 | 在用 | infrastructure011/018 IAM 总设计 |
+| 019 | 在用 | 顶层 019.backend-api-review；infrastructure011/019 存储中心 |
+| 020 | 在用 | infrastructure011/020 容器化部署 |
+| 021 | 在用 | infrastructure011/021 消息中心（平台架构能力 · 多渠道可插拔，提案） |
+| 022 | 在用 | requirement011/013 july-scheduler（定时任务） |
+| 023 | 在用 | requirement011/013 july-config（配置管理） |
+| 025 | 在用 | requirement011 平台导出（export） |
+| 026 | 在用 | requirement011/013 数据源管理（datasource 域 / july_datasource） |
+| 027 | 在用 | requirement011 数据字典（system011 / july_dictionary） |
+| 028 | 在用 | requirement011/013 AI 模型接入（ai011 / july_ai_model_provider） |
+| 029 | 在用 | requirement011/013 存储中心管理面（storagecenter / july_storage_provider + july_storage_provider_bucket） |
+| 030 | 在用 | requirement011/013 AI 模型调用（chat，ai011） |
 
-| 037 | 在用 | **存储中心管理面 + 在线编辑**（requirement011/013，2026-09-16 **已编码并 E2E**）。`july_storage` 表驱动多实例（`StorageResolver011` + `ObjectStorageFactory011`，适配器由 bean 改按实例配置造）+ 实例 CRUD/testConnection + 桶 CRUD + 对象 列表/分页/stat/上传/下载/删除/批删/预签名 + **在线文本编辑（readText/saveText + `EditableTextPolicy`，sql/markdown，≤1MB）** + yaml 播种（`StorageSeed011`）。端点前缀 `/klsjnh/storagecenter/julyStorage/v1`（实例+桶）· `/klsjnh/storagecenter/julyObject/v1`（对象）（2026-09-17 包名收敛 `storagecenter`、三控制器并为两模块，并对齐老 f016：对象分页带元数据、桶列表 `{bucketName,creationDate}`、`getBucket` `{bucketName,exists}`、`testConnection` 带 `bucketCount+basePath|endpoint`、实例 AK/SK 打码 + `secure` "1"/"0"）；AK/SK 出参打码 `******`。默认桶由适配器配置声明（`local011.default-bucket: backup011` → 落 `base-path/backup011`，`backup011` 读它，空则回退实例行） |
-
-
-| 041 | 在用 | **AI 模型调用（chat）**（requirement011/013，2026-09-17 **已实现并 E2E**）。`ai011` 域新增调用能力：传 `provider`（**id 或 code**）+ `api`（**id 或 code**，缺省默认启用密钥）+ `model`（缺省取 `provider.models` 首个）+ `messages` → 模型回复；OpenAI 兼容、非流式；出参不含 apiKey；调用审计。端点 `/klsjnh/ai011/julyAiChat/v1/chat`；供平台内部（**AI 自开发**）与 HTTP。示例：`longcat` |
-
-
-
-
-
+> 历史：`020 / 021`（并入 019）、`022 / 023 / 025 / 026 / 027 / 028`（旧主题/角色/组织等）为 **2026-09-14 前的历史占用**，号不回收；本表仅登记**现行**用途。
 
 **下一可用编号：053。**（044/046/048/049 含 4，跳过）
 

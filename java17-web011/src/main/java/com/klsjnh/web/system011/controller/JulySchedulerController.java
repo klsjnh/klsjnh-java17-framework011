@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -49,7 +50,7 @@ import java.util.List;
 /**
  * JulyScheduler HTTP adapter: scheduled task management endpoints. The
  * controller only receives and forwards requests — mapping lives in the
- * converter, orchestration in the use case.
+ * julySchedulerConverter, orchestration in the use case.
  */
 
 @Tag(name = "系统管理 - 定时任务")
@@ -60,22 +61,22 @@ public class JulySchedulerController {
     /**
      * JulyScheduler use case.
      */
-    private final JulySchedulerUseCase useCase;
+    private final JulySchedulerUseCase julySchedulerUseCase;
 
     /**
-     * Response converter.
+     * Response julySchedulerConverter.
      */
-    private final JulySchedulerConverter converter;
+    private final JulySchedulerConverter julySchedulerConverter;
 
     /**
      * Create the controller.
      *
-     * @param useCase   july scheduler use case
-     * @param converter response converter
+     * @param julySchedulerUseCase   july scheduler use case
+     * @param julySchedulerConverter response julySchedulerConverter
      */
-    public JulySchedulerController(JulySchedulerUseCase useCase, JulySchedulerConverter converter) {
-        this.useCase = useCase;
-        this.converter = converter;
+    public JulySchedulerController(JulySchedulerUseCase julySchedulerUseCase, JulySchedulerConverter julySchedulerConverter) {
+        this.julySchedulerUseCase = julySchedulerUseCase;
+        this.julySchedulerConverter = julySchedulerConverter;
     }
 
     /**
@@ -84,13 +85,13 @@ public class JulySchedulerController {
      * @param vo insert request
      * @return envelope with the new task id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyScheduler")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/insert")
     @Operation(summary = "新增定时任务（默认停止态）")
     public Response011<IdVo011> insert(@RequestBody JulySchedulerInsertVo011 vo) {
         String funcName = "insert";
 
-        return Response011.successId(funcName, useCase.insert(vo.getSchedulerCode(), vo.getSchedulerName(),
+        return Response011.successId(funcName, julySchedulerUseCase.insert(vo.getSchedulerCode(), vo.getSchedulerName(),
                 vo.getSchedulerHandler(), vo.getSchedulerCron()));
     }
 
@@ -101,13 +102,13 @@ public class JulySchedulerController {
      * @param vo update request
      * @return envelope with the updated task id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyScheduler")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/update")
     @Operation(summary = "修改定时任务（含启停状态，变更触发调度引擎联动）")
     public Response011<IdVo011> update(@RequestBody JulySchedulerUpdateVo011 vo) {
         String funcName = "update";
 
-        return Response011.successId(funcName, useCase.update(vo.getId(), vo.getSchedulerName(),
+        return Response011.successId(funcName, julySchedulerUseCase.update(vo.getId(), vo.getSchedulerName(),
                 vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getStatus()));
     }
 
@@ -118,13 +119,13 @@ public class JulySchedulerController {
      * @param idVo request with the task id
      * @return envelope with the deleted task id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyScheduler")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个，运行中任务先摘出调度引擎）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
+        return Response011.successId(funcName, julySchedulerUseCase.logicDelete(idVo.getId()));
     }
 
     /**
@@ -133,13 +134,13 @@ public class JulySchedulerController {
      * @param idsVo request with the task id list
      * @return per-id success/failure summary
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyScheduler")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量，运行中任务先摘出调度引擎）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
         String funcName = "logic delete batch";
 
-        return Response011.success(funcName, useCase.logicDeleteBatch(idsVo.getIds()));
+        return Response011.success(funcName, julySchedulerUseCase.logicDeleteBatch(idsVo.getIds()));
     }
 
     /**
@@ -153,7 +154,7 @@ public class JulySchedulerController {
     public Response011<JulySchedulerVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+        return Response011.success(funcName, julySchedulerConverter.toVo(julySchedulerUseCase.getById(id)));
     }
 
     /**
@@ -169,10 +170,10 @@ public class JulySchedulerController {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(query.getPageIndex(), query.getPageSize());
-        PageResult011<JulyScheduler> page = useCase.selectListByPage(pageQuery, query.getSchedulerCode(),
+        PageResult011<JulyScheduler> page = julySchedulerUseCase.selectListByPage(pageQuery, query.getSchedulerCode(),
                 query.getSchedulerName());
 
-        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+        return Response011.success(funcName, page.withRows(julySchedulerConverter.toVoList(page.rows())));
     }
 
     /**
@@ -181,13 +182,13 @@ public class JulySchedulerController {
      * @param idVo request with the task id
      * @return envelope with the started task id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyScheduler")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/start")
     @Operation(summary = "启动任务（注册调度引擎）")
     public Response011<IdVo011> start(@RequestBody IdVo011 idVo) {
         String funcName = "start";
 
-        return Response011.successId(funcName, useCase.start(idVo.getId()));
+        return Response011.successId(funcName, julySchedulerUseCase.start(idVo.getId()));
     }
 
     /**
@@ -196,13 +197,13 @@ public class JulySchedulerController {
      * @param idVo request with the task id
      * @return envelope with the stopped task id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyScheduler")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/stop")
     @Operation(summary = "停止任务（摘出调度引擎）")
     public Response011<IdVo011> stop(@RequestBody IdVo011 idVo) {
         String funcName = "stop";
 
-        return Response011.successId(funcName, useCase.stop(idVo.getId()));
+        return Response011.successId(funcName, julySchedulerUseCase.stop(idVo.getId()));
     }
 
     /**
@@ -216,6 +217,6 @@ public class JulySchedulerController {
     public Response011<IdVo011> runOnce(@RequestBody IdVo011 idVo) {
         String funcName = "run once";
 
-        return Response011.successId(funcName, useCase.runOnce(idVo.getId()));
+        return Response011.successId(funcName, julySchedulerUseCase.runOnce(idVo.getId()));
     }
 }

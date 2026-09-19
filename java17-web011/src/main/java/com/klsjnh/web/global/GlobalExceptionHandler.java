@@ -21,7 +21,7 @@ import com.klsjnh.common.enums.HttpCodeEnum011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.response.Response011;
 
-import com.klsjnh.domain.iam.RuntimeStatusPort;
+import com.klsjnh.domain.iam.auth.RuntimeStatusPort;
 
 import io.swagger.v3.oas.annotations.Hidden;
 

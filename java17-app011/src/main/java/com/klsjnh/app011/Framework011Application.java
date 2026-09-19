@@ -24,9 +24,9 @@ import org.mybatis.spring.annotation.MapperScan;
  */
 
 @SpringBootApplication(scanBasePackages = "com.klsjnh")
-@MapperScan({"com.klsjnh.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.system011.mapper",
-        "com.klsjnh.infrastructure.datasource.mapper", "com.klsjnh.infrastructure.ai011.mapper",
-        "com.klsjnh.infrastructure.storagecenter.mapper",
+@MapperScan({ "com.klsjnh.infrastructure.iam","com.klsjnh.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.system011",
+        "com.klsjnh.infrastructure.datasource", "com.klsjnh.infrastructure.ai011",
+        "com.klsjnh.infrastructure.storagecenter",
         "com.klsjnh.demo11.infrastructure.persistence.mapper"})
 public class Framework011Application {
 

@@ -22,9 +22,9 @@ import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.identity.OperatorContext011;
 import com.klsjnh.common.response.Response011;
 
-import com.klsjnh.domain.iam.AuthTokenPort;
-import com.klsjnh.domain.iam.AuthTokenPort.OperatorIdentity;
-import com.klsjnh.domain.iam.RuntimeStatusPort;
+import com.klsjnh.domain.iam.auth.AuthTokenPort;
+import com.klsjnh.domain.iam.auth.AuthTokenPort.OperatorIdentity;
+import com.klsjnh.domain.iam.auth.RuntimeStatusPort;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

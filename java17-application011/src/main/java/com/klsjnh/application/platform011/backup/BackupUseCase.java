@@ -24,11 +24,11 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.util.DateUtil011;
 
-import com.klsjnh.domain.iam.UserAuditPort;
+import com.klsjnh.domain.iam.user.UserAuditPort;
 import com.klsjnh.domain.platform011.export.ExportResult;
-import com.klsjnh.domain.storagecenter.ObjectStoragePort;
-import com.klsjnh.domain.storagecenter.StorageDefaultsPort;
-import com.klsjnh.domain.storagecenter.StorageResolverPort;
+import com.klsjnh.domain.storagecenter.object.ObjectStoragePort;
+import com.klsjnh.domain.storagecenter.object.StorageDefaultsPort;
+import com.klsjnh.domain.storagecenter.object.StorageResolverPort;
 import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import org.springframework.stereotype.Service;
@@ -50,7 +50,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * The target bucket is the active adapter's configured default
  * ({@code krt.storage-center.local011.default-bucket} /
  * {@code minio011.default-bucket}), falling back to the resolved instance's
- * own {@code july_storage.default_bucket}; no bucket name is hard-coded here.
+ * own default bucket (the {@code is_default} row of
+ * {@code july_storage_provider_bucket}); no bucket name is hard-coded here.
  * </p>
  */
 

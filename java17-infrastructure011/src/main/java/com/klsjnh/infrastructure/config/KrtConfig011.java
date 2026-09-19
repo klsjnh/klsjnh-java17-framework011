@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.klsjnh.common.enums.FrameworkStatus011;
 
-import com.klsjnh.domain.datasource.ConnectionInfo;
+import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;

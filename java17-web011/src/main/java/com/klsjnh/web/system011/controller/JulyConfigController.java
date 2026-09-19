@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.vo.IdVo011;
@@ -61,20 +62,16 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/klsjnh/system011/julyConfig/v1")
 public class JulyConfigController {
 
-    /**
-     * Object code this controller exports and backs up under.
-     */
-    private static final String OBJECT_CODE = "julyConfig";
 
     /**
      * JulyConfig use case.
      */
-    private final JulyConfigUseCase useCase;
+    private final JulyConfigUseCase julyConfigUseCase;
 
     /**
-     * Response converter.
+     * Response julyConfigConverter.
      */
-    private final JulyConfigConverter converter;
+    private final JulyConfigConverter julyConfigConverter;
 
     /**
      * Export use case (platform capability).
@@ -89,15 +86,15 @@ public class JulyConfigController {
     /**
      * Create the controller.
      *
-     * @param useCase       july config use case
-     * @param converter     response converter
+     * @param julyConfigUseCase       july config use case
+     * @param julyConfigConverter     response julyConfigConverter
      * @param exportUseCase export use case
      * @param backupUseCase backup use case
      */
-    public JulyConfigController(JulyConfigUseCase useCase, JulyConfigConverter converter,
+    public JulyConfigController(JulyConfigUseCase julyConfigUseCase, JulyConfigConverter julyConfigConverter,
             ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
-        this.useCase = useCase;
-        this.converter = converter;
+        this.julyConfigUseCase = julyConfigUseCase;
+        this.julyConfigConverter = julyConfigConverter;
         this.exportUseCase = exportUseCase;
         this.backupUseCase = backupUseCase;
     }
@@ -108,13 +105,13 @@ public class JulyConfigController {
      * @param vo insert request
      * @return envelope with the new config id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyConfig")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/insert")
     @Operation(summary = "新增配置（code 查重）")
     public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo) {
         String funcName = "insert";
 
-        return Response011.successId(funcName, useCase.insert(vo.getCode(), vo.getData()));
+        return Response011.successId(funcName, julyConfigUseCase.insert(vo.getCode(), vo.getData()));
     }
 
     /**
@@ -123,13 +120,13 @@ public class JulyConfigController {
      * @param vo update request
      * @return envelope with the config id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyConfig")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/update")
     @Operation(summary = "修改配置值（code 不可变）")
     public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo) {
         String funcName = "update";
 
-        useCase.update(vo.getId(), vo.getData());
+        julyConfigUseCase.update(vo.getId(), vo.getData());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -140,13 +137,13 @@ public class JulyConfigController {
      * @param idVo request with the config id
      * @return envelope with the config id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyConfig")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        useCase.logicDelete(idVo.getId());
+        julyConfigUseCase.logicDelete(idVo.getId());
 
         return Response011.successId(funcName, idVo.getId());
     }
@@ -162,7 +159,7 @@ public class JulyConfigController {
     public Response011<JulyConfigVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+        return Response011.success(funcName, julyConfigConverter.toVo(julyConfigUseCase.getById(id)));
     }
 
     /**
@@ -177,9 +174,9 @@ public class JulyConfigController {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyConfig> page = useCase.selectListByPage(pageQuery, vo.getKeyword());
+        PageResult011<JulyConfig> page = julyConfigUseCase.selectListByPage(pageQuery, vo.getKeyword());
 
-        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+        return Response011.success(funcName, page.withRows(julyConfigConverter.toVoList(page.rows())));
     }
 
     /**
@@ -196,7 +193,7 @@ public class JulyConfigController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+        ExportResult result = exportUseCase.export(AuditObjectCodes011.JULY_CONFIG, operator);
 
         return Response011.success(funcName, result);
     }
@@ -214,7 +211,7 @@ public class JulyConfigController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        String key = backupUseCase.backup(OBJECT_CODE, operator);
+        String key = backupUseCase.backup(AuditObjectCodes011.JULY_CONFIG, operator);
 
         return Response011.success(funcName, key);
     }

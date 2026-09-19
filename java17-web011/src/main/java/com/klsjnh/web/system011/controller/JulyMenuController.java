@@ -15,6 +15,7 @@ package com.klsjnh.web.system011.controller;
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.exception.BusinessException;
@@ -65,20 +66,16 @@ import java.util.List;
 @RequestMapping("/klsjnh/system011/julyMenu/v1")
 public class JulyMenuController {
 
-    /**
-     * Object code this controller exports and backs up under.
-     */
-    private static final String OBJECT_CODE = "julyMenu";
 
     /**
      * JulyMenu use case.
      */
-    private final JulyMenuUseCase useCase;
+    private final JulyMenuUseCase julyMenuUseCase;
 
     /**
-     * Response converter.
+     * Response julyMenuConverter.
      */
-    private final JulyMenuConverter converter;
+    private final JulyMenuConverter julyMenuConverter;
 
     /**
      * Export use case (platform capability).
@@ -93,15 +90,15 @@ public class JulyMenuController {
     /**
      * Create the controller.
      *
-     * @param useCase       july menu use case
-     * @param converter     response converter
+     * @param julyMenuUseCase       july menu use case
+     * @param julyMenuConverter     response julyMenuConverter
      * @param exportUseCase export use case
      * @param backupUseCase backup use case
      */
-    public JulyMenuController(JulyMenuUseCase useCase, JulyMenuConverter converter,
+    public JulyMenuController(JulyMenuUseCase julyMenuUseCase, JulyMenuConverter julyMenuConverter,
             ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
-        this.useCase = useCase;
-        this.converter = converter;
+        this.julyMenuUseCase = julyMenuUseCase;
+        this.julyMenuConverter = julyMenuConverter;
         this.exportUseCase = exportUseCase;
         this.backupUseCase = backupUseCase;
     }
@@ -112,13 +109,13 @@ public class JulyMenuController {
      * @param vo insert request
      * @return envelope with the new menu id
      */
-    @AuditLog(type = AuditType011.INSERT, objectCode = "julyMenu")
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/insert")
     @Operation(summary = "新增菜单")
     public Response011<IdVo011> insert(@RequestBody JulyMenuInsertVo011 vo) {
         String funcName = "insert";
 
-        return Response011.successId(funcName, useCase.insert(vo.getMenuCode(), vo.getMenuName(), vo.getMenuType(),
+        return Response011.successId(funcName, julyMenuUseCase.insert(vo.getMenuCode(), vo.getMenuName(), vo.getMenuType(),
                 vo.getMenuIcon(), vo.getMenuRoute(), vo.getPermissionCode(), vo.getComponent(), vo.getParentId(),
                 vo.getSortOrder()));
     }
@@ -129,13 +126,13 @@ public class JulyMenuController {
      * @param vo update request
      * @return envelope with the menu id
      */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = "julyMenu")
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/update")
     @Operation(summary = "修改菜单（编码不可改，可移动上级）")
     public Response011<IdVo011> update(@RequestBody JulyMenuUpdateVo011 vo) {
         String funcName = "update";
 
-        useCase.update(vo.getId(), vo.getMenuName(), vo.getMenuType(), vo.getMenuIcon(), vo.getMenuRoute(),
+        julyMenuUseCase.update(vo.getId(), vo.getMenuName(), vo.getMenuType(), vo.getMenuIcon(), vo.getMenuRoute(),
                 vo.getPermissionCode(), vo.getComponent(), vo.getParentId(), vo.getSortOrder());
 
         return Response011.successId(funcName, vo.getId());
@@ -147,13 +144,13 @@ public class JulyMenuController {
      * @param idVo request with the menu id
      * @return envelope with the deleted menu id
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyMenu")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个，有子菜单拒绝）")
     public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
-        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
+        return Response011.successId(funcName, julyMenuUseCase.logicDelete(idVo.getId()));
     }
 
     /**
@@ -162,13 +159,13 @@ public class JulyMenuController {
      * @param idsVo request with the menu id list
      * @return per-id success/failure summary
      */
-    @AuditLog(type = AuditType011.DELETE, objectCode = "julyMenu")
+    @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量，有子菜单拒绝的逐条回报）")
     public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
         String funcName = "logic delete batch";
 
-        return Response011.success(funcName, useCase.logicDelete(idsVo.getIds()));
+        return Response011.success(funcName, julyMenuUseCase.logicDeleteBatch(idsVo.getIds()));
     }
 
     /**
@@ -182,7 +179,7 @@ public class JulyMenuController {
     public Response011<JulyMenuVo011> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
 
-        return Response011.success(funcName, converter.toVo(useCase.getById(id)));
+        return Response011.success(funcName, julyMenuConverter.toVo(julyMenuUseCase.getById(id)));
     }
 
     /**
@@ -197,9 +194,9 @@ public class JulyMenuController {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(query.getPageIndex(), query.getPageSize());
-        PageResult011<JulyMenu> page = useCase.selectListByPage(pageQuery, query.getKeyword());
+        PageResult011<JulyMenu> page = julyMenuUseCase.selectListByPage(pageQuery, query.getKeyword());
 
-        return Response011.success(funcName, page.withRows(converter.toVoList(page.rows())));
+        return Response011.success(funcName, page.withRows(julyMenuConverter.toVoList(page.rows())));
     }
 
     /**
@@ -212,7 +209,7 @@ public class JulyMenuController {
     public Response011<List<JulyMenuVo011>> getTree() {
         String funcName = "get tree";
 
-        return Response011.success(funcName, converter.toVoList(useCase.getTree()));
+        return Response011.success(funcName, julyMenuConverter.toVoList(julyMenuUseCase.getTree()));
     }
 
     /**
@@ -233,7 +230,7 @@ public class JulyMenuController {
             throw BusinessException.unauthorized(funcName + ": not authenticated");
         }
 
-        return Response011.success(funcName, converter.toVoList(useCase.getUserMenuTree(operatorId)));
+        return Response011.success(funcName, julyMenuConverter.toVoList(julyMenuUseCase.getUserMenuTree(operatorId)));
     }
 
     /**
@@ -250,7 +247,7 @@ public class JulyMenuController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        ExportResult result = exportUseCase.export(OBJECT_CODE, operator);
+        ExportResult result = exportUseCase.export(AuditObjectCodes011.JULY_MENU, operator);
 
         return Response011.success(funcName, result);
     }
@@ -268,7 +265,7 @@ public class JulyMenuController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        String key = backupUseCase.backup(OBJECT_CODE, operator);
+        String key = backupUseCase.backup(AuditObjectCodes011.JULY_MENU, operator);
 
         return Response011.success(funcName, key);
     }

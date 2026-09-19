@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import com.klsjnh.common.enums.Status011;
 
-import com.klsjnh.infrastructure.system011.entity.JulySchedulerPo;
-import com.klsjnh.infrastructure.system011.mapper.JulySchedulerMapper;
+import com.klsjnh.infrastructure.system011.scheduler.entity.JulySchedulerPo;
+import com.klsjnh.infrastructure.system011.scheduler.mapper.JulySchedulerMapper;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
