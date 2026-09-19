@@ -148,6 +148,21 @@ public class SpringDocConfig011 {
     }
 
     /**
+     * Message center group (channel / template config plus the send records).
+     *
+     * @return grouped open api
+     */
+    @Bean
+    public GroupedOpenApi messagecenterGroupedOpenApi() {
+        return GroupedOpenApi.builder()
+                .group("messagecenter")
+                .displayName("消息中心011")
+                .pathsToMatch("/klsjnh/messagecenter/**")
+                .addOpenApiMethodFilter(SpringDocConfig011::isDocumentedApiMethod)
+                .build();
+    }
+
+    /**
      * Conditional app group for third-party business systems: declare
      * {@code krt.springdoc.app.group-name} (+ optional display-name and
      * paths-to-match) in their yaml and their controllers get their own doc

@@ -1,0 +1,238 @@
+package com.klsjnh.application.messagecenter.template;
+
+/*                JulyMessageTemplateUseCase class
+ *
+ *      @author     xiangrkrs@163.com
+ *      @version    ver 0.0.1
+ *      @createdate 2026.09.19
+ *      @modifydate
+ *
+ *===========================================
+ *          modify history
+ *
+ *      2026.09.19  july message template use case class
+ *
+ */
+
+import com.klsjnh.common.enums.Status011;
+import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.page.PageQuery011;
+import com.klsjnh.common.page.PageResult011;
+import com.klsjnh.common.vo.BatchDeleteResultVo011;
+
+import com.klsjnh.domain.messagecenter.template.JulyMessageTemplate;
+import com.klsjnh.domain.messagecenter.template.JulyMessageTemplateQuerySpec;
+import com.klsjnh.domain.messagecenter.template.JulyMessageTemplateRepository;
+import com.klsjnh.domain.shared.AuditInfo;
+import com.klsjnh.domain.shared.EntityId;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * JulyMessageTemplate use cases: message template CRUD.
+ */
+
+@Service
+public class JulyMessageTemplateUseCase {
+
+    /**
+     * Template repository.
+     */
+    private final JulyMessageTemplateRepository repository;
+
+    /**
+     * Create the use case.
+     *
+     * @param repository template repository
+     */
+    public JulyMessageTemplateUseCase(JulyMessageTemplateRepository repository) {
+        this.repository = repository;
+    }
+
+    /**
+     * Insert a new template.
+     *
+     * @param templateCode template code, unique, immutable
+     * @param sortOrder    manual sort order, null falls back to the default
+     * @param templateName template display name
+     * @param channelCode  channel code
+     * @param title        title, optional
+     * @param content      content body
+     * @param remark       remark, optional
+     * @return new template id
+     */
+    @Transactional
+    public String insert(String templateCode, Integer sortOrder, String templateName, String channelCode, String title,
+            String content, String remark) {
+        if (repository.findByCode(templateCode) != null) {
+            throw BusinessException.badRequest("template code already exists: " + templateCode);
+        }
+
+        JulyMessageTemplate template = newTemplate(templateCode, sortOrder, templateName, channelCode, title, content,
+                remark);
+        repository.insert(template);
+
+        return template.id().value();
+    }
+
+    /**
+     * Update a template (templateCode is immutable).
+     *
+     * @param id           template id
+     * @param templateName template display name
+     * @param channelCode  channel code
+     * @param title        title
+     * @param content      content body
+     * @param sortOrder    manual sort order, null keeps the stored one
+     * @param status       row status, null keeps the stored one
+     * @param remark       remark
+     * @return template id
+     */
+    @Transactional
+    public String update(String id, String templateName, String channelCode, String title, String content,
+            Integer sortOrder, String status, String remark) {
+        JulyMessageTemplate template = require(id);
+        requireStatus(status);
+
+        try {
+            template.update(templateName, channelCode, title, content, sortOrder, status, remark);
+        } catch (IllegalArgumentException ex) {
+            throw BusinessException.badRequest(ex.getMessage());
+        }
+
+        repository.update(template);
+
+        return template.id().value();
+    }
+
+    /**
+     * Logic delete a template.
+     *
+     * @param id template id
+     * @return deleted template id
+     */
+    @Transactional
+    public String logicDelete(String id) {
+        require(id);
+
+        if (!repository.logicDeleteById(id)) {
+            throw BusinessException.recordNotFound(id);
+        }
+
+        return id;
+    }
+
+    /**
+     * Batch logic delete, all-or-nothing: a missing id fails the whole batch.
+     *
+     * @param ids template ids
+     * @return batch delete summary
+     */
+    @Transactional
+    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+        List<String> normalized = normalize(ids);
+
+        if (normalized.isEmpty()) {
+            throw BusinessException.badRequest("batch logic delete: ids is required");
+        }
+
+        repository.logicDeleteByIds(normalized);
+
+        BatchDeleteResultVo011 result = new BatchDeleteResultVo011();
+        result.setTotal(normalized.size());
+        result.setSuccess(normalized.size());
+        result.setFailed(0);
+
+        return result;
+    }
+
+    /**
+     * Find a template by primary key.
+     *
+     * @param id template id
+     * @return aggregate
+     */
+    public JulyMessageTemplate getById(String id) {
+        return require(id);
+    }
+
+    /**
+     * Page query on the management view.
+     *
+     * @param pageQuery page query, null falls back to page 1 / size 10
+     * @param spec      query condition, null means no filter
+     * @return page result
+     */
+    public PageResult011<JulyMessageTemplate> selectListByPage(PageQuery011 pageQuery,
+            JulyMessageTemplateQuerySpec spec) {
+        PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
+        JulyMessageTemplateQuerySpec condition = spec == null ? new JulyMessageTemplateQuerySpec(null, null, null) : spec;
+        List<JulyMessageTemplate> rows = repository.findPage(query.offset(), query.pageSize(), condition);
+        long total = repository.count(condition);
+
+        return PageResult011.of(query, total, rows);
+    }
+
+    /**
+     * Build a new aggregate, translating domain validation failures into 400.
+     *
+     * @param templateCode template code
+     * @param sortOrder    manual sort order
+     * @param templateName template display name
+     * @param channelCode  channel code
+     * @param title        title
+     * @param content      content body
+     * @param remark       remark
+     * @return new aggregate
+     */
+    private JulyMessageTemplate newTemplate(String templateCode, Integer sortOrder, String templateName,
+            String channelCode, String title, String content, String remark) {
+        try {
+            return JulyMessageTemplate.create(EntityId.generate(), templateCode, sortOrder, templateName, channelCode,
+                    title, content, remark, AuditInfo.empty());
+        } catch (IllegalArgumentException ex) {
+            throw BusinessException.badRequest(ex.getMessage());
+        }
+    }
+
+    /**
+     * Require an existing template.
+     *
+     * @param id template id
+     * @return aggregate
+     */
+    private JulyMessageTemplate require(String id) {
+        JulyMessageTemplate template = repository.findById(id);
+
+        if (template == null) {
+            throw BusinessException.recordNotFound(id);
+        }
+
+        return template;
+    }
+
+    /**
+     * Reject an unknown status when one is supplied.
+     *
+     * @param status raw status, nullable
+     */
+    private void requireStatus(String status) {
+        if (status != null && !status.isBlank() && Status011.of(status) == null) {
+            throw BusinessException.badRequest("unknown status: " + status);
+        }
+    }
+
+    /**
+     * Normalize a batch id list.
+     *
+     * @param ids raw ids
+     * @return normalized ids, never null
+     */
+    private List<String> normalize(List<String> ids) {
+        return ids == null ? List.of()
+                : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
+    }
+}

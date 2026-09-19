@@ -60,6 +60,15 @@ public final class AuditObjectCodes011 {
     /** july_user. */
     public static final String JULY_USER = "julyUser";
 
+    /** july_message. */
+    public static final String JULY_MESSAGE = "julyMessage";
+
+    /** july_message_channel. */
+    public static final String JULY_MESSAGE_CHANNEL = "julyMessageChannel";
+
+    /** july_message_template. */
+    public static final String JULY_MESSAGE_TEMPLATE = "julyMessageTemplate";
+
     /**
      * Constant holder, no instances.
      */
