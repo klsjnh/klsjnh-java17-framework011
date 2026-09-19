@@ -15,6 +15,8 @@ package com.klsjnh.infrastructure.messagecenter.channel;
  */
 
 import com.klsjnh.common.constant.MessageProviderTypes011;
+import com.klsjnh.common.util.HttpResponse011;
+import com.klsjnh.common.util.HttpUtil011;
 import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.domain.messagecenter.channel.MessageChannelPort;
@@ -22,13 +24,6 @@ import com.klsjnh.domain.messagecenter.channel.MessageCommand;
 import com.klsjnh.domain.messagecenter.channel.MessageResult;
 
 import org.springframework.stereotype.Component;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 
 /**
  * Built-in generic webhook channel: HTTP POST a small JSON body to the channel
@@ -38,23 +33,6 @@ import java.time.Duration;
 
 @Component
 public class WebhookMessageChannel implements MessageChannelPort {
-
-    /**
-     * Connect timeout.
-     */
-    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
-
-    /**
-     * Request (read) timeout.
-     */
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
-
-    /**
-     * Shared http client.
-     */
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(CONNECT_TIMEOUT)
-            .build();
 
     /**
      * Channel code served by this port.
@@ -81,21 +59,13 @@ public class WebhookMessageChannel implements MessageChannelPort {
         }
 
         try {
-            String body = toJson(command);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint.trim()))
-                    .timeout(REQUEST_TIMEOUT)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
+            HttpResponse011 response = HttpUtil011.postJson(endpoint.trim(), toJson(command));
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            int status = response.statusCode();
-
-            if (status >= 200 && status < 300) {
-                return MessageResult.success("HTTP " + status);
+            if (response.isSuccess()) {
+                return MessageResult.success("HTTP " + response.status());
             }
 
-            return MessageResult.failure("webhook returned HTTP " + status);
+            return MessageResult.failure("webhook returned HTTP " + response.status());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
 

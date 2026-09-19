@@ -69,6 +69,17 @@ public class JulyMessage {
     private String providerType;
 
     /**
+     * Channel-defined message shape (open string), optional.
+     */
+    private String messageType;
+
+    /**
+     * Channel-defined message payload as JSON (shape-specific keys such as
+     * image_key / file_key / card json), optional.
+     */
+    private String payload;
+
+    /**
      * Receiver, optional.
      */
     private String msgTo;
@@ -125,6 +136,8 @@ public class JulyMessage {
      * @param sortOrder    manual sort order, null falls back to the default
      * @param channelCode  channel code
      * @param providerType provider type
+     * @param messageType  channel-defined message shape, optional
+     * @param payload      channel-defined payload JSON, optional
      * @param msgTo        receiver, optional
      * @param templateCode template code, optional
      * @param title        title, optional
@@ -136,15 +149,17 @@ public class JulyMessage {
      * @param remark       remark, optional
      * @param audit        audit info
      */
-    public JulyMessage(EntityId id, Integer sortOrder, String channelCode, String providerType, String msgTo,
-            String templateCode, String title, String content, String sendStatus, int retryCount, String error,
-            String status, String remark, AuditInfo audit) {
+    public JulyMessage(EntityId id, Integer sortOrder, String channelCode, String providerType, String messageType,
+            String payload, String msgTo, String templateCode, String title, String content, String sendStatus,
+            int retryCount, String error, String status, String remark, AuditInfo audit) {
         validate(channelCode, providerType, msgTo, remark);
 
         this.id = id;
         this.sortOrder = sortOrder == null ? DEFAULT_SORT_ORDER : sortOrder;
         this.channelCode = channelCode;
         this.providerType = providerType;
+        this.messageType = messageType;
+        this.payload = payload;
         this.msgTo = msgTo;
         this.templateCode = templateCode;
         this.title = title;
@@ -164,6 +179,8 @@ public class JulyMessage {
      * @param sortOrder    manual sort order, null falls back to the default
      * @param channelCode  channel code, max 60
      * @param providerType provider type, max 60
+     * @param messageType  channel-defined message shape, optional, max 60
+     * @param payload      channel-defined payload JSON, optional
      * @param msgTo        receiver, optional, max 300
      * @param templateCode template code, optional
      * @param title        title, optional, max 300
@@ -173,9 +190,10 @@ public class JulyMessage {
      * @return new aggregate
      */
     public static JulyMessage create(EntityId id, Integer sortOrder, String channelCode, String providerType,
-            String msgTo, String templateCode, String title, String content, String remark, AuditInfo audit) {
-        return new JulyMessage(id, sortOrder, channelCode, providerType, msgTo, templateCode, title, content,
-                STATUS_PENDING, 0, null, Status011.ENABLED.getCode(), remark, audit);
+            String messageType, String payload, String msgTo, String templateCode, String title, String content,
+            String remark, AuditInfo audit) {
+        return new JulyMessage(id, sortOrder, channelCode, providerType, messageType, payload, msgTo, templateCode,
+                title, content, STATUS_PENDING, 0, null, Status011.ENABLED.getCode(), remark, audit);
     }
 
     /**
@@ -249,6 +267,24 @@ public class JulyMessage {
      */
     public String providerType() {
         return providerType;
+    }
+
+    /**
+     * Get the channel-defined message shape.
+     *
+     * @return message type or null
+     */
+    public String messageType() {
+        return messageType;
+    }
+
+    /**
+     * Get the channel-defined payload JSON.
+     *
+     * @return payload or null
+     */
+    public String payload() {
+        return payload;
     }
 
     /**

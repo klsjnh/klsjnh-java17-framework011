@@ -24,13 +24,18 @@ import java.util.Map;
  *
  * @param channelCode  channel code (the SPI provider type)
  * @param to           receiver (user id / phone / webhook target), nullable
+ * @param messageType  channel-defined message SHAPE (open string, e.g. WeCom
+ *                     {@code text} / {@code textcard}); the platform passes it
+ *                     through uninterpreted, nullable
  * @param config       whole channel config as key-value pairs, nullable
+ * @param payload      channel-defined payload (shape-specific keys such as
+ *                     image_key / file_key / url / btntxt), nullable
  * @param templateCode template code, nullable for a raw text send
  * @param params       template variables, nullable
  * @param title        rendered title, nullable
  * @param content      rendered content, nullable
  */
 
-public record MessageCommand(String channelCode, String to, Map<String, String> config, String templateCode,
-        Map<String, String> params, String title, String content) {
+public record MessageCommand(String channelCode, String to, String messageType, Map<String, String> config,
+        Map<String, String> payload, String templateCode, Map<String, String> params, String title, String content) {
 }

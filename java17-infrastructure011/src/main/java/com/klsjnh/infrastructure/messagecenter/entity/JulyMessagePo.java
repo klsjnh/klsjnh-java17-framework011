@@ -37,6 +37,12 @@ public class JulyMessagePo extends BasePo011 {
     /** Provider type actually used. */
     private String providerType;
 
+    /** Channel-defined message shape, optional. */
+    private String messageType;
+
+    /** Channel-defined payload JSON, optional. */
+    private String payload;
+
     /** Receiver, optional. */
     private String msgTo;
 

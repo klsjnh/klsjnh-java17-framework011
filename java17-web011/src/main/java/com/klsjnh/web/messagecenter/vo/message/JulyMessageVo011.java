@@ -39,6 +39,14 @@ public class JulyMessageVo011 {
     @Schema(description = "提供商类型")
     private String providerType;
 
+    /** Channel-defined message shape. */
+    @Schema(description = "报文形态（渠道自定义）")
+    private String messageType;
+
+    /** Channel-defined payload JSON. */
+    @Schema(description = "形态载荷 JSON（渠道自定义）")
+    private String payload;
+
     /** Receiver. */
     @Schema(description = "接收方")
     private String msgTo;

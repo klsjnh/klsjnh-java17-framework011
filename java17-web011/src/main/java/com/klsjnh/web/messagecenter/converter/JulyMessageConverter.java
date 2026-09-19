@@ -44,6 +44,8 @@ public class JulyMessageConverter {
         vo.setId(message.id().value());
         vo.setChannelCode(message.channelCode());
         vo.setProviderType(message.providerType());
+        vo.setMessageType(message.messageType());
+        vo.setPayload(message.payload());
         vo.setMsgTo(message.msgTo());
         vo.setTemplateCode(message.templateCode());
         vo.setTitle(message.title());

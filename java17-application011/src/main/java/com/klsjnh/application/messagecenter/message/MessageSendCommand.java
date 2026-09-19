@@ -17,11 +17,15 @@ package com.klsjnh.application.messagecenter.message;
 import java.util.Map;
 
 /**
- * Application input of a send request: a channel, a receiver, an optional
- * template plus variables, or a raw title / content.
+ * Application input of a send request: a channel, a receiver, a channel-defined
+ * message shape, an optional template plus variables, or a raw title / content.
  *
  * @param channelCode  channel code
  * @param to           receiver, optional
+ * @param messageType  channel-defined message SHAPE (open string, passed through
+ *                     uninterpreted; e.g. WeCom text / textcard), nullable
+ * @param payload      channel-defined payload (shape-specific keys such as
+ *                     image_key / file_key / url / btntxt), nullable
  * @param templateCode template code, optional
  * @param params       template variables, nullable
  * @param title        raw title, optional
@@ -29,6 +33,6 @@ import java.util.Map;
  * @param remark       remark, optional
  */
 
-public record MessageSendCommand(String channelCode, String to, String templateCode, Map<String, String> params,
-        String title, String content, String remark) {
+public record MessageSendCommand(String channelCode, String to, String messageType, Map<String, String> payload,
+        String templateCode, Map<String, String> params, String title, String content, String remark) {
 }

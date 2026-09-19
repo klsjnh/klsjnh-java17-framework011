@@ -200,6 +200,8 @@ public class JulyMessageRepositoryImpl extends BaseRepository<JulyMessagePo, Jul
         po.setSortOrder(message.sortOrder());
         po.setChannelCode(message.channelCode());
         po.setProviderType(message.providerType());
+        po.setMessageType(message.messageType());
+        po.setPayload(message.payload());
         po.setMsgTo(message.msgTo());
         po.setTemplateCode(message.templateCode());
         po.setTitle(message.title());
@@ -223,8 +225,8 @@ public class JulyMessageRepositoryImpl extends BaseRepository<JulyMessagePo, Jul
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
         return new JulyMessage(EntityId.of(po.getId()), po.getSortOrder(), po.getChannelCode(), po.getProviderType(),
-                po.getMsgTo(), po.getTemplateCode(), po.getTitle(), po.getContent(), po.getSendStatus(),
-                po.getRetryCount() == null ? 0 : po.getRetryCount(), po.getError(), po.getStatus(), po.getRemark(),
-                audit);
+                po.getMessageType(), po.getPayload(), po.getMsgTo(), po.getTemplateCode(), po.getTitle(),
+                po.getContent(), po.getSendStatus(), po.getRetryCount() == null ? 0 : po.getRetryCount(),
+                po.getError(), po.getStatus(), po.getRemark(), audit);
     }
 }

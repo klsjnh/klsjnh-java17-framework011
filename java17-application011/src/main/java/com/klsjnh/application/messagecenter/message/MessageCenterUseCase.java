@@ -170,7 +170,8 @@ public class MessageCenterUseCase {
         }
 
         MessageSendCommand command = new MessageSendCommand(message.channelCode(), message.msgTo(),
-                message.templateCode(), null, message.title(), message.content(), message.remark());
+                message.messageType(), parseConfig(message.payload()), message.templateCode(), null, message.title(),
+                message.content(), message.remark());
 
         message.countRetry();
         MessageResult result = dispatch(channel, command, message.title(), message.content());
@@ -242,8 +243,9 @@ public class MessageCenterUseCase {
             throw BusinessException.badRequest("no channel port for provider type: " + channel.providerType());
         }
 
-        MessageCommand outbound = new MessageCommand(channel.providerType(), command.to(),
-                parseConfig(channel.config()), command.templateCode(), command.params(), title, content);
+        MessageCommand outbound = new MessageCommand(channel.providerType(), command.to(), command.messageType(),
+                parseConfig(channel.config()), command.payload(), command.templateCode(), command.params(), title,
+                content);
 
         try {
             MessageResult result = port.send(outbound);
@@ -266,7 +268,8 @@ public class MessageCenterUseCase {
     private JulyMessage newMessage(JulyMessageChannel channel, MessageSendCommand command, String title, String content) {
         try {
             return JulyMessage.create(EntityId.generate(), null, channel.channelCode(), channel.providerType(),
-                    command.to(), command.templateCode(), title, content, command.remark(), AuditInfo.empty());
+                    command.messageType(), toJson(command.payload()), command.to(), command.templateCode(), title,
+                    content, command.remark(), AuditInfo.empty());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
         }
@@ -321,6 +324,25 @@ public class MessageCenterUseCase {
             return result;
         } catch (Exception ex) {
             return Map.of();
+        }
+    }
+
+    /**
+     * Serialize a payload map to JSON for persistence; blank or empty yields
+     * null so the column stays empty.
+     *
+     * @param payload payload map, nullable
+     * @return JSON string or null
+     */
+    private String toJson(Map<String, String> payload) {
+        if (payload == null || payload.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (Exception ex) {
+            return null;
         }
     }
 }

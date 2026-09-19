@@ -14,41 +14,23 @@ package com.klsjnh.infrastructure.ai011.modelprovider.probe;
  *
  */
 
+import com.klsjnh.common.util.HttpResponse011;
+import com.klsjnh.common.util.HttpUtil011;
+
 import com.klsjnh.domain.ai011.modelprovider.AiModelProbePort;
 
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import java.util.Map;
 
 /**
- * Connectivity probe over the JDK HTTP client: GET {@code {baseUrl}/models}
+ * Connectivity probe over the shared JDK HTTP helper: GET {@code {baseUrl}/models}
  * with {@code Authorization: Bearer <apiKey>}. Only the status line is read;
  * the key never appears in any message.
  */
 
 @Component
 public class AiModelProbe011 implements AiModelProbePort {
-
-    /**
-     * Connect timeout.
-     */
-    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
-
-    /**
-     * Request (read) timeout.
-     */
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
-
-    /**
-     * Shared http client.
-     */
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(CONNECT_TIMEOUT)
-            .build();
 
     /**
      * Probe an endpoint with the given api key.
@@ -62,16 +44,11 @@ public class AiModelProbe011 implements AiModelProbePort {
         String url = normalize(baseUrl) + "/models";
 
         try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                    .timeout(REQUEST_TIMEOUT)
-                    .header("Authorization", "Bearer " + (apiKey == null ? "" : apiKey))
-                    .GET()
-                    .build();
+            HttpResponse011 response = HttpUtil011.get(url,
+                    Map.of("Authorization", "Bearer " + (apiKey == null ? "" : apiKey)));
+            int status = response.status();
 
-            HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-            int status = response.statusCode();
-
-            return new ProbeResult(status >= 200 && status < 300, "HTTP " + status, status);
+            return new ProbeResult(response.isSuccess(), "HTTP " + status, status);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
 

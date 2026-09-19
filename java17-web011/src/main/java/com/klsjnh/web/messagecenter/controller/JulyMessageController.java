@@ -86,8 +86,8 @@ public class JulyMessageController {
     public Response011<JulyMessageSendResultVo011> send(@RequestBody JulyMessageSendVo011 vo) {
         String funcName = "send";
 
-        MessageSendCommand command = new MessageSendCommand(vo.getChannelCode(), vo.getTo(), vo.getTemplateCode(),
-                vo.getParams(), vo.getTitle(), vo.getContent(), vo.getRemark());
+        MessageSendCommand command = new MessageSendCommand(vo.getChannelCode(), vo.getTo(), vo.getMessageType(),
+                vo.getPayload(), vo.getTemplateCode(), vo.getParams(), vo.getTitle(), vo.getContent(), vo.getRemark());
 
         return Response011.success(funcName, julyMessageConverter.toSendResultVo(messageCenterUseCase.send(command)));
     }

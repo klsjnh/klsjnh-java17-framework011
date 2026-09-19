@@ -13,7 +13,8 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | MyBatis-Plus | 3.5.9（spring-boot3-starter） |
 | 数据库 | MySQL 8 / Oracle（ojdbc8）/ SQL Server（mssql-jdbc）· Druid 1.2.23 连接池 |
 | 调度 | Quartz（spring-boot-starter-quartz，内存模式） |
-| 对象存储 | MinIO SDK 8.5.7（local011 / minio011 适配器） |
+| 对象存储 | MinIO SDK 8.5.7（local011 / minio011 / s3011 适配器，provider 注册表内置） |
+| 消息中心 | 内置 `inapp` / `webhook` 渠道 + `MessageChannelPort` SPI（厂商渠道由使用者插件提供） |
 | 鉴权 | JJWT 0.12.6 |
 | AOP | spring-boot-starter-aop（controller IUD 审计） |
 | JSON | Jackson（导出） |
@@ -41,11 +42,11 @@ web ──► application ──► domain ◄── infrastructure
 
 | 模块 | 层 | 内容 |
 |------|-----|------|
-| java17-common011 | common | 枚举（FrameworkStatus011 / DatabaseType011 / HttpCodeEnum011 / Status011 / StorageType011 / AuditType011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 / AuthAttribute011 · 工具（DateUtil011 / MarkdownUtil011） |
-| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（动态数据源内核 Port + **JulyDatasource 管理** + 方言/探针）· storagecenter（ObjectStoragePort / JulyStorageProvider / JulyStorageProviderBucket / EditableTextPolicy / Resolver）· system011（menu / config / organization / scheduler / dictionary）· ai011（AiModelProvider + Api + Probe）· platform011（export / backup Port） |
-| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· ai011 · storagecenter（实例 / 桶 / 对象 + 在线编辑）· platform011（export / backup） |
-| java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / datasource / ai011 / storagecenter 持久化 · 动态数据源路由 + 方言 + 探针 · local011/minio011 适配器 + Resolver + 播种 · IAM 适配器（bcrypt / JWT / 审计记录器） |
-| java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 4 组（system011 / storagecenter / datasource / ai011） |
+| java17-common011 | common | 枚举（FrameworkStatus011 / HttpCodeEnum011 / Status011 / AuditType011 / ExportFormat011）· 开放字符串常量（DatabaseTypes011 / StorageProviderCodes011 / MessageProviderTypes011 / AuditObjectCodes011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 · 工具（DateUtil011 / StringUtil011 / MarkdownUtil011 / HttpUtil011） |
+| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（kernel Port + 方言 SPI `SqlDialectPort011` + management）· storagecenter（object：ObjectStoragePort / ObjectStorageProviderFactory SPI；storage：JulyStorageProvider / JulyStorageProviderBucket）· messagecenter（channel SPI `MessageChannelPort` / template / message）· system011（menu / config / organization / scheduler / dictionary）· ai011（AiModelProvider + Api + Probe / chat）· platform011（export / backup Port） |
+| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· ai011（模型接入 + chat）· storagecenter（实例 / 桶 / 对象 + 在线编辑）· **messagecenter（send / 渠道 / 模板 / 记录）** · platform011（export / backup） |
+| java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / datasource / ai011 / storagecenter / messagecenter 持久化 · 动态数据源路由 + 方言注册表 + 探针 · provider 注册表（local011/minio011/s3011）+ Resolver + 播种 · 内置渠道（inapp / webhook）· IAM 适配器（bcrypt / JWT / 审计记录器） |
+| java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 6 组（system011 / iam / storagecenter / datasource / ai011 / messagecenter） |
 | java17-app011 | app | 唯一 main + 配置 + 参考样板（demo11 纵切面 / Demo011Scheduler）+ 启动播种（ci011 / storage） |
 
 ## 快速开始
@@ -96,13 +97,15 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | 六模块骨架 + 依赖铁律 + 统一响应信封 / 状态码 / 全局异常 |
 | ✅ | 仓库基座家族（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ 审计自动填充 |
 | ✅ | 编码规则门禁（正则 + AST，经 script011.sh 强制） |
-| ✅ | system011：配置（029）· 组织（013）· 用户（015）· 角色（016）· 菜单（011）· 调度（021）· 数据字典（035） |
-| ✅ | platform011：数据导出 + 备份（030，注册制 Provider / EXPORT·BACKUP 审计） |
-| ✅ | datasource：数据源管理（031，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页） |
-| ✅ | ai011：模型接入（036，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 模型调用 chat（041，OpenAI 兼容，id/code 解析） |
-| ✅ | storagecenter：存储中心管理面 + 在线编辑（037，表驱动多实例 + 桶/对象 + readText/saveText + 预签名） |
-| ✅ | 审计：AuditType011 枚举 + controller IUD 审计切面 |
-| ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插） |
+| ✅ | system011：配置（023）· 组织（013）· 用户（015）· 角色（016）· 菜单（011）· 调度（022）· 数据字典（027） |
+| ✅ | platform011：数据导出（025，注册制 Provider / EXPORT 审计）+ 备份（BACKUP 审计） |
+| ✅ | datasource：数据源管理（026，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页 + **分页方言开放 SPI**，内置 mysql/postgresql/oracle/sqlserver） |
+| ✅ | ai011：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 模型调用 chat（030，OpenAI 兼容，id/code 解析） |
+| ✅ | storagecenter：存储中心管理面 + 在线编辑（029，**主子表** `july_storage_provider` + `_bucket` + 桶/对象 + readText/saveText + 预签名 + **provider 注册表**） |
+| ✅ | messagecenter：消息中心（021，**实现型 SPI** + 注册表 + 三表 + send/分页/重发 + 内置 inapp/webhook，2026-09-19） |
+| ✅ | 审计：AuditType011 枚举 + controller IUD 切面 + 平台事件（EXPORT/BACKUP 在 use case 写，独立事务）；`objectCode` 统一 `AuditObjectCodes011` |
+| ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插）；批量删除**全有或全无**（原子） |
+| ✅ | 扩展点开放化：存储 provider / 分页方言 / 消息渠道 = 开放字符串 + 注册表（禁封闭枚举做路由键） |
 | ✅ | 容器化部署（docker compose + ubuntu 26.04 基镜像 + mount/bake，见 020） |
 
 ## 版本

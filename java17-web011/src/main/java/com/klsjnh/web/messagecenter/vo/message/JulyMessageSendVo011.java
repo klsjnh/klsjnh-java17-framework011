@@ -36,6 +36,14 @@ public class JulyMessageSendVo011 {
     @Schema(description = "接收方（用户 id / 手机号 / webhook 标识）")
     private String to;
 
+    /** Channel-defined message shape, optional. */
+    @Schema(description = "报文形态（渠道自定义开放字符串，如 text / textcard / image；框架不解释，留空由渠道取默认）")
+    private String messageType;
+
+    /** Channel-defined payload, optional. */
+    @Schema(description = "形态载荷（渠道自定义键值，如 image_key / file_key / url / btntxt）")
+    private Map<String, String> payload;
+
     /** Template code, optional. */
     @Schema(description = "模板编码（可空，纯文本直发）")
     private String templateCode;

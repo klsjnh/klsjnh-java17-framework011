@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS july_message (
     id            VARCHAR(33)   NOT NULL                COMMENT '主键',
     channel_code  VARCHAR(60)   NOT NULL                COMMENT '渠道编码',
     provider_type VARCHAR(60)   NOT NULL                COMMENT '提供商类型（实际发送的 SPI channelCode）',
+    message_type  VARCHAR(60)   NULL                    COMMENT '报文形态（渠道自定义开放字符串：text/image/... 框架不解释）',
+    payload       TEXT          NULL                    COMMENT '形态载荷 JSON（渠道自定义键值，如 image_key/file_key/card）',
     msg_to        VARCHAR(300)  NULL                    COMMENT '接收方（站内信为用户 id / 手机号 / webhook 标识）',
     template_code VARCHAR(60)   NULL                    COMMENT '模板编码（可空，纯文本直发）',
     title         VARCHAR(300)  NULL                    COMMENT '标题',
