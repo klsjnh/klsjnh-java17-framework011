@@ -54,33 +54,35 @@ public class JulyConfigUseCase {
     /**
      * Insert a new config entry.
      *
-     * @param code config key, unique
-     * @param data config value
+     * @param code   config key, unique
+     * @param data   config value
+     * @param status config status, null defaults to enabled
      * @return new config id
      */
     @Transactional
-    public String insert(String code, String data) {
+    public String insert(String code, String data, String status) {
         if (repository.findEnabledByCode(code) != null) {
             throw BusinessException.badRequest("config code already exists: " + code);
         }
 
-        JulyConfig config = JulyConfig.create(EntityId.generate(), code, data, AuditInfo.empty());
+        JulyConfig config = JulyConfig.create(EntityId.generate(), code, data, status, AuditInfo.empty());
         repository.insert(config);
 
         return config.id().value();
     }
 
     /**
-     * Update the value of a config entry (code immutable).
+     * Update the value / status of a config entry (code immutable).
      *
-     * @param id   config id
-     * @param data config value
+     * @param id     config id
+     * @param data   config value
+     * @param status config status, null keeps the stored one
      * @return config id
      */
     @Transactional
-    public String update(String id, String data) {
+    public String update(String id, String data, String status) {
         JulyConfig config = require(id);
-        config.updateData(data);
+        config.updateData(data, status);
         repository.update(config);
 
         return config.id().value();
@@ -123,16 +125,17 @@ public class JulyConfigUseCase {
     }
 
     /**
-     * Page query with an optional keyword filter.
+     * Page query with an optional keyword / status filter.
      *
      * @param pageQuery page query, null falls back to page 1 / size 10
      * @param keyword   code / data keyword, nullable
+     * @param status    row status, nullable
      * @return page result
      */
-    public PageResult011<JulyConfig> selectListByPage(PageQuery011 pageQuery, String keyword) {
+    public PageResult011<JulyConfig> selectListByPage(PageQuery011 pageQuery, String keyword, String status) {
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
-        List<JulyConfig> rows = repository.findPage(query.offset(), query.pageSize(), keyword);
-        long total = repository.count(keyword);
+        List<JulyConfig> rows = repository.findPage(query.offset(), query.pageSize(), keyword, status);
+        long total = repository.count(keyword, status);
 
         return PageResult011.of(query, total, rows);
     }

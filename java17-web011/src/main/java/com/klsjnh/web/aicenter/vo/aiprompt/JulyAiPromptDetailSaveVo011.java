@@ -1,6 +1,6 @@
 package com.klsjnh.web.aicenter.vo.aiprompt;
 
-/*                JulyAiPromptDetailVo011 class
+/*                JulyAiPromptDetailSaveVo011 class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
@@ -10,7 +10,7 @@ package com.klsjnh.web.aicenter.vo.aiprompt;
  *===========================================
  *          modify history
  *
- *      2026.09.20  ai prompt detail vo 011 class
+ *      2026.09.20  ai prompt detail save vo 011 class
  *
  */
 
@@ -19,14 +19,18 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Prompt detail (business domain + content).
+ * Prompt detail save request (insert needs promptId; update needs id).
  */
 
 @Data
-public class JulyAiPromptDetailVo011 {
+public class JulyAiPromptDetailSaveVo011 {
 
-    /** Detail id (for update / delete). */
-    @Schema(description = "明细 id（改/删时传）")
+    /** Prompt id (insert). */
+    @Schema(description = "提示词 id（新增时传）")
+    private String promptId;
+
+    /** Detail id (update / delete). */
+    @Schema(description = "明细 id（修改/删除时传）")
     private String id;
 
     /** Business domain. */
@@ -62,6 +66,6 @@ public class JulyAiPromptDetailVo011 {
     private String remark;
 
     /** Row status. */
-    @Schema(description = "状态（0 停用 / 1 启用；改时留空保持）")
+    @Schema(description = "状态（0 停用 / 1 启用；留空保持）")
     private String status;
 }

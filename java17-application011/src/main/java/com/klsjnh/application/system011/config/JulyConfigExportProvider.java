@@ -85,7 +85,7 @@ public class JulyConfigExportProvider implements ExportProvider {
      */
     @Override
     public List<Map<String, Object>> exportRows(int offset, int limit) {
-        return repository.findPage(offset, limit, null).stream()
+        return repository.findPage(offset, limit, null, null).stream()
                 .map(this::toRow)
                 .toList();
     }

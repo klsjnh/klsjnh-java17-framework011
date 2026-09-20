@@ -111,7 +111,7 @@ public class JulyConfigController {
     public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo) {
         String funcName = "insert";
 
-        return Response011.successId(funcName, julyConfigUseCase.insert(vo.getCode(), vo.getData()));
+        return Response011.successId(funcName, julyConfigUseCase.insert(vo.getCode(), vo.getData(), vo.getStatus()));
     }
 
     /**
@@ -126,7 +126,7 @@ public class JulyConfigController {
     public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo) {
         String funcName = "update";
 
-        julyConfigUseCase.update(vo.getId(), vo.getData());
+        julyConfigUseCase.update(vo.getId(), vo.getData(), vo.getStatus());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -174,7 +174,7 @@ public class JulyConfigController {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyConfig> page = julyConfigUseCase.selectListByPage(pageQuery, vo.getKeyword());
+        PageResult011<JulyConfig> page = julyConfigUseCase.selectListByPage(pageQuery, vo.getKeyword(), vo.getStatus());
 
         return Response011.success(funcName, page.withRows(julyConfigConverter.toVoList(page.rows())));
     }

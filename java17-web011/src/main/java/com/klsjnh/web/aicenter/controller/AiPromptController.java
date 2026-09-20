@@ -11,6 +11,7 @@ package com.klsjnh.web.aicenter.controller;
  *          modify history
  *
  *      2026.09.20  ai prompt controller
+ *      2026.09.20  prompt update + detail crud + getContent
  *
  */
 
@@ -24,10 +25,12 @@ import com.klsjnh.application.aicenter.prompt.PromptDetailCommand;
 import com.klsjnh.domain.aicenter.prompt.JulyAiPrompt;
 import com.klsjnh.domain.aicenter.prompt.JulyAiPromptQuerySpec;
 
+import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptDetailSaveVo011;
 import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptDetailVo011;
 import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptInsertVo011;
 import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptQueryVo011;
 import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptRenderVo011;
+import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptUpdateVo011;
 import com.klsjnh.web.aicenter.vo.aiprompt.JulyAiPromptVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,8 +47,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * AI prompt HTTP adapter ({@code /klsjnh/aicenter/julyAiPrompt/v1}): prompt CRUD
- * (with per-domain details) and rendering a prompt for AI development.
+ * AI prompt HTTP adapter ({@code /klsjnh/aicenter/julyAiPrompt/v1}): prompt /
+ * detail CRUD, storage-mode body read and rendering a prompt for AI development.
  */
 
 @Tag(name = "AI中心011 - 提示词")
@@ -82,9 +85,9 @@ public class AiPromptController {
 
         if (vo.getDetails() != null) {
             for (JulyAiPromptDetailVo011 detail : vo.getDetails()) {
-                details.add(new PromptDetailCommand(detail.getDomainCode(), detail.getContentMode(),
-                        detail.getContent(), detail.getStorageCode(), detail.getBucket(), detail.getVariables(),
-                        detail.getSortOrder()));
+                details.add(command(detail.getDomainCode(), detail.getContentMode(), detail.getContent(),
+                        detail.getStorageCode(), detail.getBucket(), detail.getVariables(), detail.getSortOrder(),
+                        detail.getRemark(), detail.getStatus()));
             }
         }
 
@@ -92,6 +95,21 @@ public class AiPromptController {
                 vo.getRemark(), details);
 
         return Response011.successId(funcName, id);
+    }
+
+    /**
+     * Update a prompt.
+     *
+     * @param vo request
+     * @return the prompt id
+     */
+    @PostMapping("/update")
+    @Operation(summary = "修改提示词（promptCode 不可变）")
+    public Response011<IdVo011> update(@RequestBody JulyAiPromptUpdateVo011 vo) {
+        String funcName = "ai prompt update";
+
+        return Response011.successId(funcName, promptUseCase.update(vo.getId(), vo.getPromptName(), vo.getScene(),
+                vo.getSortOrder(), vo.getRemark(), vo.getStatus()));
     }
 
     /**
@@ -112,6 +130,20 @@ public class AiPromptController {
         List<JulyAiPromptVo011> rows = page.rows().stream().map(this::toVo).toList();
 
         return Response011.success(funcName, PageResult011.of(query, page.total(), rows));
+    }
+
+    /**
+     * Find a prompt by id.
+     *
+     * @param id prompt id
+     * @return prompt
+     */
+    @GetMapping("/getById")
+    @Operation(summary = "按主键点查提示词")
+    public Response011<JulyAiPromptVo011> getById(@RequestParam("id") String id) {
+        String funcName = "ai prompt get by id";
+
+        return Response011.success(funcName, toVo(promptUseCase.getById(id)));
     }
 
     /**
@@ -143,6 +175,70 @@ public class AiPromptController {
     }
 
     /**
+     * Insert one detail.
+     *
+     * @param vo request
+     * @return new detail id
+     */
+    @PostMapping("/insertDetail")
+    @Operation(summary = "新增提示词明细（业务域内容）")
+    public Response011<IdVo011> insertDetail(@RequestBody JulyAiPromptDetailSaveVo011 vo) {
+        String funcName = "ai prompt detail insert";
+
+        String id = promptUseCase.insertDetail(vo.getPromptId(), command(vo.getDomainCode(), vo.getContentMode(),
+                vo.getContent(), vo.getStorageCode(), vo.getBucket(), vo.getVariables(), vo.getSortOrder(),
+                vo.getRemark(), vo.getStatus()));
+
+        return Response011.successId(funcName, id);
+    }
+
+    /**
+     * Update one detail.
+     *
+     * @param vo request
+     * @return the detail id
+     */
+    @PostMapping("/updateDetail")
+    @Operation(summary = "修改提示词明细（storage 模式重写对象）")
+    public Response011<IdVo011> updateDetail(@RequestBody JulyAiPromptDetailSaveVo011 vo) {
+        String funcName = "ai prompt detail update";
+
+        String id = promptUseCase.updateDetail(vo.getId(), command(vo.getDomainCode(), vo.getContentMode(),
+                vo.getContent(), vo.getStorageCode(), vo.getBucket(), vo.getVariables(), vo.getSortOrder(),
+                vo.getRemark(), vo.getStatus()));
+
+        return Response011.successId(funcName, id);
+    }
+
+    /**
+     * Logic delete one detail.
+     *
+     * @param idVo id
+     * @return deleted id
+     */
+    @PostMapping("/logicDeleteDetail")
+    @Operation(summary = "逻辑删除提示词明细")
+    public Response011<IdVo011> logicDeleteDetail(@RequestBody IdVo011 idVo) {
+        String funcName = "ai prompt detail logic delete";
+
+        return Response011.successId(funcName, promptUseCase.logicDeleteDetail(idVo.getId()));
+    }
+
+    /**
+     * Read a detail body.
+     *
+     * @param id detail id
+     * @return content text
+     */
+    @GetMapping("/getContent")
+    @Operation(summary = "读取明细正文（inline / 对象存储）")
+    public Response011<String> getContent(@RequestParam("id") String id) {
+        String funcName = "ai prompt get content";
+
+        return Response011.success(funcName, promptUseCase.getContent(id));
+    }
+
+    /**
      * Render a prompt.
      *
      * @param vo request
@@ -155,6 +251,26 @@ public class AiPromptController {
 
         return Response011.success(funcName, promptUseCase.render(vo.getPromptCode(), vo.getDomainCode(),
                 vo.getParams()));
+    }
+
+    /**
+     * Build a detail command.
+     *
+     * @param domainCode  business domain
+     * @param contentMode content mode
+     * @param content     inline content
+     * @param storageCode storage instance code
+     * @param bucket      bucket
+     * @param variables   variable declarations
+     * @param sortOrder   sort order
+     * @param remark      remark
+     * @param status      row status
+     * @return command
+     */
+    private PromptDetailCommand command(String domainCode, String contentMode, String content, String storageCode,
+            String bucket, String variables, Integer sortOrder, String remark, String status) {
+        return new PromptDetailCommand(domainCode, contentMode, content, storageCode, bucket, variables, sortOrder,
+                remark, status);
     }
 
     /**

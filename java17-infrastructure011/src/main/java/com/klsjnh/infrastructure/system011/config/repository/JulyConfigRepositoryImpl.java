@@ -164,11 +164,11 @@ public class JulyConfigRepositoryImpl
      * @return page rows
      */
     @Override
-    public List<JulyConfig> findPage(int offset, int pageSize, String keyword) {
+    public List<JulyConfig> findPage(int offset, int pageSize, String keyword, String status) {
         int current = offset / pageSize + 1;
         Page<JulyConfigPo> page = Page.of(current, pageSize);
 
-        return mapper.selectPage(page, keywordWrapper(keyword)).getRecords().stream()
+        return mapper.selectPage(page, keywordWrapper(keyword, status)).getRecords().stream()
                 .map(this::toAggregate)
                 .toList();
     }
@@ -177,24 +177,30 @@ public class JulyConfigRepositoryImpl
      * Count with the same filter as findPage.
      *
      * @param keyword code / data keyword, nullable
+     * @param status  row status, nullable
      * @return total row count
      */
     @Override
-    public long count(String keyword) {
-        return mapper.selectCount(keywordWrapper(keyword));
+    public long count(String keyword, String status) {
+        return mapper.selectCount(keywordWrapper(keyword, status));
     }
 
     /**
-     * Keyword filter wrapper shared by findPage and count.
+     * Keyword / status filter wrapper shared by findPage and count.
      *
      * @param keyword code / data keyword, nullable
+     * @param status  row status, nullable
      * @return query wrapper
      */
-    private QueryWrapper<JulyConfigPo> keywordWrapper(String keyword) {
+    private QueryWrapper<JulyConfigPo> keywordWrapper(String keyword, String status) {
         QueryWrapper<JulyConfigPo> wrapper = new QueryWrapper<>();
 
         if (keyword != null && !keyword.isBlank()) {
-            wrapper.like("code", keyword).or().like("data", keyword);
+            wrapper.and(w -> w.like("code", keyword).or().like("data", keyword));
+        }
+
+        if (status != null && !status.isBlank()) {
+            wrapper.eq("status", status);
         }
 
         wrapper.orderByDesc("create_time").orderByAsc("id");

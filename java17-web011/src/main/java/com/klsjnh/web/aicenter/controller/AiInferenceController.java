@@ -40,7 +40,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -138,6 +140,7 @@ public class AiInferenceController {
     private void emit(SseEmitter emitter, Stream<AiInferenceChunk> stream) {
         try (stream) {
             stream.forEach(chunk -> send(emitter, chunk));
+            emitter.send(SseEmitter.event().data("[DONE]", MediaType.TEXT_PLAIN));
             emitter.complete();
         } catch (Exception ex) {
             emitter.completeWithError(ex);
@@ -145,14 +148,30 @@ public class AiInferenceController {
     }
 
     /**
-     * Send one chunk.
+     * Send one chunk as an OpenAI-compatible SSE data frame
+     * ({@code {"choices":[{"delta":{"content":"..."},"finish_reason":null}]}}),
+     * so embedded newlines survive the transport (JSON-escaped) and the de-facto
+     * standard client parser ({@code choices[0].delta.content}) works unchanged.
      *
      * @param emitter sse emitter
      * @param chunk   chunk
      */
     private void send(SseEmitter emitter, AiInferenceChunk chunk) {
+        Map<String, Object> delta = new LinkedHashMap<>();
+
+        if (chunk.content() != null) {
+            delta.put("content", chunk.content());
+        }
+
+        Map<String, Object> choice = new LinkedHashMap<>();
+        choice.put("delta", delta);
+        choice.put("finish_reason", chunk.finishReason());
+
+        Map<String, Object> frame = new LinkedHashMap<>();
+        frame.put("choices", List.of(choice));
+
         try {
-            emitter.send(SseEmitter.event().data(chunk.content() == null ? "" : chunk.content()));
+            emitter.send(SseEmitter.event().data(frame, MediaType.APPLICATION_JSON));
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }

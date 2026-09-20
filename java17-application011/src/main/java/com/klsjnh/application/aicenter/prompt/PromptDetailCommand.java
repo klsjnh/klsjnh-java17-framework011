@@ -24,8 +24,10 @@ package com.klsjnh.application.aicenter.prompt;
  * @param bucket      bucket (storage mode)
  * @param variables   variable declarations
  * @param sortOrder   sort order
+ * @param remark      remark
+ * @param status      row status, null keeps the stored one
  */
 
 public record PromptDetailCommand(String domainCode, String contentMode, String content, String storageCode,
-        String bucket, String variables, Integer sortOrder) {
+        String bucket, String variables, Integer sortOrder, String remark, String status) {
 }

@@ -36,4 +36,8 @@ public class JulyConfigQueryVo011 {
     /** Code / data keyword (fuzzy). */
     @Schema(description = "配置项 / 配置值关键字（模糊）")
     private String keyword;
+
+    /** Status filter. */
+    @Schema(description = "状态过滤（0 停用 / 1 启用）")
+    private String status;
 }

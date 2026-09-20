@@ -32,4 +32,8 @@ public class JulyConfigInsertVo011 {
     /** Config value, max 300. */
     @Schema(description = "配置值（最长 300）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String data;
+
+    /** Config status: '0' disabled / '1' enabled; null defaults to enabled. */
+    @Schema(description = "状态（0 停用 / 1 启用；留空默认启用）")
+    private String status;
 }

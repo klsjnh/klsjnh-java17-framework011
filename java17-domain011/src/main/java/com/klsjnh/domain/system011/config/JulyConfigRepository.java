@@ -70,7 +70,7 @@ public interface JulyConfigRepository {
      * @param keyword  code / data keyword, nullable
      * @return page rows
      */
-    List<JulyConfig> findPage(int offset, int pageSize, String keyword);
+    List<JulyConfig> findPage(int offset, int pageSize, String keyword, String status);
 
     /**
      * Count with the same filter as findPage.
@@ -78,5 +78,5 @@ public interface JulyConfigRepository {
      * @param keyword code / data keyword, nullable
      * @return total row count
      */
-    long count(String keyword);
+    long count(String keyword, String status);
 }

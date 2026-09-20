@@ -78,26 +78,32 @@ public class JulyConfig {
     /**
      * Factory for a new config entry.
      *
-     * @param id    primary key
-     * @param code  config key, unique, max 60
-     * @param data  config value, max 300
-     * @param audit audit info
+     * @param id     primary key
+     * @param code   config key, unique, max 60
+     * @param data   config value, max 300
+     * @param status config status, null defaults to enabled
+     * @param audit  audit info
      * @return new aggregate
      */
-    public static JulyConfig create(EntityId id, String code, String data, AuditInfo audit) {
+    public static JulyConfig create(EntityId id, String code, String data, String status, AuditInfo audit) {
         validate(code, data);
 
-        return new JulyConfig(id, code, data, Status011.ENABLED.getCode(), audit);
+        return new JulyConfig(id, code, data, status, audit);
     }
 
     /**
-     * Update the value (code is immutable after create).
+     * Update the value / status (code is immutable after create).
      *
-     * @param data config value
+     * @param data   config value
+     * @param status config status, null keeps the stored one
      */
-    public void updateData(String data) {
+    public void updateData(String data, String status) {
         validate(this.code, data);
         this.data = data;
+
+        if (!StringUtil011.isBlank(status)) {
+            this.status = status;
+        }
     }
 
     /**
