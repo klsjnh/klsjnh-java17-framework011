@@ -1,26 +1,26 @@
 #!/bin/bash
 # ============================================================
-# script011.sh — 项目统一入口（提交 / 构建 / 运行态）
+# script011.sh — project single entry point (commit / build / runtime)
 #
-# 用法:
-#   ./script011.sh              空参 = git 提交（gate + 版本号自增 + commit + push）
-#   ./script011.sh gate         仅规范检查（node）+ mvn 离线编译
-#   ./script011.sh build011     mvn clean package install（全量构建 + 装本地仓库）
-#   ./script011.sh dev011       杀进程 → 直接执行现有 jar（不编译）
-#   ./script011.sh dev013       杀进程 → 重新编译（clean，旧 jar 一并删除）→ 执行 jar
-#   ./script011.sh stop         停止
-#   ./script011.sh restart      重启（先杀进程再执行现有 jar）
-#   ./script011.sh status       查看状态
-#   ./script011.sh log          跟踪日志
+# Usage:
+#   ./script011.sh              no arg = git commit (gate + version bump + commit + push)
+#   ./script011.sh gate         standards check only (node) + mvn offline compile
+#   ./script011.sh build011     mvn clean package install (full build + install to local repo)
+#   ./script011.sh dev011       kill process -> run the existing jar (no compile)
+#   ./script011.sh dev013       kill process -> clean rebuild (drops old jar) -> run jar
+#   ./script011.sh stop         stop
+#   ./script011.sh restart      restart (kill then run the existing jar)
+#   ./script011.sh status       show status
+#   ./script011.sh log          tail the log
 #
-# 注: 本脚本是项目唯一操作入口（提交 / 构建 / 运行态）。
+# Note: this script is the project's single entry point (commit / build / runtime).
 # ============================================================
 
 set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-# Java17 toolchain: prefer java17 JVM for Maven build
+# Java17 toolchain: prefer the java17 JVM for the Maven build
 export JAVA_HOME="${JAVA_HOME:-/usr/local/java17}"
 export PATH="$JAVA_HOME/bin:$PATH"
 
@@ -60,9 +60,9 @@ Commands:
   (default)  gate + version bump + commit + push
   gate       push gate only: standards check (node) + mvn offline compile
   build011   mvn clean package install (full build + install to local repo)
-  dev011     杀进程 + 直接执行现有 jar（不编译）
-  dev013     杀进程 + 重新编译（clean 删旧 jar）+ 执行 jar
-  stop|restart|status|log   运行态管理
+  dev011     kill process + run the existing jar (no compile)
+  dev013     kill process + clean rebuild (drops old jar) + run jar
+  stop|restart|status|log   runtime management
 EOF
 }
 
@@ -123,7 +123,7 @@ do_push() {
 }
 
 # ============================================================
-# 运行态（app011 启停）
+# runtime (app011 start / stop)
 # ============================================================
 
 APP_JAR="$PROJECT_ROOT/java17-app011/target/java17-app011-1.0.0.jar"
@@ -131,7 +131,7 @@ APP_LOG="$PROJECT_ROOT/logs/app011.log"
 PID_FILE="$PROJECT_ROOT/.app011.pid"
 APP_PORT=11160
 
-# debug 模式：development profile + krt.status=debug（application.yml 默认即 debug）
+# debug mode: development profile + krt.status=debug (application.yml defaults to debug)
 PROFILE="development"
 
 is_running() {
@@ -149,7 +149,8 @@ wait_up() {
   return 1
 }
 
-# 按端口找占用进程（PID 文件丢失 / 外部启动时的兜底）
+# Find the process holding the port (fallback when the PID file is missing or
+# the app was started externally)
 port_pids() {
   if command -v lsof >/dev/null 2>&1; then
     lsof -ti tcp:"$APP_PORT" 2>/dev/null || true
@@ -172,29 +173,29 @@ wait_port_free() {
 
 do_start() {
   if is_running; then
-    echo "已在运行 (PID $(cat "$PID_FILE"))，无需启动 ..."
+    echo "already running (PID $(cat "$PID_FILE")), nothing to start ..."
     exit 0
   fi
 
   if [ ! -f "$APP_JAR" ]; then
-    echo "JAR 不存在：$APP_JAR"
-    echo "  请先构建：./script011.sh dev013（重新编译）或 ./script011.sh build011"
+    echo "JAR not found: $APP_JAR"
+    echo "  build it first: ./script011.sh dev013 (rebuild) or ./script011.sh build011"
     exit 1
   fi
 
   mkdir -p "$PROJECT_ROOT/logs"
-  echo "启动 app011（profile=$PROFILE，krt.status=debug）..."
+  echo "starting app011 (profile=$PROFILE, krt.status=debug) ..."
   nohup "$JAVA_BIN" -jar "$APP_JAR" --spring.profiles.active="$PROFILE" > "$APP_LOG" 2>&1 &
   echo $! > "$PID_FILE"
 
   if wait_up; then
-    echo "启动成功 (PID $(cat "$PID_FILE"))"
-    echo "  服务:   http://127.0.0.1:$APP_PORT"
-    echo "  文档:   http://127.0.0.1:$APP_PORT/doc.html"
-    echo "  Druid:  http://127.0.0.1:$APP_PORT/druid  (klsjnh/klsjnh)"
-    echo "  日志:   tail -f $APP_LOG"
+    echo "started (PID $(cat "$PID_FILE"))"
+    echo "  service: http://127.0.0.1:$APP_PORT"
+    echo "  docs:    http://127.0.0.1:$APP_PORT/doc.html"
+    echo "  Druid:   http://127.0.0.1:$APP_PORT/druid  (klsjnh/klsjnh)"
+    echo "  log:     tail -f $APP_LOG"
   else
-    echo "启动失败（30s 内未就绪），查看 $APP_LOG"
+    echo "failed to start (not ready within 30s), see $APP_LOG"
     exit 1
   fi
 }
@@ -210,19 +211,21 @@ wait_down() {
   return 1
 }
 
-# 提前杀进程：PID 文件优先，端口占用兜底（先 TERM 优雅关停，超时再 -9）
+# Kill early: PID file first, port holder as fallback (TERM for a graceful
+# shutdown, then -9 after the timeout)
 do_stop() {
   stopped=0
 
   if [ -f "$PID_FILE" ]; then
     pid="$(cat "$PID_FILE" 2>/dev/null || true)"
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      echo "停止 app011 (PID $pid) ..."
+      echo "stopping app011 (PID $pid) ..."
       kill "$pid" 2>/dev/null || true
 
-      # 等优雅关停（释放端口）真正退出，再起新实例，避免端口占用
+      # Wait for the graceful shutdown (port released) before starting a new
+      # instance, so the port is not held.
       if ! wait_down "$pid"; then
-        echo "关停超时，强制终止 ..."
+        echo "shutdown timed out, force killing ..."
         kill -9 "$pid" 2>/dev/null || true
         wait_down "$pid" || true
       fi
@@ -232,9 +235,9 @@ do_stop() {
     rm -f "$PID_FILE"
   fi
 
-  # 兜底：端口仍被占用（PID 文件丢失、被外部启动）时按端口清理
+  # Fallback: the port is still held (PID file lost, started externally)
   for p in $(port_pids); do
-    echo "端口 $APP_PORT 被 PID $p 占用，终止 ..."
+    echo "port $APP_PORT held by PID $p, killing ..."
     kill "$p" 2>/dev/null || true
     sleep 2
     kill -0 "$p" 2>/dev/null && kill -9 "$p" 2>/dev/null || true
@@ -242,28 +245,28 @@ do_stop() {
   done
 
   if [ "$stopped" -eq 0 ]; then
-    echo "未在运行"
+    echo "not running"
   else
-    wait_port_free || echo "警告: 端口 $APP_PORT 仍未释放"
-    echo "已停止"
+    wait_port_free || echo "warning: port $APP_PORT still not released"
+    echo "stopped"
   fi
 }
 
-# dev011: 直接执行现有 jar（不编译）
+# dev011: run the existing jar (no compile)
 do_dev011() {
   do_stop
   do_start
 }
 
-# dev013: clean 重编译（旧 jar 一并删除）后执行
+# dev013: clean rebuild (drops old jar) then run
 do_dev013() {
   do_stop
 
-  echo "[$(NOW)] 重新编译: mvn -o clean package -DskipTests ..."
+  echo "[$(NOW)] rebuilding: mvn -o clean package -DskipTests ..."
   (cd "$PROJECT_ROOT" && "$MVN_BIN" -o clean package -DskipTests)
 
   if [ ! -f "$APP_JAR" ]; then
-    echo "编译后仍未生成 JAR：$APP_JAR"
+    echo "no JAR produced after build: $APP_JAR"
     exit 1
   fi
 
@@ -298,9 +301,9 @@ case "${1:-}" in
     ;;
   status)
     if is_running; then
-      echo "运行中 (PID $(cat "$PID_FILE"))"
+      echo "running (PID $(cat "$PID_FILE"))"
     else
-      echo "未在运行"
+      echo "not running"
     fi
     ;;
   log)
@@ -310,7 +313,7 @@ case "${1:-}" in
     usage
     ;;
   *)
-    echo "未知命令: $1"
+    echo "unknown command: $1"
     echo ""
     usage
     exit 1

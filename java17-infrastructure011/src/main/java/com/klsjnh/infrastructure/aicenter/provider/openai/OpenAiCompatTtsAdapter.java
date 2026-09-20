@@ -62,6 +62,16 @@ public class OpenAiCompatTtsAdapter implements AiTtsPort {
     }
 
     /**
+     * Generic fallback: the registry prefers a vendor-specific port over this.
+     *
+     * @return always true
+     */
+    @Override
+    public boolean generic() {
+        return true;
+    }
+
+    /**
      * Synthesize speech.
      *
      * @param request vendor-neutral request

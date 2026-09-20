@@ -18,10 +18,10 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（重构规划）** · 020 容器化部署 |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（已实现）** · 020 容器化部署 |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
 | requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** |
-| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 模型调用（含图片/TTS 能力） 均已编码；IAM 各主题按 011→013→编码 推进 |
+| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 能力（推理 / 图片 / 语音） 均已编码；IAM 各主题按 011→013→编码 推进 |
 | archive011/ | 历史工作日志归档 |
 
 > **两源一汇（2026-09-20 约定）**：架构类需求（平台能力演进）入 `infrastructure011/`；普通需求（业务诉求）入 `requirement011/`；两路合流至 `requirement013/`（详细设计 · 对接代码）。判据见 [011.agreements.md](011.agreements.md) §015。

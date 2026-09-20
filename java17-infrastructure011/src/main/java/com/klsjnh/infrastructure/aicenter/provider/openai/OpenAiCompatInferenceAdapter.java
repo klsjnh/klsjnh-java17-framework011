@@ -17,6 +17,7 @@ package com.klsjnh.infrastructure.aicenter.provider.openai;
  */
 
 import com.klsjnh.common.util.HttpResponse011;
+import com.klsjnh.common.util.HttpResponseStream011;
 import com.klsjnh.common.util.HttpUtil011;
 
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
@@ -35,6 +36,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -85,6 +88,16 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
     }
 
     /**
+     * Generic fallback: the registry prefers a vendor-specific port over this.
+     *
+     * @return always true
+     */
+    @Override
+    public boolean generic() {
+        return true;
+    }
+
+    /**
      * Send an inference request and return the whole reply.
      *
      * @param command resolved inference request
@@ -128,8 +141,14 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
                 "Bearer " + (command.apiKey() == null ? "" : command.apiKey()));
 
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    HttpUtil011.postJsonStream(url, body(command, true), headers, timeout), StandardCharsets.UTF_8));
+            HttpResponseStream011 response = HttpUtil011.postJsonStream(url, body(command, true), headers, timeout);
+
+            if (!response.isSuccess()) {
+                throw new IllegalStateException("ai inference failed: HTTP " + response.status() + " "
+                        + snippet(response.body()));
+            }
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8));
 
             return reader.lines()
                     .filter(line -> line.startsWith("data:"))
@@ -244,6 +263,25 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
             reader.close();
         } catch (Exception ignored) {
             // best effort
+        }
+    }
+
+    /**
+     * Read a short snippet of a stream for an error message.
+     *
+     * @param stream body stream
+     * @return up to 300 characters
+     */
+    private String snippet(InputStream stream) {
+        try (InputStream in = stream; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[300];
+            int read = in.read(buffer);
+            if (read > 0) {
+                out.write(buffer, 0, read);
+            }
+            return out.toString(StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            return "";
         }
     }
 

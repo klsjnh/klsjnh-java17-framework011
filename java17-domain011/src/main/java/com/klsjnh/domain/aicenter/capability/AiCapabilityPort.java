@@ -36,4 +36,15 @@ public interface AiCapabilityPort {
      * @return true when supported
      */
     boolean supports(String providerCode);
+
+    /**
+     * Whether this port is a generic fallback (serves any provider). The
+     * registry prefers a vendor-specific port over a generic one, so a vendor
+     * that adds its own SPI bean is never shadowed by the generic adapter.
+     *
+     * @return true when this is a generic fallback
+     */
+    default boolean generic() {
+        return false;
+    }
 }

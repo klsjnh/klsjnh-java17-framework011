@@ -15,6 +15,7 @@ package com.klsjnh.infrastructure.aicenter.provider.openai;
  */
 
 import com.klsjnh.common.util.HttpResponse011;
+import com.klsjnh.common.util.HttpResponseBytes011;
 import com.klsjnh.common.util.HttpUtil011;
 import com.klsjnh.common.util.StringUtil011;
 
@@ -61,6 +62,16 @@ public class OpenAiCompatAsrAdapter implements AiAsrPort {
     }
 
     /**
+     * Generic fallback: the registry prefers a vendor-specific port over this.
+     *
+     * @return always true
+     */
+    @Override
+    public boolean generic() {
+        return true;
+    }
+
+    /**
      * Transcribe audio to text.
      *
      * @param request vendor-neutral request
@@ -68,23 +79,33 @@ public class OpenAiCompatAsrAdapter implements AiAsrPort {
      */
     @Override
     public AiAsrResult recognize(AiAsrRequest request) {
-        if (request.audio() == null || request.audio().length == 0) {
-            throw new IllegalStateException("asr requires audio bytes (url download is the caller's job)");
-        }
-
-        String format = StringUtil011.isBlank(request.format()) ? "mp3" : request.format();
-        Map<String, String> fields = new HashMap<>();
-        fields.put("model", request.target().model());
-        fields.put("response_format", "json");
-
-        if (!StringUtil011.isBlank(request.language())) {
-            fields.put("language", request.language());
-        }
-
-        List<HttpUtil011.Part> files = List.of(
-                new HttpUtil011.Part("file", "audio." + format, mime(format), request.audio()));
-
         try {
+            byte[] audio = request.audio();
+
+            if ((audio == null || audio.length == 0) && !StringUtil011.isBlank(request.audioUrl())) {
+                HttpResponseBytes011 download = HttpUtil011.getBytes(request.audioUrl());
+                if (!download.isSuccess()) {
+                    throw new IllegalStateException("asr audio download HTTP " + download.status());
+                }
+                audio = download.body();
+            }
+
+            if (audio == null || audio.length == 0) {
+                throw new IllegalStateException("asr requires audio bytes or a downloadable audio url");
+            }
+
+            String format = StringUtil011.isBlank(request.format()) ? "mp3" : request.format();
+            Map<String, String> fields = new HashMap<>();
+            fields.put("model", request.target().model());
+            fields.put("response_format", "json");
+
+            if (!StringUtil011.isBlank(request.language())) {
+                fields.put("language", request.language());
+            }
+
+            List<HttpUtil011.Part> files = List.of(
+                    new HttpUtil011.Part("file", "audio." + format, mime(format), audio));
+
             HttpResponse011 response = HttpUtil011.postMultipart(normalize(request.baseUrl()) + TRANSCRIPTION_PATH,
                     Map.of("Authorization", "Bearer " + request.apiKey()), fields, files);
 

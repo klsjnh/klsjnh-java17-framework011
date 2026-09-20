@@ -63,6 +63,16 @@ public class OpenAiCompatImageAdapter implements AiImagePort {
     }
 
     /**
+     * Generic fallback: the registry prefers a vendor-specific port over this.
+     *
+     * @return always true
+     */
+    @Override
+    public boolean generic() {
+        return true;
+    }
+
+    /**
      * Generate an image.
      *
      * @param request vendor-neutral request

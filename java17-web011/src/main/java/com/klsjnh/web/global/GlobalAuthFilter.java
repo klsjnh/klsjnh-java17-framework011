@@ -16,6 +16,7 @@ package com.klsjnh.web.global;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.identity.Operator011;
@@ -40,6 +41,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JWT authentication filter. Verifies the {@code Authorization: Bearer} token
@@ -139,6 +141,10 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String traceId = resolveTraceId(request);
+        MDC.put(FrameConst011.TRACE_ID, traceId);
+        request.setAttribute(FrameConst011.TRACE_ID, traceId);
+
         OperatorIdentity identity = resolveIdentity(request);
 
         if (identity != null) {
@@ -156,7 +162,25 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             OperatorContext011.clear();
+            MDC.remove(FrameConst011.TRACE_ID);
         }
+    }
+
+    /**
+     * Resolve the per-request trace id: the incoming {@code X-Trace-Id} header
+     * when present, otherwise a fresh UUID.
+     *
+     * @param request http request
+     * @return trace id, never blank
+     */
+    private String resolveTraceId(HttpServletRequest request) {
+        String header = request.getHeader("X-Trace-Id");
+
+        if (header != null && !header.isBlank()) {
+            return header.trim();
+        }
+
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     /**
@@ -190,6 +214,8 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        objectMapper.writeValue(response.getWriter(), Response011.unauthorized());
+        Response011<Void> body = Response011.unauthorized();
+        body.setTraceId(MDC.get(FrameConst011.TRACE_ID));
+        objectMapper.writeValue(response.getWriter(), body);
     }
 }

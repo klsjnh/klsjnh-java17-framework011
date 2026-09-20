@@ -18,8 +18,11 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -65,10 +68,19 @@ public class SpringDocConfig011 {
      */
     @Bean
     public OpenAPI klsjnhOpenAPI(Properties properties) {
-        return new OpenAPI().info(new Info()
-                .title(properties.getTitle())
-                .version(properties.getVersion())
-                .description(properties.getDescription()));
+        SecurityScheme bearer = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("Bearer <JWT>（登录后取 token；doc.html 右上角 Authorize 填入）");
+
+        return new OpenAPI()
+                .info(new Info()
+                        .title(properties.getTitle())
+                        .version(properties.getVersion())
+                        .description(properties.getDescription()))
+                .components(new Components().addSecuritySchemes("bearerAuth", bearer))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
     }
 
     /**

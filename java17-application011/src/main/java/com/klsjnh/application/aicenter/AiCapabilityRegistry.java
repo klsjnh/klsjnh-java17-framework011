@@ -56,15 +56,24 @@ public class AiCapabilityRegistry {
     }
 
     /**
-     * Resolve the port serving a capability / provider pair.
+     * Resolve the port serving a capability / provider pair. A vendor-specific
+     * port wins over a generic fallback (see {@link AiCapabilityPort#generic()}).
      *
      * @param capabilityCode capability code
      * @param providerCode   provider code
      * @return port or null when unsupported
      */
     public AiCapabilityPort port(String capabilityCode, String providerCode) {
-        for (AiCapabilityPort port : byCapability.getOrDefault(capabilityCode, List.of())) {
-            if (port.supports(providerCode)) {
+        List<AiCapabilityPort> ports = byCapability.getOrDefault(capabilityCode, List.of());
+
+        for (AiCapabilityPort port : ports) {
+            if (!port.generic() && port.supports(providerCode)) {
+                return port;
+            }
+        }
+
+        for (AiCapabilityPort port : ports) {
+            if (port.generic() && port.supports(providerCode)) {
                 return port;
             }
         }

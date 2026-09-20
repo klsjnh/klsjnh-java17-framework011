@@ -212,20 +212,21 @@ public final class HttpUtil011 {
     }
 
     /**
-     * HTTP POST a JSON body and hand back the response body as an open
-     * {@link InputStream} — the streaming entry for SSE / chunked responses.
-     * The caller owns and must close the stream.
+     * HTTP POST a JSON body and hand back the response as a stream response
+     * (status + open body) — the streaming entry for SSE / chunked responses.
+     * The caller MUST check {@link HttpResponseStream011#isSuccess()} and MUST
+     * close the body stream.
      *
      * @param url     request url
      * @param json    JSON request body
      * @param headers extra headers, nullable
      * @param timeout read timeout
-     * @return response body stream
+     * @return stream response
      * @throws IOException          on transport failure
      * @throws InterruptedException when the call is interrupted
      */
-    public static InputStream postJsonStream(String url, String json, Map<String, String> headers, Duration timeout)
-            throws IOException, InterruptedException {
+    public static HttpResponseStream011 postJsonStream(String url, String json, Map<String, String> headers,
+            Duration timeout) throws IOException, InterruptedException {
         HttpRequest.Builder builder = builder(url, headers, timeout)
                 .header("Content-Type", "application/json")
                 .header("Accept", "text/event-stream")
@@ -234,7 +235,7 @@ public final class HttpUtil011 {
         HttpResponse<InputStream> response = HTTP_CLIENT.send(builder.build(),
                 HttpResponse.BodyHandlers.ofInputStream());
 
-        return response.body();
+        return new HttpResponseStream011(response.statusCode(), response.body());
     }
 
     /**

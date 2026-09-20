@@ -19,14 +19,14 @@ package com.klsjnh.common.constant;
  * Framework-wide cross-layer constants (the single home for shared
  * framework-level constants such as request attribute keys).
  *
- * <p><b>Admission rules (015 §7) — a constant joins here ONLY when all of the
+ * <p><b>Admission rules (016.coding-standards §7) — a constant joins here ONLY when all of the
  * following hold:</b></p>
  * <ul>
  *   <li>consumed by at least two layers/modules (cross-layer shared);</li>
  *   <li>it is NOT a message text — message wording belongs to the funcName
- *       pattern and BusinessException static factories (015 §7);</li>
+ *       pattern and BusinessException static factories (016.coding-standards §7);</li>
  *   <li>it is NOT a status code — status codes belong to HttpCodeEnum011 and
- *       the docs/016 contract;</li>
+ *       the docs/013.api-contract contract;</li>
  *   <li>it is NOT a column definition — column widths belong to the DDL
  *       template (docs/sql).</li>
  * </ul>
@@ -51,6 +51,13 @@ public final class FrameConst011 {
      * the audit rows carry a real operator instead of an empty account.
      */
     public static final String OPERATOR_ACCOUNT = "krt.operatorAccount";
+
+    /**
+     * Servlet request attribute holding the per-request trace id, set by
+     * GlobalAuthFilter (web) and read by the response advice to fill the
+     * envelope {@code traceId} — the same cross-layer case as the operator id.
+     */
+    public static final String TRACE_ID = "krt.traceId";
 
     /**
      * Constant holder, no instances.
