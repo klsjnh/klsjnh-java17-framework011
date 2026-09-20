@@ -40,4 +40,16 @@ public interface SqlDialectPort011 {
      * @return page sql
      */
     String pageSql(String sql, long offset, int pageSize);
+
+    /**
+     * Build the count query for the given developer SQL. The default wraps the
+     * statement in a subquery; a database that forbids {@code ORDER BY} in a
+     * derived table (SQL Server) overrides this.
+     *
+     * @param sql developer select statement
+     * @return count sql
+     */
+    default String countSql(String sql) {
+        return "SELECT COUNT(*) FROM ( " + sql + " ) klsjnh_count";
+    }
 }

@@ -87,4 +87,50 @@ public interface SqlRoutingPort {
      */
     PageResult011<Map<String, Object>> selectListByPage(String dsCode, String sql, Integer pageIndex,
             Integer pageSize);
+
+    /**
+     * Parameterized select: PreparedStatement binding (never string
+     * concatenation).
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored select statement with {@code ?} placeholders
+     * @param params bound parameters, nullable for none
+     * @return rows as column-value maps
+     */
+    List<Map<String, Object>> selectList(String dsCode, String sql, List<Object> params);
+
+    /**
+     * Parameterized single-row select.
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored select statement with {@code ?} placeholders
+     * @param params bound parameters, nullable for none
+     * @return first row or null
+     */
+    Map<String, Object> selectOne(String dsCode, String sql, List<Object> params);
+
+    /**
+     * Parameterized update / insert / delete / DDL statement (internal use; not
+     * exposed over HTTP yet).
+     *
+     * @param dsCode datasource code
+     * @param sql    developer-authored statement with {@code ?} placeholders
+     * @param params bound parameters, nullable for none
+     * @return affected row count
+     */
+    int execute(String dsCode, String sql, List<Object> params);
+
+    /**
+     * Parameterized paged select with database dialect and a page size clamped
+     * to [10, 500] in code.
+     *
+     * @param dsCode    datasource code
+     * @param sql       developer-authored select statement (ORDER BY recommended)
+     * @param params    bound parameters, nullable for none
+     * @param pageIndex page index starting at 1
+     * @param pageSize  page size, clamped to [10, 500]
+     * @return page result
+     */
+    PageResult011<Map<String, Object>> selectListByPage(String dsCode, String sql, List<Object> params,
+            Integer pageIndex, Integer pageSize);
 }

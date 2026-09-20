@@ -51,15 +51,16 @@ web ──► application ──► domain ◄── infrastructure
 
 ## 平台能力中心
 
-三个横切能力中心，架构底册在 `docs/infrastructure011/`，详细设计在 `docs/requirement013/`：
+四个横切能力中心，架构底册在 `docs/infrastructure011/`，详细设计在 `docs/requirement013/`：
 
 | 中心 | 一句话 | 架构底册 |
 |------|--------|----------|
 | **存储中心** | 对象存储统一端口：local011 / minio011 / s3011 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑 | [011.storage-center](docs/infrastructure011/011.storage-center/011.topic-design.md) |
 | **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | [013.message-center](docs/infrastructure011/013.message-center/011.topic-design.md) |
-| **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；产物落盘（生命周期归使用方） | [015.ai-center](docs/infrastructure011/015.ai-center/011.topic-design.md) |
+| **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | [015.ai-center](docs/infrastructure011/015.ai-center/011.topic-design.md) |
+| **数据源中心** | 多数据源管理 + **参数化只读分页查询** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [017.datasource-center](docs/infrastructure011/017.datasource-center/011.topic-design.md) |
 
-> 三者共同口径：**能力 / 厂商用开放字符串 + 注册表**，扩展不改底座（见 [docs/011.agreements.md](docs/011.agreements.md)）。
+> 共同口径：**能力 / 厂商用开放字符串 + 注册表**，扩展不改底座（见 [docs/011.agreements.md](docs/011.agreements.md)）。
 
 ## 快速开始
 
@@ -112,7 +113,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | system011：配置（023）· 组织（013）· 用户（015）· 角色（016）· 菜单（011）· 调度（022）· 数据字典（027） |
 | ✅ | platform011：数据导出（025，注册制 Provider / EXPORT 审计）+ 备份（BACKUP 审计） |
 | ✅ | datasource：数据源管理（026，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页 + **分页方言开放 SPI**，内置 mysql/postgresql/oracle/sqlserver） |
-| ✅ | aicenter：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 三大能力（030，**推理（SSE 流式）/ 图片 / 语音（TTS+ASR）**，能力 SPI + 通用 OpenAI 兼容适配器 + 产物落盘 + 本地存储闸，id/code 解析、model 直传） |
+| ✅ | aicenter：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 三大能力（030，**推理（SSE 流式）/ 图片 / 语音（TTS+ASR）**，能力 SPI + 通用 OpenAI 兼容适配器 + 产物落盘 + 本地存储闸，id/code 解析、model 直传）· **提示词管理（主子表 + `render` 公共件）** |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（029，**主子表** `july_storage_provider` + `_bucket` + 桶/对象 + readText/saveText + 预签名 + **provider 注册表**） |
 | ✅ | messagecenter：消息中心（021，**出入两套**：出站 `MessageChannelPort` + 入站 `MessageInboundPort`/监听 + 6 表 + send/接收回调/去重/分发 + 内置出站 inapp/webhook，2026-09-19） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 切面 + 平台事件（EXPORT/BACKUP 在 use case 写，独立事务）；`objectCode` 统一 `AuditObjectCodes011` |

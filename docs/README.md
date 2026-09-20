@@ -18,10 +18,10 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（已实现）** · 020 容器化部署 |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（三能力 + 提示词管理已实现）** · **017.datasource-center 数据源中心（能力一/二、能力三 S1 已实现）** · 020 容器化部署 |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
 | requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** |
-| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 能力（推理 / 图片 / 语音） 均已编码；IAM 各主题按 011→013→编码 推进 |
+| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 能力（推理 / 图片 / 语音 / 提示词） / 031 数据源中心（读写分页 / 类型契约 / 同步 S1） 均已编码；IAM 各主题按 011→013→编码 推进 |
 | archive011/ | 历史工作日志归档 |
 
 > **两源一汇（2026-09-20 约定）**：架构类需求（平台能力演进）入 `infrastructure011/`；普通需求（业务诉求）入 `requirement011/`；两路合流至 `requirement013/`（详细设计 · 对接代码）。判据见 [011.agreements.md](011.agreements.md) §015。
@@ -51,11 +51,12 @@
 | 027 | 在用 | requirement011 数据字典（system011 / july_dictionary） |
 | 028 | 在用 | requirement011/013 AI 模型接入（aicenter / july_ai_model_provider） |
 | 029 | 在用 | requirement011/013 存储中心管理面（storagecenter / july_storage_provider + july_storage_provider_bucket） |
-| 030 | 在用 | requirement011/013 AI 模型调用（推理 / 文生图 / 图生图 / TTS / 语音识别，aicenter） |
+| 030 | 在用 | requirement011/013 AI 模型调用（推理 / 文生图 / 图生图 / TTS / 语音识别 / 提示词，aicenter） |
+| 031 | 在用 | requirement013 数据源中心（读写分页 / 类型契约 / 同步 S1，datasource） |
 
 > 历史：`020 / 021`（并入 019）、`022 / 023 / 025 / 026 / 027 / 028`（旧主题/角色/组织等）为 **2026-09-14 前的历史占用**，号不回收；本表仅登记**现行**用途。
 
-**下一可用编号：053。**（044/046/048/049 含 4，跳过）
+**下一可用编号：032。**（044/046/048/049 含 4，跳过）
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。

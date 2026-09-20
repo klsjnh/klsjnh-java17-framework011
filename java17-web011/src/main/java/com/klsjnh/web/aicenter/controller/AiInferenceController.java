@@ -19,6 +19,7 @@ import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.aicenter.inference.AiInferenceOutcome;
 import com.klsjnh.application.aicenter.inference.AiInferenceUseCase;
+import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
 import com.klsjnh.domain.aicenter.inference.AiInferenceChunk;
 
@@ -80,8 +81,11 @@ public class AiInferenceController {
     public Response011<AiChatResponseVo011> chat(@RequestBody AiChatRequestVo011 vo) {
         String funcName = "ai inference";
 
-        AiInferenceOutcome outcome = aiInferenceUseCase.chat(vo.getProvider(), vo.getApi(), vo.getModel(),
-                messages(vo), vo.getTemperature(), vo.getMaxTokens());
+        AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
+                vo.getModel(), null);
+
+        AiInferenceOutcome outcome = aiInferenceUseCase.chat(target, messages(vo), vo.getTemperature(),
+                vo.getMaxTokens());
 
         return Response011.success(funcName, toVo(outcome));
     }
@@ -95,8 +99,11 @@ public class AiInferenceController {
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "AI 推理流式（SSE；provider/api 支持 id 或 code；model 必传）")
     public SseEmitter chatStream(@RequestBody AiChatRequestVo011 vo) {
-        Stream<AiInferenceChunk> stream = aiInferenceUseCase.stream(vo.getProvider(), vo.getApi(), vo.getModel(),
-                messages(vo), vo.getTemperature(), vo.getMaxTokens());
+        AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
+                vo.getModel(), null);
+
+        Stream<AiInferenceChunk> stream = aiInferenceUseCase.stream(target, messages(vo), vo.getTemperature(),
+                vo.getMaxTokens());
 
         SseEmitter emitter = new SseEmitter(0L);
         CompletableFuture.runAsync(() -> emit(emitter, stream));

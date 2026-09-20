@@ -12,6 +12,7 @@ package com.klsjnh.application.aicenter.inference;
  *
  *      2026.09.17  ai invoke use case class
  *      2026.09.20  inference use case + streaming
+ *      2026.09.20  resolve by provider code/id + key code/id (AiInvokeTarget)
  *
  */
 
@@ -19,6 +20,8 @@ import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
+import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
 import com.klsjnh.domain.aicenter.inference.AiInferenceChunk;
 import com.klsjnh.domain.aicenter.inference.AiInferenceCommand;
@@ -26,8 +29,6 @@ import com.klsjnh.domain.aicenter.inference.AiInferencePort;
 import com.klsjnh.domain.aicenter.inference.AiInferenceResult;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
-import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApiRepository;
-import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderRepository;
 import com.klsjnh.domain.iam.user.UserAuditPort;
 
 import org.springframework.stereotype.Service;
@@ -37,24 +38,20 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * AI inference use case (program entry): resolves the provider and api key by
- * <b>id or code</b>, requires an explicit model, dispatches to the inference
- * port and writes an audit row. Designed to be injected by other use cases (AI
- * self-development) as well as exposed over HTTP.
+ * AI inference use case (program entry): resolves the provider by code/id and
+ * the api key by code/id, requires an explicit model, dispatches to the
+ * inference port and writes an audit row. Same routing header
+ * ({@link AiInvokeTarget}) as the image / tts / asr capabilities. Designed to be
+ * injected by other use cases (AI self-development) as well as exposed over HTTP.
  */
 
 @Service
 public class AiInferenceUseCase {
 
     /**
-     * Provider repository.
+     * Provider / key resolver.
      */
-    private final AiModelProviderRepository providerRepository;
-
-    /**
-     * Api (key) repository.
-     */
-    private final AiModelProviderApiRepository apiRepository;
+    private final AiProviderResolver resolver;
 
     /**
      * Capability registry.
@@ -69,151 +66,60 @@ public class AiInferenceUseCase {
     /**
      * Create the use case.
      *
-     * @param providerRepository provider repository
-     * @param apiRepository      api repository
-     * @param registry           capability registry
-     * @param userAuditPort      user audit port
+     * @param resolver      provider resolver
+     * @param registry      capability registry
+     * @param userAuditPort user audit port
      */
-    public AiInferenceUseCase(AiModelProviderRepository providerRepository, AiModelProviderApiRepository apiRepository,
-            AiCapabilityRegistry registry, UserAuditPort userAuditPort) {
-        this.providerRepository = providerRepository;
-        this.apiRepository = apiRepository;
+    public AiInferenceUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, UserAuditPort userAuditPort) {
+        this.resolver = resolver;
         this.registry = registry;
         this.userAuditPort = userAuditPort;
     }
 
     /**
-     * Infer, resolving the provider / key by id or code.
+     * Infer, resolving the provider and key by code/id.
      *
-     * @param providerRef provider id or providerCode
-     * @param apiRef      api id or apiCode, blank for the default enabled key
-     * @param model       model name, required
+     * @param target      routing header (provider code/id + key code/id + model)
      * @param messages    chat messages
      * @param temperature sampling temperature, nullable
      * @param maxTokens   max output tokens, nullable
      * @return inference outcome (key masked, usage included)
      */
-    public AiInferenceOutcome chat(String providerRef, String apiRef, String model, List<AiChatMessage> messages,
-            Double temperature, Integer maxTokens) {
-        AiModelProvider provider = resolveProvider(providerRef);
-        AiModelProviderApi api = resolveApi(provider, apiRef);
-        String resolvedModel = requireModel(provider, model);
+    public AiInferenceOutcome chat(AiInvokeTarget target, List<AiChatMessage> messages, Double temperature,
+            Integer maxTokens) {
+        AiModelProvider provider = resolver.resolveProvider(target.providerCode(), target.providerId());
+        AiModelProviderApi api = resolver.resolveApi(provider, target.keyCode(), target.keyId());
+        String model = resolver.requireModel(provider, target.model());
         AiInferencePort port = requireInferencePort(provider);
-        AiInferenceResult result = port.chat(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), resolvedModel,
-                messages, temperature, maxTokens));
+        AiInferenceResult result = port.chat(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), model, messages,
+                temperature, maxTokens));
 
-        audit(provider.providerCode(), api.apiCode(), resolvedModel, result);
+        audit(provider.providerCode(), api.apiCode(), model, result);
 
-        return new AiInferenceOutcome(provider.providerCode(), api.apiCode(), resolvedModel, result.content(),
+        return new AiInferenceOutcome(provider.providerCode(), api.apiCode(), model, result.content(),
                 result.finishReason(), result.promptTokens(), result.completionTokens(), result.totalTokens());
     }
 
     /**
-     * Convenience overload: default key, model still required.
+     * Stream the inference fragments, resolving the provider and key by code/id.
      *
-     * @param providerRef provider id or providerCode
-     * @param model       model name, required
-     * @param messages    chat messages
-     * @return inference outcome
-     */
-    public AiInferenceOutcome chat(String providerRef, String model, List<AiChatMessage> messages) {
-        return chat(providerRef, null, model, messages, null, null);
-    }
-
-    /**
-     * Stream the inference fragments, resolving the provider / key by id or code.
-     *
-     * @param providerRef provider id or providerCode
-     * @param apiRef      api id or apiCode, blank for the default enabled key
-     * @param model       model name, required
+     * @param target      routing header (provider code/id + key code/id + model)
      * @param messages    chat messages
      * @param temperature sampling temperature, nullable
      * @param maxTokens   max output tokens, nullable
      * @return fragment stream, never null
      */
-    public Stream<AiInferenceChunk> stream(String providerRef, String apiRef, String model,
-            List<AiChatMessage> messages, Double temperature, Integer maxTokens) {
-        AiModelProvider provider = resolveProvider(providerRef);
-        AiModelProviderApi api = resolveApi(provider, apiRef);
-        String resolvedModel = requireModel(provider, model);
+    public Stream<AiInferenceChunk> stream(AiInvokeTarget target, List<AiChatMessage> messages, Double temperature,
+            Integer maxTokens) {
+        AiModelProvider provider = resolver.resolveProvider(target.providerCode(), target.providerId());
+        AiModelProviderApi api = resolver.resolveApi(provider, target.keyCode(), target.keyId());
+        String model = resolver.requireModel(provider, target.model());
         AiInferencePort port = requireInferencePort(provider);
 
-        audit(provider.providerCode(), api.apiCode(), resolvedModel, null);
+        audit(provider.providerCode(), api.apiCode(), model, null);
 
-        return port.stream(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), resolvedModel, messages,
-                temperature, maxTokens));
-    }
-
-    /**
-     * Resolve the provider by id first, then by enabled code.
-     *
-     * @param ref provider id or code
-     * @return provider
-     */
-    private AiModelProvider resolveProvider(String ref) {
-        if (ref == null || ref.isBlank()) {
-            throw BusinessException.badRequest("provider is required");
-        }
-
-        AiModelProvider provider = providerRepository.findById(ref);
-
-        if (provider == null) {
-            provider = providerRepository.findEnabledByCode(ref);
-        }
-
-        if (provider == null) {
-            throw BusinessException.recordNotFound("ai provider: " + ref);
-        }
-
-        return provider;
-    }
-
-    /**
-     * Resolve the api key by id first, then by code (within the provider);
-     * blank falls back to the default enabled key.
-     *
-     * @param provider provider
-     * @param ref      api id or code, nullable
-     * @return api key entity
-     */
-    private AiModelProviderApi resolveApi(AiModelProvider provider, String ref) {
-        String providerId = provider.id().value();
-
-        if (ref == null || ref.isBlank()) {
-            List<AiModelProviderApi> apis = apiRepository.findByMaster(providerId);
-            if (apis.isEmpty()) {
-                throw BusinessException.badRequest("no enabled api key for provider: " + provider.providerCode());
-            }
-            return apis.get(0);
-        }
-
-        AiModelProviderApi api = apiRepository.findById(ref);
-
-        if (api == null) {
-            api = apiRepository.findByMasterAndCode(providerId, ref);
-        }
-
-        if (api == null) {
-            throw BusinessException.recordNotFound("ai api key: " + ref);
-        }
-
-        return api;
-    }
-
-    /**
-     * Require an explicit model: the caller must name it (a provider serves
-     * many models, so there is no safe default). Blank is a 400.
-     *
-     * @param provider provider
-     * @param model    model name, required
-     * @return trimmed model name
-     */
-    private String requireModel(AiModelProvider provider, String model) {
-        if (model == null || model.isBlank()) {
-            throw BusinessException.badRequest("model is required for provider: " + provider.providerCode());
-        }
-
-        return model.trim();
+        return port.stream(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), model, messages, temperature,
+                maxTokens));
     }
 
     /**

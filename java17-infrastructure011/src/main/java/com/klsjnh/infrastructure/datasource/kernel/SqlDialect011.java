@@ -73,12 +73,20 @@ public class SqlDialect011 {
     }
 
     /**
-     * Build the count query (database agnostic).
+     * Build the count query for a database type.
      *
-     * @param sql developer select statement
+     * @param dsType database type
+     * @param sql    developer select statement
      * @return count sql
      */
-    public String countSql(String sql) {
-        return "SELECT COUNT(*) FROM ( " + sql + " ) klsjnh_count";
+    public String countSql(String dsType, String sql) {
+        String type = DatabaseTypes011.normalize(dsType);
+        SqlDialectPort011 dialect = type == null ? null : byType.get(type);
+
+        if (dialect == null) {
+            throw BusinessException.badRequest("unknown database type: " + dsType);
+        }
+
+        return dialect.countSql(sql);
     }
 }

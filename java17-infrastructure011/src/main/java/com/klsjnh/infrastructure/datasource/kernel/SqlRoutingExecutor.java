@@ -24,6 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,11 @@ public class SqlRoutingExecutor implements SqlRoutingPort {
      * Page size upper bound (product decision, code-enforced).
      */
     private static final int PAGE_SIZE_MAX = 500;
+
+    /**
+     * Dialect helper column (row number), stripped from result rows.
+     */
+    private static final String HELPER_COLUMN = "klsjnh_rn";
 
     /**
      * Registry (config declaration + lazy pool ensure).
@@ -196,14 +202,144 @@ public class SqlRoutingExecutor implements SqlRoutingPort {
         try {
             DynamicDataSource011.set(dsCode);
 
-            List<Map<String, Object>> rows = jdbcTemplate
-                    .queryForList(dialect.pageSql(info.dsType(), sql, offset, size));
-            Long total = jdbcTemplate.queryForObject(dialect.countSql(sql), Long.class);
+            List<Map<String, Object>> rows = stripHelperColumn(
+                    jdbcTemplate.queryForList(dialect.pageSql(info.dsType(), sql, offset, size)));
+            Long total = jdbcTemplate.queryForObject(dialect.countSql(info.dsType(), sql), Long.class);
 
             return PageResult011.of(new PageQuery011(index, size), total == null ? 0 : total, rows);
         } finally {
             DynamicDataSource011.clear();
         }
+    }
+
+    /**
+     * Parameterized select (PreparedStatement binding).
+     *
+     * @param dsCode datasource code
+     * @param sql    select statement with {@code ?} placeholders
+     * @param params bound parameters, nullable
+     * @return rows
+     */
+    @Override
+    public List<Map<String, Object>> selectList(String dsCode, String sql, List<Object> params) {
+        registry.ensurePool(dsCode);
+
+        try {
+            DynamicDataSource011.set(dsCode);
+
+            return jdbcTemplate.queryForList(sql, args(params));
+        } finally {
+            DynamicDataSource011.clear();
+        }
+    }
+
+    /**
+     * Parameterized single-row select.
+     *
+     * @param dsCode datasource code
+     * @param sql    select statement with {@code ?} placeholders
+     * @param params bound parameters, nullable
+     * @return first row or null
+     */
+    @Override
+    public Map<String, Object> selectOne(String dsCode, String sql, List<Object> params) {
+        List<Map<String, Object>> rows = selectList(dsCode, sql, params);
+
+        return rows == null || rows.isEmpty() ? null : rows.get(0);
+    }
+
+    /**
+     * Parameterized write statement (internal; not exposed over HTTP yet).
+     *
+     * @param dsCode datasource code
+     * @param sql    statement with {@code ?} placeholders
+     * @param params bound parameters, nullable
+     * @return affected row count
+     */
+    @Override
+    public int execute(String dsCode, String sql, List<Object> params) {
+        registry.ensurePool(dsCode);
+
+        try {
+            DynamicDataSource011.set(dsCode);
+
+            return jdbcTemplate.update(sql, args(params));
+        } finally {
+            DynamicDataSource011.clear();
+        }
+    }
+
+    /**
+     * Parameterized paged select (dialect pagination + count).
+     *
+     * @param dsCode    datasource code
+     * @param sql       select statement with {@code ?} placeholders
+     * @param params    bound parameters, nullable
+     * @param pageIndex page index starting at 1
+     * @param pageSize  requested size, clamped
+     * @return page result
+     */
+    @Override
+    public PageResult011<Map<String, Object>> selectListByPage(String dsCode, String sql, List<Object> params,
+            Integer pageIndex, Integer pageSize) {
+        registry.ensurePool(dsCode);
+
+        int size = clamp(pageSize);
+        int index = pageIndex == null || pageIndex < 1 ? 1 : pageIndex;
+        long offset = (long) (index - 1) * size;
+
+        ConnectionInfo info = registry.getConfig(dsCode);
+
+        try {
+            DynamicDataSource011.set(dsCode);
+
+            List<Map<String, Object>> rows = stripHelperColumn(
+                    jdbcTemplate.queryForList(dialect.pageSql(info.dsType(), sql, offset, size), args(params)));
+            Long total = jdbcTemplate.queryForObject(dialect.countSql(info.dsType(), sql), Long.class, args(params));
+
+            return PageResult011.of(new PageQuery011(index, size), total == null ? 0 : total, rows);
+        } finally {
+            DynamicDataSource011.clear();
+        }
+    }
+
+    /**
+     * Convert a nullable parameter list to a varargs array.
+     *
+     * @param params parameters, nullable
+     * @return argument array
+     */
+    private Object[] args(List<Object> params) {
+        return params == null ? new Object[0] : params.toArray();
+    }
+
+    /**
+     * Remove the dialect helper column (row number) from result rows, so it
+     * never leaks into the API payload.
+     *
+     * @param rows rows
+     * @return the same rows, helper column removed
+     */
+    private List<Map<String, Object>> stripHelperColumn(List<Map<String, Object>> rows) {
+        if (rows == null) {
+            return null;
+        }
+
+        for (Map<String, Object> row : rows) {
+            List<String> remove = new ArrayList<>();
+
+            for (String key : row.keySet()) {
+                if (HELPER_COLUMN.equalsIgnoreCase(key)) {
+                    remove.add(key);
+                }
+            }
+
+            for (String key : remove) {
+                row.remove(key);
+            }
+        }
+
+        return rows;
     }
 
     /**

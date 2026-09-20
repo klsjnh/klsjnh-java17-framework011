@@ -28,15 +28,23 @@ import java.util.List;
 @Data
 public class AiChatRequestVo011 {
 
-    /** Provider id or providerCode (e.g. longcat or its id). */
-    @Schema(description = "模型提供方（id 或 providerCode，如 longcat）")
+    /** Provider code (providerCode), alternative to providerId. */
+    @Schema(description = "模型提供方编码（providerCode，如 longcat）")
     private String provider;
 
-    /** Api key id or apiCode; blank for the default enabled key. */
-    @Schema(description = "密钥（id 或 apiCode；留空用默认启用密钥）")
+    /** Provider id, alternative to provider. */
+    @Schema(description = "模型提供方 id（与 provider 二选一）")
+    private String providerId;
+
+    /** Api key code (apiCode); blank for the default enabled key. */
+    @Schema(description = "密钥编码（apiCode；留空用默认启用密钥）")
     private String api;
 
-    /** Model name; blank for the provider's first model. */
+    /** Api key id, alternative to api. */
+    @Schema(description = "密钥 id（与 api 二选一）")
+    private String apiId;
+
+    /** Model name, required. */
     @Schema(description = "模型名（必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String model;
 

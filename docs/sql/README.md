@@ -11,8 +11,8 @@
    | 域 | 文件 |
    |----|------|
    | system011 | `july_config` · `july_menu` · `july_organization` · `july_user` · `july_role` · `july_scheduler` · `july_dictionary` |
-   | datasource | `july_datasource` |
-   | aicenter | `july_ai_model_provider` |
+   | datasource | `july_datasource` · `july_sync_rule` · `july_sync_rule_column` |
+   | aicenter | `july_ai_model_provider` · `july_ai_prompt` · `july_ai_prompt_detail` |
    | storagecenter | `july_storage_provider` · `july_storage_provider_bucket` |
    | messagecenter（出站） | `july_message_outbound_channel` · `july_message_outbound_template` · `july_message_outbound` |
    | messagecenter（入站） | `july_message_inbound_channel` · `july_message_inbound_template` · `july_message_inbound` |
