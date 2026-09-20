@@ -84,9 +84,9 @@ public class KrtConfig011 {
 
 
     /**
-     * AI settings (krt.ai011.*).
+     * AI settings (krt.ai-center.*).
      */
-    private AiConfig ai011 = new AiConfig();
+    private AiConfig aiCenter = new AiConfig();
 
     /**
      * Startup guard: reject unsafe config combinations at boot.
@@ -158,7 +158,7 @@ public class KrtConfig011 {
     public static class AiConfig {
 
         /**
-         * Chat request timeout seconds (krt.ai011.chat-timeout-seconds).
+         * Chat request timeout seconds (krt.ai-center.chat-timeout-seconds).
          */
         private long chatTimeoutSeconds = 60;
     }

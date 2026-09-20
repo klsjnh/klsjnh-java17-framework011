@@ -17,6 +17,7 @@ package com.klsjnh.common.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -208,6 +209,32 @@ public final class HttpUtil011 {
         HttpResponse<byte[]> response = HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
 
         return new HttpResponseBytes011(response.statusCode(), response.body());
+    }
+
+    /**
+     * HTTP POST a JSON body and hand back the response body as an open
+     * {@link InputStream} — the streaming entry for SSE / chunked responses.
+     * The caller owns and must close the stream.
+     *
+     * @param url     request url
+     * @param json    JSON request body
+     * @param headers extra headers, nullable
+     * @param timeout read timeout
+     * @return response body stream
+     * @throws IOException          on transport failure
+     * @throws InterruptedException when the call is interrupted
+     */
+    public static InputStream postJsonStream(String url, String json, Map<String, String> headers, Duration timeout)
+            throws IOException, InterruptedException {
+        HttpRequest.Builder builder = builder(url, headers, timeout)
+                .header("Content-Type", "application/json")
+                .header("Accept", "text/event-stream")
+                .POST(HttpRequest.BodyPublishers.ofString(json == null ? "" : json, StandardCharsets.UTF_8));
+
+        HttpResponse<InputStream> response = HTTP_CLIENT.send(builder.build(),
+                HttpResponse.BodyHandlers.ofInputStream());
+
+        return response.body();
     }
 
     /**

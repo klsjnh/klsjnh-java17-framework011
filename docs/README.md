@@ -18,10 +18,10 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · 020 容器化部署 |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 016 持久化体系 · 017 动态数据源 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（重构规划）** · 020 容器化部署 |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
-| requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码）· 028 AI 模型接入（ai011，已编码）· 030 AI 模型调用 + **AI 能力（chat/图片/TTS，已编码）** |
-| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 ai011 / 029 存储中心管理面 / 030 AI 模型调用（含图片/TTS 能力） 均已编码；IAM 各主题按 011→013→编码 推进 |
+| requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** |
+| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 模型调用（含图片/TTS 能力） 均已编码；IAM 各主题按 011→013→编码 推进 |
 | archive011/ | 历史工作日志归档 |
 
 > **两源一汇（2026-09-20 约定）**：架构类需求（平台能力演进）入 `infrastructure011/`；普通需求（业务诉求）入 `requirement011/`；两路合流至 `requirement013/`（详细设计 · 对接代码）。判据见 [011.agreements.md](011.agreements.md) §015。
@@ -49,9 +49,9 @@
 | 025 | 在用 | requirement011 平台导出（export） |
 | 026 | 在用 | requirement011/013 数据源管理（datasource 域 / july_datasource） |
 | 027 | 在用 | requirement011 数据字典（system011 / july_dictionary） |
-| 028 | 在用 | requirement011/013 AI 模型接入（ai011 / july_ai_model_provider） |
+| 028 | 在用 | requirement011/013 AI 模型接入（aicenter / july_ai_model_provider） |
 | 029 | 在用 | requirement011/013 存储中心管理面（storagecenter / july_storage_provider + july_storage_provider_bucket） |
-| 030 | 在用 | requirement011/013 AI 模型调用（chat / 文生图 / 图生图 / TTS 能力，ai011） |
+| 030 | 在用 | requirement011/013 AI 模型调用（推理 / 文生图 / 图生图 / TTS / 语音识别，aicenter） |
 
 > 历史：`020 / 021`（并入 019）、`022 / 023 / 025 / 026 / 027 / 028`（旧主题/角色/组织等）为 **2026-09-14 前的历史占用**，号不回收；本表仅登记**现行**用途。
 

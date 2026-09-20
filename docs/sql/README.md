@@ -12,7 +12,7 @@
    |----|------|
    | system011 | `july_config` · `july_menu` · `july_organization` · `july_user` · `july_role` · `july_scheduler` · `july_dictionary` |
    | datasource | `july_datasource` |
-   | ai011 | `july_ai_model_provider` |
+   | aicenter | `july_ai_model_provider` |
    | storagecenter | `july_storage_provider` · `july_storage_provider_bucket` |
    | messagecenter（出站） | `july_message_outbound_channel` · `july_message_outbound_template` · `july_message_outbound` |
    | messagecenter（入站） | `july_message_inbound_channel` · `july_message_inbound_template` · `july_message_inbound` |
