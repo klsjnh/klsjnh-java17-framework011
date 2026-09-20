@@ -165,7 +165,23 @@ public final class HttpUtil011 {
      */
     public static HttpResponse011 postJson(String url, String json, Map<String, String> headers)
             throws IOException, InterruptedException {
-        HttpRequest.Builder builder = builder(url, headers, REQUEST_TIMEOUT)
+        return postJson(url, json, headers, REQUEST_TIMEOUT);
+    }
+
+    /**
+     * HTTP POST a JSON body with extra headers and an explicit timeout.
+     *
+     * @param url     request url
+     * @param json    JSON request body
+     * @param headers extra headers, nullable
+     * @param timeout read timeout
+     * @return response
+     * @throws IOException          on transport failure
+     * @throws InterruptedException when the call is interrupted
+     */
+    public static HttpResponse011 postJson(String url, String json, Map<String, String> headers, Duration timeout)
+            throws IOException, InterruptedException {
+        HttpRequest.Builder builder = builder(url, headers, timeout)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json == null ? "" : json, StandardCharsets.UTF_8));
 
