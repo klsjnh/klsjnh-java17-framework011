@@ -71,10 +71,12 @@ public class JulySchedulerUseCase {
      * @param schedulerName    scheduler name
      * @param schedulerHandler handler content (Spring bean name)
      * @param schedulerCron    cron expression
+     * @param remark           remark, optional
      * @return new task id
      */
     @Transactional
-    public String insert(String schedulerCode, String schedulerName, String schedulerHandler, String schedulerCron) {
+    public String insert(String schedulerCode, String schedulerName, String schedulerHandler, String schedulerCron,
+            String remark) {
         validateCron(schedulerCron);
 
         if (repository.findByCode(schedulerCode) != null) {
@@ -82,7 +84,7 @@ public class JulySchedulerUseCase {
         }
 
         JulyScheduler scheduler = JulyScheduler.create(EntityId.generate(), schedulerCode, schedulerName,
-                schedulerHandler, schedulerCron, AuditInfo.empty());
+                schedulerHandler, schedulerCron, remark, AuditInfo.empty());
         repository.insert(scheduler);
 
         return scheduler.id().value();
@@ -97,10 +99,12 @@ public class JulySchedulerUseCase {
      * @param schedulerHandler handler content
      * @param schedulerCron    cron expression
      * @param status           runtime status ("1" running / "0" stopped)
+     * @param remark           remark, optional
      * @return updated task id
      */
     @Transactional
-    public String update(String id, String schedulerName, String schedulerHandler, String schedulerCron, String status) {
+    public String update(String id, String schedulerName, String schedulerHandler, String schedulerCron, String status,
+            String remark) {
         Status011 target = Status011.of(status);
 
         if (target == null) {
@@ -110,7 +114,7 @@ public class JulySchedulerUseCase {
         validateCron(schedulerCron);
 
         JulyScheduler scheduler = require(id);
-        scheduler.updateBasics(schedulerName, schedulerHandler, schedulerCron);
+        scheduler.updateBasics(schedulerName, schedulerHandler, schedulerCron, remark);
 
         if (target == Status011.ENABLED) {
             scheduler.start();

@@ -21,7 +21,7 @@ import com.klsjnh.domain.shared.EntityId;
 
 import com.klsjnh.infrastructure.iam.role.entity.JulyRolePo;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository021;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.iam.role.mapper.JulyRoleMapper;
 
@@ -34,12 +34,12 @@ import java.util.List;
 
 /**
  * Repository implementation for the JulyRole aggregate: master of the
- * role_permissions child (BaseMasterSubRepository021).
+ * role_permissions child (BaseMasterSubRepository011).
  */
 
 @Repository
 public class JulyRoleRepositoryImpl
-        extends BaseMasterSubRepository021<JulyRolePo, JulyRoleMapper>
+        extends BaseMasterSubRepository011<JulyRolePo, JulyRoleMapper>
         implements JulyRoleRepository {
 
     /**

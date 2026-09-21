@@ -43,6 +43,10 @@ public class JulyConfigVo011 {
     @Schema(description = "状态（0 停用 / 1 启用）")
     private String status;
 
+    /** Remark, max 300. */
+    @Schema(description = "备注（最长 300）")
+    private String remark;
+
     /** Creator. */
     @Schema(description = "创建人")
     private String createBy;

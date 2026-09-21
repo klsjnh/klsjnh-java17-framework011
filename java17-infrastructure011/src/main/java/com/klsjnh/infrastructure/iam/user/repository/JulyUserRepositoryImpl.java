@@ -24,7 +24,7 @@ import com.klsjnh.domain.shared.EntityId;
 
 import com.klsjnh.infrastructure.iam.user.entity.JulyUserPo;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository021;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.iam.user.mapper.JulyUserMapper;
 import com.klsjnh.infrastructure.iam.role.repository.JulyUserRoleRepositoryImpl;
@@ -40,12 +40,12 @@ import java.util.List;
 
 /**
  * Repository implementation for the JulyUser aggregate: master of the
- * user_role / user_audit children (BaseMasterSubRepository021).
+ * user_role / user_audit children (BaseMasterSubRepository011).
  */
 
 @Repository
 public class JulyUserRepositoryImpl
-        extends BaseMasterSubRepository021<JulyUserPo, JulyUserMapper>
+        extends BaseMasterSubRepository011<JulyUserPo, JulyUserMapper>
         implements JulyUserRepository {
 
     /**

@@ -220,6 +220,7 @@ public class JulyConfigRepositoryImpl
         po.setCode(config.code());
         po.setData(config.data());
         po.setStatus(config.status());
+        po.setRemark(config.remark());
 
         return po;
     }
@@ -233,6 +234,7 @@ public class JulyConfigRepositoryImpl
     private JulyConfig toAggregate(JulyConfigPo po) {
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
-        return new JulyConfig(EntityId.of(po.getId()), po.getCode(), po.getData(), po.getStatus(), audit);
+        return new JulyConfig(EntityId.of(po.getId()), po.getCode(), po.getData(), po.getStatus(), po.getRemark(),
+                audit);
     }
 }

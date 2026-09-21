@@ -110,7 +110,7 @@ public class JulyDictionaryController {
         String funcName = "insert";
 
         return Response011.successId(funcName, julyDictionaryUseCase.insert(vo.getDictionaryCode(), vo.getSortOrder(),
-                vo.getDictionaryName(), vo.getRemark()));
+                vo.getDictionaryName(), vo.getStatus(), vo.getRemark()));
     }
 
     /**
@@ -204,7 +204,7 @@ public class JulyDictionaryController {
         String funcName = "insert item";
 
         return Response011.successId(funcName, julyDictionaryUseCase.insertItem(vo.getDictionaryCode(), vo.getSortOrder(),
-                vo.getItemCode(), vo.getItemLabel(), vo.getRemark()));
+                vo.getItemCode(), vo.getItemLabel(), vo.getStatus(), vo.getRemark()));
     }
 
     /**

@@ -68,16 +68,20 @@ public class JulyDictionaryUseCase {
      * @param dictionaryCode dictionary code, unique, immutable
      * @param sortOrder      manual sort order, null falls back to the default
      * @param dictionaryName dictionary display name
+     * @param status         row status, null falls back to enabled
      * @param remark         remark, optional
      * @return new dictionary id
      */
     @Transactional
-    public String insert(String dictionaryCode, Integer sortOrder, String dictionaryName, String remark) {
+    public String insert(String dictionaryCode, Integer sortOrder, String dictionaryName, String status,
+            String remark) {
         if (repository.findByCode(dictionaryCode) != null) {
             throw BusinessException.badRequest("dictionary code already exists: " + dictionaryCode);
         }
 
-        JulyDictionary dictionary = newDictionary(dictionaryCode, sortOrder, dictionaryName, remark);
+        requireStatus(status);
+
+        JulyDictionary dictionary = newDictionary(dictionaryCode, sortOrder, dictionaryName, status, remark);
         repository.insert(dictionary);
 
         return dictionary.id().value();
@@ -182,11 +186,13 @@ public class JulyDictionaryUseCase {
      * @param sortOrder      manual sort order, null falls back to the default
      * @param itemCode       item code, unique within the dictionary
      * @param itemLabel      item display name
+     * @param status         row status, null falls back to enabled
      * @param remark         remark, optional
      * @return new item id
      */
     @Transactional
-    public String insertItem(String dictionaryCode, Integer sortOrder, String itemCode, String itemLabel, String remark) {
+    public String insertItem(String dictionaryCode, Integer sortOrder, String itemCode, String itemLabel,
+            String status, String remark) {
         JulyDictionary dictionary = repository.findByCode(dictionaryCode);
 
         if (dictionary == null) {
@@ -199,7 +205,9 @@ public class JulyDictionaryUseCase {
             throw BusinessException.badRequest("item code already exists in dictionary: " + itemCode);
         }
 
-        JulyDictionaryItem item = newItem(dictionaryId, sortOrder, itemCode, itemLabel, remark);
+        requireStatus(status);
+
+        JulyDictionaryItem item = newItem(dictionaryId, sortOrder, itemCode, itemLabel, status, remark);
         itemRepository.insert(item);
 
         return item.id().value();
@@ -352,12 +360,14 @@ public class JulyDictionaryUseCase {
      * @param dictionaryCode dictionary code
      * @param sortOrder      manual sort order
      * @param dictionaryName dictionary display name
+     * @param status         row status
      * @param remark         remark
      * @return new aggregate
      */
-    private JulyDictionary newDictionary(String dictionaryCode, Integer sortOrder, String dictionaryName, String remark) {
+    private JulyDictionary newDictionary(String dictionaryCode, Integer sortOrder, String dictionaryName, String status,
+            String remark) {
         try {
-            return JulyDictionary.create(EntityId.generate(), dictionaryCode, sortOrder, dictionaryName, remark,
+            return JulyDictionary.create(EntityId.generate(), dictionaryCode, sortOrder, dictionaryName, status, remark,
                     AuditInfo.empty());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
@@ -372,14 +382,15 @@ public class JulyDictionaryUseCase {
      * @param sortOrder    manual sort order
      * @param itemCode     item code
      * @param itemLabel    item display name
+     * @param status       row status
      * @param remark       remark
      * @return new entity
      */
     private JulyDictionaryItem newItem(String dictionaryId, Integer sortOrder, String itemCode, String itemLabel,
-            String remark) {
+            String status, String remark) {
         try {
-            return JulyDictionaryItem.create(EntityId.generate(), dictionaryId, sortOrder, itemCode, itemLabel, remark,
-                    AuditInfo.empty());
+            return JulyDictionaryItem.create(EntityId.generate(), dictionaryId, sortOrder, itemCode, itemLabel, status,
+                    remark, AuditInfo.empty());
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
         }

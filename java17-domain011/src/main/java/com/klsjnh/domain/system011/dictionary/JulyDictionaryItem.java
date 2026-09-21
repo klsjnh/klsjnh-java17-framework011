@@ -104,16 +104,17 @@ public class JulyDictionaryItem {
      * @param sortOrder manual sort order, null falls back to the default
      * @param itemCode  item code, unique within the dictionary, max 60
      * @param itemLabel item display name, max 100
+     * @param status    row status, null falls back to enabled
      * @param remark    remark, optional, max 300
      * @param audit     audit info
      * @return new entity
      */
     public static JulyDictionaryItem create(EntityId id, String pkMt, Integer sortOrder, String itemCode,
-            String itemLabel, String remark, AuditInfo audit) {
+            String itemLabel, String status, String remark, AuditInfo audit) {
         validate(pkMt, itemCode, itemLabel, remark);
 
-        return new JulyDictionaryItem(id, pkMt, sortOrder, itemCode, itemLabel, Status011.ENABLED.getCode(), remark,
-                audit);
+        return new JulyDictionaryItem(id, pkMt, sortOrder, itemCode, itemLabel,
+                status == null ? Status011.ENABLED.getCode() : status, remark, audit);
     }
 
     /**

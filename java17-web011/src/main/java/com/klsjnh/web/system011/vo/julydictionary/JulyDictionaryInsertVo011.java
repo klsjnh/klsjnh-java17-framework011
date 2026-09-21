@@ -37,6 +37,10 @@ public class JulyDictionaryInsertVo011 {
     @Schema(description = "字典名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictionaryName;
 
+    /** Row status: 0 disabled / 1 enabled; blank falls back to enabled. */
+    @Schema(description = "状态（0 停用 / 1 启用，留空默认启用）")
+    private String status;
+
     /** Remark, max 300. */
     @Schema(description = "备注（最长 300）")
     private String remark;

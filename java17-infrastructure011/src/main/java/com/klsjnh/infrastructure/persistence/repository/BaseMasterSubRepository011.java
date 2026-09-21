@@ -1,6 +1,6 @@
 package com.klsjnh.infrastructure.persistence.repository;
 
-/*                BaseMasterSubRepository021 class
+/*                BaseMasterSubRepository011 class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
@@ -10,7 +10,8 @@ package com.klsjnh.infrastructure.persistence.repository;
  *===========================================
  *          modify history
  *
- *      2026.09.12  base master sub repository 021 class
+ *      2026.09.12  base master sub repository class
+ *      2026.09.21  renamed from BaseMasterSubRepository021; cascade rules extracted to MasterSubSupport
  *
  */
 
@@ -19,8 +20,8 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.infrastructure.persistence.entity.BasePo;
 import com.klsjnh.infrastructure.persistence.entity.MasterLinked;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
+import com.klsjnh.infrastructure.persistence.support.MasterSubSupport;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import java.util.HashMap;
@@ -28,9 +29,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Master-sub repository base (tier 021): cascade behaviour for master tables
- * that own child tables — whole save (master + children), query with children
- * and cascade logical delete.
+ * Master-sub repository base: cascade behaviour for master tables that own
+ * child tables — whole save (master + children), query with children and
+ * cascade logical delete. The cascade rules live in {@link MasterSubSupport}.
  * <p>
  * Subclasses implement {@link #getChildServices()} to declare the child
  * repositories; each child PO implements {@link MasterLinked} (the fixed
@@ -40,15 +41,18 @@ import java.util.Map;
  * safe inside one.
  * </p>
  * <p>
- * Both shapes are supported: one-master-one-child (a single-entry children
- * map) and one-master-multiple-children (multiple entries).
+ * The type bound is {@link BasePo}, so this base serves both unsorted
+ * ({@code BasePo}) and sorted ({@code BasePo011}) master tables; the 011 suffix
+ * labels the repository base family, not a sort-order requirement. Both shapes
+ * are supported: one-master-one-child (a single-entry children map) and
+ * one-master-multiple-children (multiple entries).
  * </p>
  *
  * @param <T> master PO type (extends {@link BasePo})
  * @param <M> master mapper type
  */
 
-public abstract class BaseMasterSubRepository021<T extends BasePo, M extends BaseMapper<T>>
+public abstract class BaseMasterSubRepository011<T extends BasePo, M extends BaseMapper<T>>
         extends BaseRepository<T, M> {
 
     /**
@@ -57,7 +61,7 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
      * @param mapper       master mapper
      * @param commonMapper native sql mapper
      */
-    protected BaseMasterSubRepository021(M mapper, CommonMapper commonMapper) {
+    protected BaseMasterSubRepository011(M mapper, CommonMapper commonMapper) {
         super(mapper, commonMapper);
     }
 
@@ -97,22 +101,7 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
      */
     public <C extends BasePo & MasterLinked> void saveChildren(String masterId,
             BaseRepository<C, ?> childService, List<C> children) {
-        String funcName = "save children";
-
-        if (masterId == null || masterId.isBlank()) {
-            throw BusinessException.badRequest(funcName + ": master id is required");
-        }
-
-        deleteChildrenByMaster(masterId, childService);
-
-        if (children == null || children.isEmpty()) {
-            return;
-        }
-
-        for (C child : children) {
-            child.setPkMt(masterId);
-            childService.insert(child);
-        }
+        MasterSubSupport.saveChildren(masterId, childService, children);
     }
 
     /**
@@ -140,36 +129,10 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
         }
 
         for (Map.Entry<BaseRepository<?, ?>, List<? extends BasePo>> entry : childrenByService.entrySet()) {
-            saveChildrenRaw(master.getId(), entry.getKey(), entry.getValue());
+            MasterSubSupport.saveChildrenRaw(master.getId(), entry.getKey(), entry.getValue());
         }
 
         return master;
-    }
-
-    /**
-     * Raw-type bridge for the wildcard map in {@link #saveWhole}: replace old
-     * children, then insert the given list with the master link set. Children
-     * not implementing {@link MasterLinked} are rejected loudly instead of
-     * being inserted with a blank master link.
-     *
-     * @param masterId     master id
-     * @param childService the child repository
-     * @param children     child entities
-     */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void saveChildrenRaw(String masterId, BaseRepository childService, List children) {
-        String funcName = "save children";
-
-        deleteChildrenByMaster(masterId, childService);
-
-        for (Object child : children) {
-            if (!(child instanceof MasterLinked linked)) {
-                throw BusinessException.badRequest(funcName + ": child must implement MasterLinked");
-            }
-
-            linked.setPkMt(masterId);
-            childService.insert((BasePo) child);
-        }
     }
 
     /**
@@ -195,8 +158,8 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
         result.put("master", master);
 
         for (BaseRepository<?, ?> childService : getChildServices()) {
-            List<?> children = selectChildrenByMaster(id, childService);
-            result.put(childKey(childService), children);
+            List<?> children = MasterSubSupport.selectChildrenByMaster(id, childService);
+            result.put(MasterSubSupport.childKey(childService), children);
         }
 
         return result;
@@ -216,7 +179,7 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
         }
 
         for (BaseRepository<?, ?> childService : getChildServices()) {
-            deleteChildrenByMaster(id, childService);
+            MasterSubSupport.deleteChildrenByMaster(id, childService);
         }
 
         T master = getById(id);
@@ -226,72 +189,5 @@ public abstract class BaseMasterSubRepository021<T extends BasePo, M extends Bas
         }
 
         return logicDelete(master);
-    }
-
-    /**
-     * Delete children by master id (logical delete).
-     *
-     * @param masterId     master id
-     * @param childService the child repository
-     * @param <C>          child PO type
-     */
-    protected <C extends BasePo> void deleteChildrenByMaster(String masterId, BaseRepository<C, ?> childService) {
-        for (C child : selectChildrenByMaster(masterId, childService)) {
-            childService.logicDelete(child);
-        }
-    }
-
-    /**
-     * Select children by master id (the alive filter comes from
-     * {@code @TableLogic} automatically).
-     *
-     * @param masterId     master id
-     * @param childService the child repository
-     * @param <C>          child PO type
-     * @return matching children
-     */
-    protected <C extends BasePo> List<C> selectChildrenByMaster(String masterId, BaseRepository<C, ?> childService) {
-        QueryWrapper<C> w = new QueryWrapper<>();
-        w.eq(masterIdColumnFor(childService), masterId);
-
-        return childService.selectList(w);
-    }
-
-    /**
-     * Resolve the master link column for a child repository. Framework-fixed
-     * to {@code pk_mt}; subclasses rarely override.
-     *
-     * @param childService the child repository
-     * @return master link column name
-     */
-    protected String masterIdColumnFor(BaseRepository<?, ?> childService) {
-        return "pk_mt";
-    }
-
-    /**
-     * Child repository to response key mapping: the child repository class
-     * simple name minus the RepositoryImpl suffix, decapitalized.
-     *
-     * @param childService the child repository
-     * @return response key
-     */
-    protected String childKey(BaseRepository<?, ?> childService) {
-        String name = childService.getClass().getSimpleName().replace("RepositoryImpl", "");
-
-        return decapitalize(name);
-    }
-
-    /**
-     * Lowercase the first char.
-     *
-     * @param name input string
-     * @return string with lowercased first char
-     */
-    private String decapitalize(String name) {
-        if (name == null || name.isEmpty()) {
-            return name;
-        }
-
-        return Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
 }

@@ -97,16 +97,17 @@ public class JulyDictionary {
      * @param dictionaryCode dictionary code, unique, max 60
      * @param sortOrder      manual sort order, null falls back to the default
      * @param dictionaryName dictionary display name, max 100
+     * @param status         row status, null falls back to enabled
      * @param remark         remark, optional, max 300
      * @param audit          audit info
      * @return new aggregate
      */
     public static JulyDictionary create(EntityId id, String dictionaryCode, Integer sortOrder, String dictionaryName,
-            String remark, AuditInfo audit) {
+            String status, String remark, AuditInfo audit) {
         validate(dictionaryCode, dictionaryName, remark);
 
-        return new JulyDictionary(id, dictionaryCode, sortOrder, dictionaryName, Status011.ENABLED.getCode(), remark,
-                audit);
+        return new JulyDictionary(id, dictionaryCode, sortOrder, dictionaryName,
+                status == null ? Status011.ENABLED.getCode() : status, remark, audit);
     }
 
     /**

@@ -54,6 +54,11 @@ public class JulyConfig {
     private String status;
 
     /**
+     * Remark, optional.
+     */
+    private String remark;
+
+    /**
      * Audit info.
      */
     private AuditInfo audit;
@@ -65,13 +70,15 @@ public class JulyConfig {
      * @param code  config key, unique
      * @param data  config value
      * @param status config status
+     * @param remark remark, optional, max 300
      * @param audit audit info
      */
-    public JulyConfig(EntityId id, String code, String data, String status, AuditInfo audit) {
+    public JulyConfig(EntityId id, String code, String data, String status, String remark, AuditInfo audit) {
         this.id = id;
         this.code = code;
         this.data = data;
         this.status = status == null ? Status011.ENABLED.getCode() : status;
+        this.remark = remark;
         this.audit = audit == null ? AuditInfo.empty() : audit;
     }
 
@@ -82,13 +89,15 @@ public class JulyConfig {
      * @param code   config key, unique, max 60
      * @param data   config value, max 300
      * @param status config status, null defaults to enabled
+     * @param remark remark, optional, max 300
      * @param audit  audit info
      * @return new aggregate
      */
-    public static JulyConfig create(EntityId id, String code, String data, String status, AuditInfo audit) {
-        validate(code, data);
+    public static JulyConfig create(EntityId id, String code, String data, String status, String remark,
+            AuditInfo audit) {
+        validate(code, data, remark);
 
-        return new JulyConfig(id, code, data, status, audit);
+        return new JulyConfig(id, code, data, status, remark, audit);
     }
 
     /**
@@ -96,10 +105,12 @@ public class JulyConfig {
      *
      * @param data   config value
      * @param status config status, null keeps the stored one
+     * @param remark remark, optional, max 300
      */
-    public void updateData(String data, String status) {
-        validate(this.code, data);
+    public void updateData(String data, String status, String remark) {
+        validate(this.code, data, remark);
         this.data = data;
+        this.remark = remark;
 
         if (!StringUtil011.isBlank(status)) {
             this.status = status;
@@ -111,11 +122,14 @@ public class JulyConfig {
      *
      * @param code config key
      * @param data config value
+     * @param remark remark, optional
      */
-    private static void validate(String code, String data) {
+    private static void validate(String code, String data, String remark) {
         StringUtil011.requirePresent(code, "config code", 60);
 
         StringUtil011.requirePresent(data, "config data", 300);
+
+        StringUtil011.requireMax(remark, "remark", 300);
     }
 
     /**
@@ -152,6 +166,15 @@ public class JulyConfig {
      */
     public String status() {
         return status;
+    }
+
+    /**
+     * Get the remark.
+     *
+     * @return remark, nullable
+     */
+    public String remark() {
+        return remark;
     }
 
     /**

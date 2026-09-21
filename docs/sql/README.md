@@ -8,15 +8,14 @@
 
 1. **各域建表**（顺序无关，均 `CREATE TABLE IF NOT EXISTS`）：
 
-   | 域 | 文件 |
-   |----|------|
-   | system011 | `july_config` · `july_menu` · `july_organization` · `july_user` · `july_role` · `july_scheduler` · `july_dictionary` |
-   | datasource | `july_datasource` · `july_sync_rule` · `july_sync_rule_column` |
-   | aicenter | `july_ai_model_provider` · `july_ai_domain` · `july_ai_domain_prompt` |
-   | storagecenter | `july_storage_provider` · `july_storage_provider_bucket` |
-   | messagecenter（出站） | `july_message_outbound_channel` · `july_message_outbound_template` · `july_message_outbound` |
-   | messagecenter（入站） | `july_message_inbound_channel` · `july_message_inbound_template` · `july_message_inbound` |
-   | demo | `july_demo011` |
+   | 域 | 文件 | 表 |
+   |----|------|----|
+   | system011 | `july_config.sql` · `july_menu.sql` · `july_organization.sql` · `july_user.sql` · `july_role.sql` · `july_scheduler.sql` · `july_dictionary.sql` | `july_config` · `july_menu` · `july_organization` · `july_user` · `july_role` · `july_scheduler` · `july_dictionary` · `july_dictionary_item` |
+   | datasource | `july_datasource.sql` · `july_sync_rule.sql` | `july_datasource` · `july_sync_rule` · `july_sync_rule_column` |
+   | aicenter | **`july_ai_center.sql`**（模型接入 + 提示词，按中心归并） | `july_ai_model_provider` · `july_ai_model_provider_api` · `july_ai_domain` · `july_ai_domain_prompt` |
+   | storagecenter | `july_storage_provider.sql` | `july_storage_provider` · `july_storage_provider_bucket` |
+   | messagecenter | **`july_message_center.sql`**（出站 + 入站，按中心归并） | `july_message_outbound_channel` · `july_message_outbound_template` · `july_message_outbound` · `july_message_inbound_channel` · `july_message_inbound_template` · `july_message_inbound` |
+   | demo | `july_demo011.sql` | `july_demo011` |
 
 2. **逻辑删除唯一键迁移**：`logic-delete-unique-fix.sql` —— 把业务唯一键切到 `alive_*` 生成列，**必须在对应表建好之后执行一次**。
 

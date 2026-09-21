@@ -68,6 +68,11 @@ public class JulyScheduler {
     private String status;
 
     /**
+     * Remark, optional.
+     */
+    private String remark;
+
+    /**
      * Audit info.
      */
     private AuditInfo audit;
@@ -82,10 +87,11 @@ public class JulyScheduler {
      * @param schedulerCron    cron expression
      * @param executeTimes     execute times, null falls back to 0
      * @param status           runtime status, null falls back to stopped
+     * @param remark           remark, optional, max 300
      * @param audit            audit info
      */
     public JulyScheduler(EntityId id, String schedulerCode, String schedulerName, String schedulerHandler,
-            String schedulerCron, Integer executeTimes, String status, AuditInfo audit) {
+            String schedulerCron, Integer executeTimes, String status, String remark, AuditInfo audit) {
         this.id = id;
         this.schedulerCode = schedulerCode;
         this.schedulerName = schedulerName;
@@ -93,6 +99,7 @@ public class JulyScheduler {
         this.schedulerCron = schedulerCron;
         this.executeTimes = executeTimes == null ? 0 : executeTimes;
         this.status = status == null ? Status011.DISABLED.getCode() : status;
+        this.remark = remark;
         this.audit = audit == null ? AuditInfo.empty() : audit;
     }
 
@@ -104,15 +111,16 @@ public class JulyScheduler {
      * @param schedulerName    scheduler name, max 60
      * @param schedulerHandler handler content, max 300
      * @param schedulerCron    cron expression, max 30
+     * @param remark           remark, optional, max 300
      * @param audit            audit info
      * @return new aggregate in stopped state
      */
     public static JulyScheduler create(EntityId id, String schedulerCode, String schedulerName,
-            String schedulerHandler, String schedulerCron, AuditInfo audit) {
-        validateBasics(schedulerCode, schedulerName, schedulerHandler, schedulerCron);
+            String schedulerHandler, String schedulerCron, String remark, AuditInfo audit) {
+        validateBasics(schedulerCode, schedulerName, schedulerHandler, schedulerCron, remark);
 
         return new JulyScheduler(id, schedulerCode, schedulerName, schedulerHandler, schedulerCron, 0,
-                Status011.DISABLED.getCode(), audit);
+                Status011.DISABLED.getCode(), remark, audit);
     }
 
     /**
@@ -121,12 +129,14 @@ public class JulyScheduler {
      * @param schedulerName    scheduler name, max 60
      * @param schedulerHandler handler content, max 300
      * @param schedulerCron    cron expression, max 30
+     * @param remark           remark, optional, max 300
      */
-    public void updateBasics(String schedulerName, String schedulerHandler, String schedulerCron) {
-        validateBasics(this.schedulerCode, schedulerName, schedulerHandler, schedulerCron);
+    public void updateBasics(String schedulerName, String schedulerHandler, String schedulerCron, String remark) {
+        validateBasics(this.schedulerCode, schedulerName, schedulerHandler, schedulerCron, remark);
         this.schedulerName = schedulerName;
         this.schedulerHandler = schedulerHandler;
         this.schedulerCron = schedulerCron;
+        this.remark = remark;
     }
 
     /**
@@ -150,8 +160,9 @@ public class JulyScheduler {
      * @param name    scheduler name
      * @param handler handler content
      * @param cron    cron expression
+     * @param remark  remark, optional
      */
-    private static void validateBasics(String code, String name, String handler, String cron) {
+    private static void validateBasics(String code, String name, String handler, String cron, String remark) {
         StringUtil011.requirePresent(code, "scheduler code", 30);
 
         StringUtil011.requirePresent(name, "scheduler name", 60);
@@ -159,6 +170,8 @@ public class JulyScheduler {
         StringUtil011.requirePresent(handler, "scheduler handler", 300);
 
         StringUtil011.requirePresent(cron, "scheduler cron", 30);
+
+        StringUtil011.requireMax(remark, "remark", 300);
     }
 
     /**
@@ -222,6 +235,15 @@ public class JulyScheduler {
      */
     public String status() {
         return status;
+    }
+
+    /**
+     * Get the remark.
+     *
+     * @return remark, nullable
+     */
+    public String remark() {
+        return remark;
     }
 
     /**

@@ -69,12 +69,12 @@ public interface JulyAiDomainRepository {
     boolean hasChildren(String parentId);
 
     /**
-     * Load every enabled domain, ordered by sort_order / id, for tree
-     * assembly.
+     * Load the enabled domain tree (nested children, ordered by sort_order /
+     * id). Assembly rules live in the persistence base (`TreeAssembler`).
      *
-     * @return enabled domains, flat
+     * @return enabled domain roots with nested children
      */
-    List<JulyAiDomain> findAllEnabled();
+    List<JulyAiDomain> findTree();
 
     /**
      * Offset page query.

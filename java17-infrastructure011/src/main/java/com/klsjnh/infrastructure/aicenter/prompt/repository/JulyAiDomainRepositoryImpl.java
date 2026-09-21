@@ -11,6 +11,7 @@ package com.klsjnh.infrastructure.aicenter.prompt.repository;
  *          modify history
  *
  *      2026.09.21  july ai domain repository impl class
+ *      2026.09.21  extends BaseTreeSubRepository011 (tree + master-sub)
  *
  */
 
@@ -26,6 +27,7 @@ import com.klsjnh.infrastructure.aicenter.prompt.entity.JulyAiDomainPo;
 import com.klsjnh.infrastructure.aicenter.prompt.mapper.JulyAiDomainMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.repository.BaseTreeSubRepository011;
 
 import org.springframework.stereotype.Repository;
 
@@ -36,21 +38,31 @@ import java.util.List;
 
 /**
  * Repository implementation for the JulyAiDomain aggregate (july_ai_domain,
- * business unique column domain_code).
+ * business unique column domain_code): a tree master (parent_id + sort_order)
+ * whose child table is july_ai_domain_prompt (pk_mt), hence
+ * {@link BaseTreeSubRepository011}.
  */
 
 @Repository
-public class JulyAiDomainRepositoryImpl extends BaseRepository<JulyAiDomainPo, JulyAiDomainMapper>
+public class JulyAiDomainRepositoryImpl extends BaseTreeSubRepository011<JulyAiDomainPo, JulyAiDomainMapper>
         implements JulyAiDomainRepository {
+
+    /**
+     * Prompt (child) repository.
+     */
+    private final JulyAiDomainPromptRepositoryImpl promptRepository;
 
     /**
      * Create the repository.
      *
-     * @param mapper       mybatis-plus mapper
-     * @param commonMapper native sql mapper
+     * @param mapper           mybatis-plus mapper
+     * @param commonMapper     native sql mapper
+     * @param promptRepository prompt child repository
      */
-    public JulyAiDomainRepositoryImpl(JulyAiDomainMapper mapper, CommonMapper commonMapper) {
+    public JulyAiDomainRepositoryImpl(JulyAiDomainMapper mapper, CommonMapper commonMapper,
+            JulyAiDomainPromptRepositoryImpl promptRepository) {
         super(mapper, commonMapper);
+        this.promptRepository = promptRepository;
     }
 
     /** {@inheritDoc} */
@@ -75,6 +87,22 @@ public class JulyAiDomainRepositoryImpl extends BaseRepository<JulyAiDomainPo, J
     @Override
     protected String duplicateMessage() {
         return "domain code already exists";
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected List<BaseRepository<?, ?>> getChildServices() {
+        return List.of(promptRepository);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The tree carries only enabled domains, ordered by sort_order / id.</p>
+     */
+    @Override
+    protected QueryWrapper<JulyAiDomainPo> treeWrapper() {
+        return super.treeWrapper().eq("status", Status011.ENABLED.getCode());
     }
 
     /** {@inheritDoc} */
@@ -130,13 +158,8 @@ public class JulyAiDomainRepositoryImpl extends BaseRepository<JulyAiDomainPo, J
 
     /** {@inheritDoc} */
     @Override
-    public List<JulyAiDomain> findAllEnabled() {
-        QueryWrapper<JulyAiDomainPo> wrapper = new QueryWrapper<>();
-        wrapper.eq("status", Status011.ENABLED.getCode())
-                .orderByAsc("sort_order")
-                .orderByAsc("id");
-
-        return mapper.selectList(wrapper).stream().map(this::toAggregate).toList();
+    public List<JulyAiDomain> findTree() {
+        return selectTree().stream().map(this::toAggregateTree).toList();
     }
 
     /** {@inheritDoc} */
@@ -204,7 +227,7 @@ public class JulyAiDomainRepositoryImpl extends BaseRepository<JulyAiDomainPo, J
     }
 
     /**
-     * Map a PO to the aggregate.
+     * Map a PO to the aggregate (children not mapped).
      *
      * @param po PO
      * @return aggregate
@@ -214,5 +237,21 @@ public class JulyAiDomainRepositoryImpl extends BaseRepository<JulyAiDomainPo, J
 
         return new JulyAiDomain(EntityId.of(po.getId()), po.getDomainCode(), po.getDomainName(), po.getParentId(),
                 po.getSortOrder(), po.getStatus(), po.getRemark(), audit);
+    }
+
+    /**
+     * Map a PO tree to an aggregate tree (children mapped recursively).
+     *
+     * @param po PO node
+     * @return aggregate node with nested children
+     */
+    private JulyAiDomain toAggregateTree(JulyAiDomainPo po) {
+        JulyAiDomain domain = toAggregate(po);
+
+        for (JulyAiDomainPo child : po.getChildren()) {
+            domain.addChild(toAggregateTree(child));
+        }
+
+        return domain;
     }
 }

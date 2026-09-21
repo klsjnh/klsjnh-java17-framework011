@@ -35,4 +35,7 @@ public class JulyConfigPo extends BasePo {
 
     /** Config value (String; consumer parses). */
     private String data;
+
+    /** Remark, optional. */
+    private String remark;
 }

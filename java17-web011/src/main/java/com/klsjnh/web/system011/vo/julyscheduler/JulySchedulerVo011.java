@@ -56,6 +56,10 @@ public class JulySchedulerVo011 {
     @Schema(description = "运行态（0 停止 / 1 运行）")
     private String status;
 
+    /** Remark, max 300. */
+    @Schema(description = "备注（最长 300）")
+    private String remark;
+
     /** Creator. */
     @Schema(description = "创建人")
     private String createBy;

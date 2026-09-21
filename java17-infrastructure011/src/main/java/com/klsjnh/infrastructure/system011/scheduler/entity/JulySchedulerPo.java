@@ -46,4 +46,7 @@ public class JulySchedulerPo extends BasePo {
 
     /** Execute times, incremented on every trigger. */
     private Integer executeTimes;
+
+    /** Remark, optional. */
+    private String remark;
 }

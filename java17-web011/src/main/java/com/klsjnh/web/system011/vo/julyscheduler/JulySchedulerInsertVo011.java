@@ -41,4 +41,8 @@ public class JulySchedulerInsertVo011 {
     /** Cron expression, max 30, validated on save. */
     @Schema(description = "cron 表达式（最长 30，保存时校验合法性）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String schedulerCron;
+
+    /** Remark, max 300. */
+    @Schema(description = "备注（最长 300）")
+    private String remark;
 }

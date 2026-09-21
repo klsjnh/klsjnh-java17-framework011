@@ -111,7 +111,8 @@ public class JulyConfigController {
     public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo) {
         String funcName = "insert";
 
-        return Response011.successId(funcName, julyConfigUseCase.insert(vo.getCode(), vo.getData(), vo.getStatus()));
+        return Response011.successId(funcName, julyConfigUseCase.insert(vo.getCode(), vo.getData(), vo.getStatus(),
+                vo.getRemark()));
     }
 
     /**
@@ -126,7 +127,7 @@ public class JulyConfigController {
     public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo) {
         String funcName = "update";
 
-        julyConfigUseCase.update(vo.getId(), vo.getData(), vo.getStatus());
+        julyConfigUseCase.update(vo.getId(), vo.getData(), vo.getStatus(), vo.getRemark());
 
         return Response011.successId(funcName, vo.getId());
     }

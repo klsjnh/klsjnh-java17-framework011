@@ -36,4 +36,8 @@ public class JulyConfigUpdateVo011 {
     /** Config status: '0' disabled / '1' enabled; null keeps the stored one. */
     @Schema(description = "状态（0 停用 / 1 启用；留空保持）")
     private String status;
+
+    /** Remark, max 300. */
+    @Schema(description = "备注（最长 300）")
+    private String remark;
 }

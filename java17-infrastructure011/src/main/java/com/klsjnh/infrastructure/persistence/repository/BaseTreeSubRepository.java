@@ -1,17 +1,16 @@
 package com.klsjnh.infrastructure.persistence.repository;
 
-/*                BaseTreeRepository class
+/*                BaseTreeSubRepository class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.12
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.12  base tree repository class
- *      2026.09.21  tree assembly extracted to TreeAssembler (shared with tree-sub base)
+ *      2026.09.21  tree master + child repository base
  *
  */
 
@@ -25,24 +24,31 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import java.util.List;
 
 /**
- * Tree repository base: {@link BaseRepository} plus {@link #selectTree()},
- * which loads all alive rows and assembles them into a nested tree rooted at a
- * blank {@code parent_id} (assembly rules live in {@link TreeAssembler}).
+ * Tree master-sub repository base: a tree master ({@code parent_id}) that also
+ * owns child tables ({@code pk_mt}) — {@link BaseMasterSubRepository011} plus
+ * {@link #selectTree()}. The tree assembly rules live in {@link TreeAssembler};
+ * the cascade rules in {@code MasterSubSupport}.
+ * <p>
+ * The tree chain and the master-sub chain cannot be combined by inheritance
+ * (Java single inheritance), so this base extends the master-sub chain and
+ * re-adds the tree read side; {@link BaseTreeRepository} stays the base for
+ * childless trees.
+ * </p>
  *
- * @param <T> tree PO type (extends {@link TreePo})
- * @param <M> mapper type
+ * @param <T> tree master PO type (extends {@link TreePo})
+ * @param <M> master mapper type
  */
 
-public abstract class BaseTreeRepository<T extends TreePo<T>, M extends BaseMapper<T>>
-        extends BaseRepository<T, M> {
+public abstract class BaseTreeSubRepository<T extends TreePo<T>, M extends BaseMapper<T>>
+        extends BaseMasterSubRepository011<T, M> {
 
     /**
-     * Create the tree repository base.
+     * Create the tree master-sub repository base.
      *
-     * @param mapper       mybatis-plus mapper
+     * @param mapper       master mapper
      * @param commonMapper native sql mapper
      */
-    protected BaseTreeRepository(M mapper, CommonMapper commonMapper) {
+    protected BaseTreeSubRepository(M mapper, CommonMapper commonMapper) {
         super(mapper, commonMapper);
     }
 

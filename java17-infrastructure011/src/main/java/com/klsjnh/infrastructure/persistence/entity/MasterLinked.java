@@ -17,7 +17,7 @@ package com.klsjnh.infrastructure.persistence.entity;
 /**
  * Contract for child POs of a master-sub table: the fixed master link column
  * {@code pk_mt} mapped to the {@code pkMt} field. Child POs of
- * BaseMasterSubRepository021 must implement this interface so the cascade
+ * BaseMasterSubRepository011 must implement this interface so the cascade
  * save can set the master link without reflection.
  */
 

@@ -92,7 +92,7 @@ public class JulySchedulerController {
         String funcName = "insert";
 
         return Response011.successId(funcName, julySchedulerUseCase.insert(vo.getSchedulerCode(), vo.getSchedulerName(),
-                vo.getSchedulerHandler(), vo.getSchedulerCron()));
+                vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getRemark()));
     }
 
     /**
@@ -109,7 +109,7 @@ public class JulySchedulerController {
         String funcName = "update";
 
         return Response011.successId(funcName, julySchedulerUseCase.update(vo.getId(), vo.getSchedulerName(),
-                vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getStatus()));
+                vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getStatus(), vo.getRemark()));
     }
 
     /**

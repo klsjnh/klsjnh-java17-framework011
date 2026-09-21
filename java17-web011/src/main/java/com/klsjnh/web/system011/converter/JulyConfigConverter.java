@@ -42,6 +42,7 @@ public class JulyConfigConverter {
         vo.setCode(config.code());
         vo.setData(config.data());
         vo.setStatus(config.status());
+        vo.setRemark(config.remark());
         vo.setCreateBy(config.audit().createBy());
         vo.setUpdateBy(config.audit().updateBy());
         vo.setCreateTime(config.audit().createTime());

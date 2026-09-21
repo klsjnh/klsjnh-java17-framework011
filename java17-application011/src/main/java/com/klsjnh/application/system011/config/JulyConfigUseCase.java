@@ -57,32 +57,34 @@ public class JulyConfigUseCase {
      * @param code   config key, unique
      * @param data   config value
      * @param status config status, null defaults to enabled
+     * @param remark remark, optional
      * @return new config id
      */
     @Transactional
-    public String insert(String code, String data, String status) {
+    public String insert(String code, String data, String status, String remark) {
         if (repository.findEnabledByCode(code) != null) {
             throw BusinessException.badRequest("config code already exists: " + code);
         }
 
-        JulyConfig config = JulyConfig.create(EntityId.generate(), code, data, status, AuditInfo.empty());
+        JulyConfig config = JulyConfig.create(EntityId.generate(), code, data, status, remark, AuditInfo.empty());
         repository.insert(config);
 
         return config.id().value();
     }
 
     /**
-     * Update the value / status of a config entry (code immutable).
+     * Update the value / status / remark of a config entry (code immutable).
      *
      * @param id     config id
      * @param data   config value
      * @param status config status, null keeps the stored one
+     * @param remark remark, optional
      * @return config id
      */
     @Transactional
-    public String update(String id, String data, String status) {
+    public String update(String id, String data, String status, String remark) {
         JulyConfig config = require(id);
-        config.updateData(data, status);
+        config.updateData(data, status, remark);
         repository.update(config);
 
         return config.id().value();

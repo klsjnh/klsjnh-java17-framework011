@@ -213,6 +213,7 @@ public class JulySchedulerRepositoryImpl
         po.setSchedulerCron(scheduler.schedulerCron());
         po.setExecuteTimes(scheduler.executeTimes());
         po.setStatus(scheduler.status());
+        po.setRemark(scheduler.remark());
 
         return po;
     }
@@ -227,6 +228,7 @@ public class JulySchedulerRepositoryImpl
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
         return new JulyScheduler(EntityId.of(po.getId()), po.getSchedulerCode(), po.getSchedulerName(),
-                po.getSchedulerHandler(), po.getSchedulerCron(), po.getExecuteTimes(), po.getStatus(), audit);
+                po.getSchedulerHandler(), po.getSchedulerCron(), po.getExecuteTimes(), po.getStatus(), po.getRemark(),
+                audit);
     }
 }
