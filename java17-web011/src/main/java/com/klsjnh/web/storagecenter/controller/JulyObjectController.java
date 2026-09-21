@@ -22,12 +22,16 @@ import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.storagecenter.object.StorageObjectUseCase;
 import com.klsjnh.application.storagecenter.object.StorageTextContent;
+import com.klsjnh.domain.storagecenter.object.ObjectListing;
 import com.klsjnh.domain.storagecenter.object.ObjectStat;
 
 import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectBatchRemoveVo011;
+import com.klsjnh.web.storagecenter.vo.object.StorageObjectCopyVo011;
+import com.klsjnh.web.storagecenter.vo.object.StorageObjectPageVo011;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectQueryVo011;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectRefVo011;
+import com.klsjnh.web.storagecenter.vo.object.StorageObjectRenameVo011;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectSaveTextVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -172,6 +176,84 @@ public class JulyObjectController {
         }
 
         response.flushBuffer();
+    }
+
+    /**
+     * Download an object as a stream (no full-object buffering; no envelope).
+     *
+     * @param storageCode storage code, optional
+     * @param bucketName  bucket name, optional
+     * @param objectName  object name
+     * @param response    http response
+     * @throws Exception on write failure
+     */
+    @GetMapping("/downloadObjectStream")
+    @Operation(summary = "流式下载对象（不整对象进堆，不走信封）")
+    public void downloadObjectStream(@RequestParam(value = "storageCode", required = false) String storageCode,
+            @RequestParam(value = "bucketName", required = false) String bucketName,
+            @RequestParam("objectName") String objectName, HttpServletResponse response) throws Exception {
+        String fileName = objectName.contains("/") ? objectName.substring(objectName.lastIndexOf('/') + 1)
+                : objectName;
+
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + URLEncoder.encode(fileName, StandardCharsets.UTF_8.name()) + "\"");
+
+        try (InputStream stream = storageObjectUseCase.downloadStream(storageCode, bucketName, objectName)) {
+            StreamUtils.copy(stream, response.getOutputStream());
+        }
+
+        response.flushBuffer();
+    }
+
+    /**
+     * Copy an object within / across buckets.
+     *
+     * @param vo copy request
+     * @return the target key
+     */
+    @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
+    @PostMapping("/copyObject")
+    @Operation(summary = "复制对象（同/跨桶）")
+    public Response011<String> copyObject(@RequestBody StorageObjectCopyVo011 vo) {
+        String funcName = "copy object";
+
+        return Response011.success(funcName, storageObjectUseCase.copy(vo.getStorageCode(), vo.getBucketName(),
+                vo.getObjectName(), vo.getTargetBucket(), vo.getTargetName()));
+    }
+
+    /**
+     * Rename (move) an object within the same bucket.
+     *
+     * @param vo rename request
+     * @return the target key
+     */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
+    @PostMapping("/renameObject")
+    @Operation(summary = "重命名对象（同桶 move）")
+    public Response011<String> renameObject(@RequestBody StorageObjectRenameVo011 vo) {
+        String funcName = "rename object";
+
+        return Response011.success(funcName, storageObjectUseCase.rename(vo.getStorageCode(), vo.getBucketName(),
+                vo.getObjectName(), vo.getTargetName()));
+    }
+
+    /**
+     * Native paged listing (delimiter + marker) — the folder-like view.
+     *
+     * @param vo page request
+     * @return one page of objects / prefixes
+     */
+    @PostMapping("/selectObjectPage")
+    @Operation(summary = "对象原生分页（delimiter 目录 + marker 续传）")
+    public Response011<ObjectListing> selectObjectPage(@RequestBody StorageObjectPageVo011 vo) {
+        String funcName = "select object page";
+
+        int limit = vo.getLimit() == null ? 100 : vo.getLimit();
+        ObjectListing page = storageObjectUseCase.selectObjectPage(vo.getStorageCode(), vo.getBucketName(),
+                vo.getPrefix(), vo.getDelimiter(), limit, vo.getMarker());
+
+        return Response011.success(funcName, page);
     }
 
     /**

@@ -1,46 +1,55 @@
 package com.klsjnh.domain.aicenter.prompt;
 
-/*                JulyAiPromptQuerySpec record
+/*                JulyAiDomainPromptQuerySpec record
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.20
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.20  ai prompt query spec
+ *      2026.09.21  ai domain prompt query spec
  *
  */
 
 import com.klsjnh.common.util.StringUtil011;
 
 /**
- * Prompt page query condition: keyword (code / name), scene and status filters.
+ * Prompt page query condition: keyword (code / name), master, scene and
+ * status filters.
  *
  * @param keyword prompt code / name keyword (fuzzy), nullable
+ * @param pkMt    master id filter, nullable
  * @param scene   scene filter, nullable
  * @param status  row status filter, nullable
  */
 
-public record JulyAiPromptQuerySpec(String keyword, String scene, String status) {
+public record JulyAiDomainPromptQuerySpec(String keyword, String pkMt, String scene, String status) {
 
     /**
-     * Normalize the keyword (blank → null).
+     * Normalize the filters (blank → null).
      *
      * @param keyword prompt code / name keyword (fuzzy), nullable
+     * @param pkMt    master id filter, nullable
      * @param scene   scene filter, nullable
      * @param status  row status filter, nullable
      */
-    public JulyAiPromptQuerySpec {
+    public JulyAiDomainPromptQuerySpec {
         keyword = StringUtil011.blankToNull(keyword);
+        pkMt = StringUtil011.blankToNull(pkMt);
         scene = StringUtil011.blankToNull(scene);
     }
 
     /** @return true when a keyword is present */
     public boolean hasKeyword() {
         return keyword != null;
+    }
+
+    /** @return true when a master id is present */
+    public boolean hasPkMt() {
+        return pkMt != null;
     }
 
     /** @return true when a scene is present */

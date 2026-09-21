@@ -1,16 +1,16 @@
-package com.klsjnh.web.aicenter.vo.aiprompt;
+package com.klsjnh.web.aicenter.vo.aidomain;
 
-/*                JulyAiPromptQueryVo011 class
+/*                JulyAiDomainQueryVo011 class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.20
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.20  ai prompt query vo 011 class
+ *      2026.09.21  ai domain query vo 011 class
  *
  */
 
@@ -19,11 +19,11 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Prompt page query request.
+ * Domain page query request.
  */
 
 @Data
-public class JulyAiPromptQueryVo011 {
+public class JulyAiDomainQueryVo011 {
 
     /** Page index. */
     @Schema(description = "页码（从 1 起）")
@@ -37,9 +37,9 @@ public class JulyAiPromptQueryVo011 {
     @Schema(description = "编码/名称关键字")
     private String keyword;
 
-    /** Scene filter. */
-    @Schema(description = "适用能力过滤")
-    private String scene;
+    /** Parent domain id filter. */
+    @Schema(description = "上级域 id 过滤")
+    private String parentId;
 
     /** Status filter. */
     @Schema(description = "状态（0 停用 / 1 启用）")

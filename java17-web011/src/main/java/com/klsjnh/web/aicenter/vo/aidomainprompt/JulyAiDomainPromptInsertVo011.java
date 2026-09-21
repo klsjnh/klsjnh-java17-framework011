@@ -1,16 +1,16 @@
-package com.klsjnh.web.aicenter.vo.aiprompt;
+package com.klsjnh.web.aicenter.vo.aidomainprompt;
 
-/*                JulyAiPromptDetailSaveVo011 class
+/*                JulyAiDomainPromptInsertVo011 class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.20
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.20  ai prompt detail save vo 011 class
+ *      2026.09.21  ai domain prompt insert vo 011 class
  *
  */
 
@@ -19,23 +19,27 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Prompt detail save request (insert needs promptId; update needs id).
+ * Prompt insert request.
  */
 
 @Data
-public class JulyAiPromptDetailSaveVo011 {
+public class JulyAiDomainPromptInsertVo011 {
 
-    /** Prompt id (insert). */
-    @Schema(description = "提示词 id（新增时传）")
-    private String promptId;
+    /** Master domain id (pk_mt). */
+    @Schema(description = "业务域 id（pk_mt）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String pkMt;
 
-    /** Detail id (update / delete). */
-    @Schema(description = "明细 id（修改/删除时传）")
-    private String id;
+    /** Prompt code, globally unique, immutable. */
+    @Schema(description = "提示词编码（全局唯一，不可变）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String promptCode;
 
-    /** Business domain. */
-    @Schema(description = "业务域", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String domainCode;
+    /** Prompt name. */
+    @Schema(description = "提示词名称", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String promptName;
+
+    /** Scene. */
+    @Schema(description = "适用能力（inference / image / tts）")
+    private String scene;
 
     /** Content mode (inline / storage). */
     @Schema(description = "内容模式（inline / storage，默认 inline）")
@@ -66,6 +70,6 @@ public class JulyAiPromptDetailSaveVo011 {
     private String remark;
 
     /** Row status. */
-    @Schema(description = "状态（0 停用 / 1 启用；留空保持）")
+    @Schema(description = "状态（0 停用 / 1 启用）")
     private String status;
 }

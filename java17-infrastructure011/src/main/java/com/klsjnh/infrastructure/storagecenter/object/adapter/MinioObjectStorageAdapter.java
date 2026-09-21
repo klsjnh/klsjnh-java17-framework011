@@ -17,16 +17,20 @@ package com.klsjnh.infrastructure.storagecenter.object.adapter;
 import lombok.extern.slf4j.Slf4j;
 
 import com.klsjnh.domain.storagecenter.object.BucketInfo;
+import com.klsjnh.domain.storagecenter.object.ObjectListing;
 import com.klsjnh.domain.storagecenter.object.ObjectStat;
 import com.klsjnh.domain.storagecenter.object.ObjectStoragePort;
 import com.klsjnh.domain.storagecenter.object.StorageConnectionConfig;
 import com.klsjnh.domain.storagecenter.object.StorageProbe;
 
 import io.minio.BucketExistsArgs;
+import io.minio.CopyObjectArgs;
+import io.minio.CopySource;
 import io.minio.GetObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.http.Method;
 import io.minio.ListBucketsArgs;
+import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -36,6 +40,7 @@ import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -406,5 +411,107 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
      */
     private String bucketOf(String bucket) {
         return bucket == null || bucket.isBlank() ? defaultBucket() : bucket;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public InputStream getStream(String bucket, String key) {
+        try {
+            client.statObject(StatObjectArgs.builder().bucket(bucketOf(bucket)).object(key).build());
+
+            return client.getObject(GetObjectArgs.builder().bucket(bucketOf(bucket)).object(key).build());
+        } catch (ErrorResponseException ex) {
+            if ("NoSuchKey".equals(ex.errorResponse().code())) {
+                return null;
+            }
+
+            throw new IllegalStateException("getStream failed: " + ex.errorResponse().code(), ex);
+        } catch (Exception ex) {
+            throw new IllegalStateException("getStream failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String putStream(String bucket, String key, InputStream content, long size, String contentType) {
+        try {
+            long partSize = size < 0 ? 10485760L : -1L;
+
+            client.putObject(PutObjectArgs.builder()
+                    .bucket(bucketOf(bucket))
+                    .object(key)
+                    .stream(content, size, partSize)
+                    .contentType(contentType == null ? "application/octet-stream" : contentType)
+                    .build());
+
+            return key;
+        } catch (Exception ex) {
+            throw new IllegalStateException("putStream failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String copy(String bucket, String key, String targetBucket, String targetKey) {
+        try {
+            client.copyObject(CopyObjectArgs.builder()
+                    .bucket(bucketOf(targetBucket))
+                    .object(targetKey)
+                    .source(CopySource.builder().bucket(bucketOf(bucket)).object(key).build())
+                    .build());
+
+            return targetKey;
+        } catch (Exception ex) {
+            throw new IllegalStateException("copy failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String rename(String bucket, String key, String targetKey) {
+        copy(bucket, key, bucket, targetKey);
+        delete(bucket, key);
+
+        return targetKey;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ObjectListing listPage(String bucket, String prefix, String delimiter, int limit, String marker) {
+        int size = Math.max(1, Math.min(limit, 1000));
+        List<ObjectStat> objects = new ArrayList<>();
+        List<String> prefixes = new ArrayList<>();
+        String last = null;
+
+        try {
+            ListObjectsArgs.Builder builder = ListObjectsArgs.builder()
+                    .bucket(bucketOf(bucket))
+                    .prefix(prefix)
+                    .delimiter(delimiter)
+                    .maxKeys(size);
+
+            if (marker != null && !marker.isBlank()) {
+                builder.startAfter(marker);
+            }
+
+            for (var result : client.listObjects(builder.build())) {
+                var item = result.get();
+
+                if (item.isDir()) {
+                    prefixes.add(item.objectName());
+                } else {
+                    LocalDateTime modified = item.lastModified() == null ? null : item.lastModified().toLocalDateTime();
+                    objects.add(new ObjectStat(bucketOf(bucket), item.objectName(), item.size(), modified, null));
+                }
+
+                last = item.objectName();
+            }
+
+            boolean truncated = objects.size() + prefixes.size() >= size;
+
+            return new ObjectListing(objects, prefixes, truncated ? last : null, truncated);
+        } catch (Exception ex) {
+            throw new IllegalStateException("listPage failed: " + ex.getMessage(), ex);
+        }
     }
 }

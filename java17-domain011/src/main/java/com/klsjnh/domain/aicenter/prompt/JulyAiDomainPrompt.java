@@ -1,16 +1,16 @@
 package com.klsjnh.domain.aicenter.prompt;
 
-/*                JulyAiPromptDetail class
+/*                JulyAiDomainPrompt class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.20
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.20  ai prompt detail aggregate (child)
+ *      2026.09.21  ai domain prompt aggregate (child)
  *
  */
 
@@ -21,12 +21,12 @@ import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
 /**
- * AI prompt detail aggregate (child of {@link JulyAiPrompt}): the concrete
- * content for one business domain. {@code inline} keeps the text in
+ * AI prompt aggregate (child of {@link JulyAiDomain}): the concrete prompt
+ * content mounted on one business domain. {@code inline} keeps the text in
  * {@code content}; {@code storage} keeps a pointer into object storage.
  */
 
-public class JulyAiPromptDetail {
+public class JulyAiDomainPrompt {
 
     /** Inline content mode. */
     public static final String MODE_INLINE = "inline";
@@ -43,8 +43,14 @@ public class JulyAiPromptDetail {
     /** Master id (pk_mt). */
     private final String pkMt;
 
-    /** Business domain. */
-    private String domainCode;
+    /** Prompt code, globally unique and immutable. */
+    private final String promptCode;
+
+    /** Prompt name. */
+    private String promptName;
+
+    /** Scene (inference / image / tts), classification only. */
+    private String scene;
 
     /** Content mode (inline / storage). */
     private String contentMode;
@@ -87,7 +93,9 @@ public class JulyAiPromptDetail {
      *
      * @param id          primary key
      * @param pkMt        master id
-     * @param domainCode  business domain
+     * @param promptCode  prompt code
+     * @param promptName  prompt name
+     * @param scene       scene
      * @param contentMode content mode
      * @param content     inline content
      * @param storageCode storage instance code
@@ -101,14 +109,17 @@ public class JulyAiPromptDetail {
      * @param remark      remark
      * @param audit       audit info
      */
-    public JulyAiPromptDetail(EntityId id, String pkMt, String domainCode, String contentMode, String content,
-            String storageCode, String bucket, String objectKey, String contentHash, Long contentSize,
-            String variables, Integer sortOrder, String status, String remark, AuditInfo audit) {
-        validate(domainCode);
+    public JulyAiDomainPrompt(EntityId id, String pkMt, String promptCode, String promptName, String scene,
+            String contentMode, String content, String storageCode, String bucket, String objectKey,
+            String contentHash, Long contentSize, String variables, Integer sortOrder, String status, String remark,
+            AuditInfo audit) {
+        validate(promptCode, promptName);
 
         this.id = id;
         this.pkMt = pkMt;
-        this.domainCode = domainCode;
+        this.promptCode = promptCode;
+        this.promptName = promptName;
+        this.scene = StringUtil011.isBlank(scene) ? "inference" : scene;
         this.contentMode = StringUtil011.isBlank(contentMode) ? MODE_INLINE : contentMode;
         this.content = content;
         this.storageCode = storageCode;
@@ -124,28 +135,34 @@ public class JulyAiPromptDetail {
     }
 
     /**
-     * Factory for a new detail row.
+     * Factory for a new prompt row.
      *
      * @param id          primary key
      * @param pkMt        master id
-     * @param domainCode  business domain
+     * @param promptCode  prompt code
+     * @param promptName  prompt name
+     * @param scene       scene
      * @param contentMode content mode
      * @param content     inline content
      * @param variables   variable declarations
      * @param sortOrder   sort order
      * @param remark      remark
+     * @param status      row status, null falls back to enabled
      * @param audit       audit info
      * @return new aggregate
      */
-    public static JulyAiPromptDetail create(EntityId id, String pkMt, String domainCode, String contentMode,
-            String content, String variables, Integer sortOrder, String remark, AuditInfo audit) {
-        return new JulyAiPromptDetail(id, pkMt, domainCode, contentMode, content, null, null, null, null, null,
-                variables, sortOrder, Status011.ENABLED.getCode(), remark, audit);
+    public static JulyAiDomainPrompt create(EntityId id, String pkMt, String promptCode, String promptName,
+            String scene, String contentMode, String content, String variables, Integer sortOrder, String remark,
+            String status, AuditInfo audit) {
+        return new JulyAiDomainPrompt(id, pkMt, promptCode, promptName, scene, contentMode, content, null, null, null,
+                null, null, variables, sortOrder, status, remark, audit);
     }
 
     /**
-     * Update the content fields.
+     * Update the mutable fields (promptCode is immutable).
      *
+     * @param promptName  prompt name
+     * @param scene       scene
      * @param contentMode content mode
      * @param content     inline content
      * @param storageCode storage instance code
@@ -154,12 +171,17 @@ public class JulyAiPromptDetail {
      * @param contentHash content hash
      * @param contentSize content size
      * @param variables   variable declarations
-     * @param sortOrder   sort order
+     * @param sortOrder   sort order, null keeps the stored one
      * @param remark      remark
      * @param status      row status, null keeps the stored one
      */
-    public void update(String contentMode, String content, String storageCode, String bucket, String objectKey,
-            String contentHash, Long contentSize, String variables, Integer sortOrder, String remark, String status) {
+    public void update(String promptName, String scene, String contentMode, String content, String storageCode,
+            String bucket, String objectKey, String contentHash, Long contentSize, String variables, Integer sortOrder,
+            String remark, String status) {
+        validate(this.promptCode, promptName);
+
+        this.promptName = promptName;
+        this.scene = StringUtil011.isBlank(scene) ? "inference" : scene;
         this.contentMode = StringUtil011.isBlank(contentMode) ? MODE_INLINE : contentMode;
         this.content = content;
         this.storageCode = storageCode;
@@ -182,10 +204,12 @@ public class JulyAiPromptDetail {
     /**
      * Validate the required fields.
      *
-     * @param domainCode business domain
+     * @param promptCode prompt code
+     * @param promptName prompt name
      */
-    private static void validate(String domainCode) {
-        StringUtil011.requirePresent(domainCode, "domain code", 60);
+    private static void validate(String promptCode, String promptName) {
+        StringUtil011.requirePresent(promptCode, "prompt code", 60);
+        StringUtil011.requirePresent(promptName, "prompt name", 100);
     }
 
     /** @return primary key */
@@ -198,9 +222,19 @@ public class JulyAiPromptDetail {
         return pkMt;
     }
 
-    /** @return business domain */
-    public String domainCode() {
-        return domainCode;
+    /** @return prompt code */
+    public String promptCode() {
+        return promptCode;
+    }
+
+    /** @return prompt name */
+    public String promptName() {
+        return promptName;
+    }
+
+    /** @return scene */
+    public String scene() {
+        return scene;
     }
 
     /** @return content mode */

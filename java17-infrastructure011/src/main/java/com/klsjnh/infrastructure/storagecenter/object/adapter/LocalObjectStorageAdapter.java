@@ -15,18 +15,22 @@ package com.klsjnh.infrastructure.storagecenter.object.adapter;
  */
 
 import com.klsjnh.domain.storagecenter.object.BucketInfo;
+import com.klsjnh.domain.storagecenter.object.ObjectListing;
 import com.klsjnh.domain.storagecenter.object.ObjectStat;
 import com.klsjnh.domain.storagecenter.object.ObjectStoragePort;
 import com.klsjnh.domain.storagecenter.object.StorageConnectionConfig;
 import com.klsjnh.domain.storagecenter.object.StorageProbe;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -445,5 +449,117 @@ public class LocalObjectStorageAdapter implements ObjectStoragePort {
         }
 
         return name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public InputStream getStream(String bucket, String key) {
+        try {
+            Path path = resolve(bucket, key);
+
+            return Files.exists(path) ? Files.newInputStream(path) : null;
+        } catch (IOException ex) {
+            throw new IllegalStateException("getStream failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String putStream(String bucket, String key, InputStream content, long size, String contentType) {
+        try {
+            Path path = resolve(bucket, key);
+            Files.createDirectories(path.getParent());
+            Files.copy(content, path, StandardCopyOption.REPLACE_EXISTING);
+
+            return key;
+        } catch (IOException ex) {
+            throw new IllegalStateException("putStream failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String copy(String bucket, String key, String targetBucket, String targetKey) {
+        try {
+            Path source = resolve(bucket, key);
+
+            if (!Files.exists(source)) {
+                throw new IllegalStateException("copy source missing: " + key);
+            }
+
+            Path target = resolve(targetBucket, targetKey);
+            Files.createDirectories(target.getParent());
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+
+            return targetKey;
+        } catch (IOException ex) {
+            throw new IllegalStateException("copy failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String rename(String bucket, String key, String targetKey) {
+        try {
+            Path source = resolve(bucket, key);
+
+            if (!Files.exists(source)) {
+                throw new IllegalStateException("rename source missing: " + key);
+            }
+
+            Path target = resolve(bucket, targetKey);
+            Files.createDirectories(target.getParent());
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            pruneEmptyParents(source.getParent(), Paths.get(config.basePath(), safe(bucket)));
+
+            return targetKey;
+        } catch (IOException ex) {
+            throw new IllegalStateException("rename failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ObjectListing listPage(String bucket, String prefix, String delimiter, int limit, String marker) {
+        int size = Math.max(1, Math.min(limit, 1000));
+        List<ObjectStat> all = listStat(bucket, prefix).stream()
+                .filter(stat -> marker == null || stat.key().compareTo(marker) > 0)
+                .sorted(Comparator.comparing(ObjectStat::key))
+                .toList();
+
+        if (delimiter == null || delimiter.isBlank()) {
+            List<ObjectStat> page = all.stream().limit(size).toList();
+            boolean truncated = all.size() > size;
+            return new ObjectListing(page, List.of(), truncated ? page.get(page.size() - 1).key() : null, truncated);
+        }
+
+        String base = prefix == null ? "" : prefix;
+        List<ObjectStat> objects = new ArrayList<>();
+        List<String> prefixes = new ArrayList<>();
+        String lastKey = null;
+        boolean truncated = false;
+
+        for (ObjectStat stat : all) {
+            if (objects.size() + prefixes.size() >= size) {
+                truncated = true;
+                break;
+            }
+
+            String rest = stat.key().substring(Math.min(base.length(), stat.key().length()));
+            int slash = rest.indexOf(delimiter);
+
+            if (slash >= 0) {
+                String folder = base + rest.substring(0, slash + delimiter.length());
+                if (!prefixes.contains(folder)) {
+                    prefixes.add(folder);
+                }
+            } else {
+                objects.add(stat);
+            }
+
+            lastKey = stat.key();
+        }
+
+        return new ObjectListing(objects, prefixes, truncated ? lastKey : null, truncated);
     }
 }

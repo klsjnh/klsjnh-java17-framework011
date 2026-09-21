@@ -170,4 +170,60 @@ public interface ObjectStoragePort {
      * @return presigned URL / URI
      */
     String presignedGetUrl(String bucket, String key);
+
+    /**
+     * Stream an object (no full-object buffering). Null ONLY when the object is
+     * missing; the caller owns and must close the stream.
+     *
+     * @param bucket bucket
+     * @param key    object key
+     * @return object stream, null when missing
+     */
+    java.io.InputStream getStream(String bucket, String key);
+
+    /**
+     * Store an object from a stream (no full-object buffering).
+     *
+     * @param bucket      bucket
+     * @param key         object key
+     * @param content     object stream, owned by the callee
+     * @param size        content length, -1 when unknown
+     * @param contentType mime type, nullable
+     * @return the final stored key
+     */
+    String putStream(String bucket, String key, java.io.InputStream content, long size, String contentType);
+
+    /**
+     * Copy an object within / across buckets.
+     *
+     * @param bucket       source bucket
+     * @param key          source key
+     * @param targetBucket target bucket
+     * @param targetKey    target key
+     * @return the target key
+     */
+    String copy(String bucket, String key, String targetBucket, String targetKey);
+
+    /**
+     * Rename (move) an object within the same bucket.
+     *
+     * @param bucket    bucket
+     * @param key       source key
+     * @param targetKey target key
+     * @return the target key
+     */
+    String rename(String bucket, String key, String targetKey);
+
+    /**
+     * Native paged listing with delimiter (folder-like prefixes) and a marker
+     * (continue after the last key of the previous page).
+     *
+     * @param bucket    bucket
+     * @param prefix    key prefix, nullable for all
+     * @param delimiter directory delimiter (e.g. {@code /}), nullable for flat
+     * @param limit     max entries this page, clamped by the adapter
+     * @param marker    continue-after key, nullable for the first page
+     * @return one page of objects / prefixes plus the next marker
+     */
+    ObjectListing listPage(String bucket, String prefix, String delimiter, int limit, String marker);
 }

@@ -1,16 +1,16 @@
 package com.klsjnh.infrastructure.aicenter.prompt.entity;
 
-/*                JulyAiPromptDetailPo class
+/*                JulyAiDomainPromptPo class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.20
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.20  july ai prompt detail po class
+ *      2026.09.21  july ai domain prompt po class
  *
  */
 
@@ -23,19 +23,25 @@ import com.klsjnh.infrastructure.persistence.entity.MasterLinked;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 /**
- * AI prompt detail persistence PO mapped to july_ai_prompt_detail (child).
+ * AI prompt persistence PO mapped to july_ai_domain_prompt (child).
  */
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("july_ai_prompt_detail")
-public class JulyAiPromptDetailPo extends BasePo011 implements MasterLinked {
+@TableName("july_ai_domain_prompt")
+public class JulyAiDomainPromptPo extends BasePo011 implements MasterLinked {
 
-    /** Master link: prompt id (pk_mt). */
+    /** Master link: domain id (pk_mt). */
     private String pkMt;
 
-    /** Business domain. */
-    private String domainCode;
+    /** Prompt code, globally unique, immutable. */
+    private String promptCode;
+
+    /** Prompt name. */
+    private String promptName;
+
+    /** Scene (inference / image / tts). */
+    private String scene;
 
     /** Content mode (inline / storage). */
     private String contentMode;

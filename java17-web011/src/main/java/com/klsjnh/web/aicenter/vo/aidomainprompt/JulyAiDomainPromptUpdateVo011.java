@@ -1,16 +1,16 @@
-package com.klsjnh.web.aicenter.vo.aiprompt;
+package com.klsjnh.web.aicenter.vo.aidomainprompt;
 
-/*                JulyAiPromptDetailVo011 class
+/*                JulyAiDomainPromptUpdateVo011 class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.20
+ *      @createdate 2026.09.21
  *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.20  ai prompt detail vo 011 class
+ *      2026.09.21  ai domain prompt update vo 011 class
  *
  */
 
@@ -19,19 +19,23 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Prompt detail (business domain + content).
+ * Prompt update request (promptCode is immutable).
  */
 
 @Data
-public class JulyAiPromptDetailVo011 {
+public class JulyAiDomainPromptUpdateVo011 {
 
-    /** Detail id (for update / delete). */
-    @Schema(description = "明细 id（改/删时传）")
+    /** Prompt id. */
+    @Schema(description = "提示词 id", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
-    /** Business domain. */
-    @Schema(description = "业务域", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String domainCode;
+    /** Prompt name. */
+    @Schema(description = "提示词名称", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String promptName;
+
+    /** Scene. */
+    @Schema(description = "适用能力（inference / image / tts）")
+    private String scene;
 
     /** Content mode (inline / storage). */
     @Schema(description = "内容模式（inline / storage，默认 inline）")
@@ -62,6 +66,6 @@ public class JulyAiPromptDetailVo011 {
     private String remark;
 
     /** Row status. */
-    @Schema(description = "状态（0 停用 / 1 启用；改时留空保持）")
+    @Schema(description = "状态（0 停用 / 1 启用；留空保持）")
     private String status;
 }
