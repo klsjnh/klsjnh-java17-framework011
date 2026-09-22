@@ -1,6 +1,9 @@
 /**
- * AST-level standards checks (tree-sitter-java), loaded from the system
- * node_modules — no dependency is added to the Maven project.
+ * AST-level standards checks (tree-sitter-java).
+ *
+ * Preferred install: `npm --prefix tools install` (see tools/package.json).
+ * Falls back to project-root / user / common global node_modules for older setups.
+ * No Maven dependency is added.
  *
  * MANDATORY: any environment problem (package missing, wasm broken) throws, so
  * the gate fails instead of silently skipping the AST rules.
@@ -8,19 +11,32 @@
 
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { collectJavaSources } from './klsjnh-standards-lib.mjs';
 
 const LOG_LEVELS = new Set(['info', 'warn', 'error', 'debug', 'trace']);
 
+/** Directory of this module (= tools/). */
+const TOOLS_DIR = dirname(fileURLToPath(import.meta.url));
+
 /**
- * Candidate directories that may contain node_modules (project cwd, user home,
- * common global install roots).
+ * Candidate directories that may contain node_modules.
+ * Prefer tools/node_modules so the gate works when Node is only via nvm/path
+ * and deps were installed next to the scripts.
  */
 function candidateRoots() {
-  const roots = [process.cwd(), homedir(), '/usr/local/nodejs/lib', '/usr/local/lib', '/usr/lib'];
-  return roots.map((root) => (root.endsWith('/node_modules') ? root : join(root, 'node_modules')));
+  const roots = [
+    TOOLS_DIR,
+    join(TOOLS_DIR, '..'),
+    process.cwd(),
+    homedir(),
+    '/usr/local/nodejs/lib',
+    '/usr/local/lib',
+    '/usr/lib',
+  ];
+  return roots.map((root) => (root.endsWith('node_modules') ? root : join(root, 'node_modules')));
 }
 
 /**
@@ -38,7 +54,7 @@ function resolvePackage(pkg) {
   }
   throw new Error(
       `ast checks require '${pkg}' in one of: ${candidateRoots().join(', ')}`
-      + ` — install with: npm install --save tree-sitter tree-sitter-java`);
+      + ` — install with: npm --prefix tools install`);
 }
 
 /**

@@ -5,12 +5,13 @@ package com.klsjnh.infrastructure.system011.scheduler;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.22
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  scheduler handler job class
+ *      2026.09.22  field @Autowired kept — Quartz JobFactory exception (017)
  *
  */
 
@@ -36,6 +37,12 @@ import org.quartz.JobExecutionContext;
  * Counted on every trigger, success or failure (requirement011 §023-2). A
  * missing or failing handler bean logs a WARN and never interrupts the
  * schedule.
+ * </p>
+ * <p>
+ * Field {@code @Autowired} is required here: Spring Boot's default
+ * {@code AutowiringSpringBeanJobFactory} constructs the job with a no-arg
+ * constructor then injects beans. Constructor injection would break Quartz
+ * scheduling (explicit redline exception — docs/017 §011.016).
  * </p>
  */
 

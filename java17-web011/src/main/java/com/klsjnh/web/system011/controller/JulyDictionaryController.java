@@ -11,11 +11,13 @@ package com.klsjnh.web.system011.controller;
  *          modify history
  *
  *      2026.09.15  july dictionary controller class
+ *      2026.09.22  xlsx export + import endpoints
  *
  */
 
 import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
+import com.klsjnh.common.enums.ExportFormat011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -23,8 +25,9 @@ import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.IdVo011;
 
 import com.klsjnh.application.platform011.export.ExportUseCase;
+import com.klsjnh.application.platform011.importdata.ImportUseCase;
 import com.klsjnh.application.system011.dictionary.JulyDictionaryUseCase;
-import com.klsjnh.domain.platform011.export.ExportResult;
+import com.klsjnh.domain.platform011.importdata.ImportResult;
 import com.klsjnh.domain.system011.dictionary.JulyDictionary;
 import com.klsjnh.domain.system011.dictionary.JulyDictionaryItem;
 import com.klsjnh.domain.system011.dictionary.JulyDictionaryQuerySpec;
@@ -45,12 +48,16 @@ import com.klsjnh.web.util.Operator011Resolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -84,17 +91,25 @@ public class JulyDictionaryController {
     private final ExportUseCase exportUseCase;
 
     /**
+     * Import use case.
+     */
+    private final ImportUseCase importUseCase;
+
+    /**
      * Create the controller.
      *
-     * @param julyDictionaryUseCase       july dictionary use case
-     * @param julyDictionaryConverter     response julyDictionaryConverter
-     * @param exportUseCase export use case
+     * @param julyDictionaryUseCase   july dictionary use case
+     * @param julyDictionaryConverter response converter
+     * @param exportUseCase           export use case
+     * @param importUseCase           import use case
      */
-    public JulyDictionaryController(JulyDictionaryUseCase julyDictionaryUseCase, JulyDictionaryConverter julyDictionaryConverter,
-            ExportUseCase exportUseCase) {
+    public JulyDictionaryController(JulyDictionaryUseCase julyDictionaryUseCase,
+            JulyDictionaryConverter julyDictionaryConverter, ExportUseCase exportUseCase,
+            ImportUseCase importUseCase) {
         this.julyDictionaryUseCase = julyDictionaryUseCase;
         this.julyDictionaryConverter = julyDictionaryConverter;
         this.exportUseCase = exportUseCase;
+        this.importUseCase = importUseCase;
     }
 
     /**
@@ -256,19 +271,51 @@ public class JulyDictionaryController {
     }
 
     /**
-     * Export every dictionary row in batches and return the whole result in the
-     * JSON envelope.
+     * Export dictionaries. Default returns a JSON envelope (master rows). Pass
+     * {@code format=xlsx} for a binary workbook (master + children sheets).
      *
-     * @param request http request (operator from the auth filter)
-     * @return envelope with the export result
+     * @param format  optional format (json default / xlsx)
+     * @param request http request
+     * @return envelope or xlsx bytes
      */
     @PostMapping("/export")
-    @Operation(summary = "导出全部字典（分批取数，写 EXPORT 审计）")
-    public Response011<ExportResult> export(HttpServletRequest request) {
+    @Operation(summary = "导出字典（默认 JSON 信封；format=xlsx 为两 sheet 二进制）")
+    public Object export(@RequestParam(value = "format", required = false) String format,
+            HttpServletRequest request) {
         String funcName = "export";
-
         Operator011 operator = Operator011Resolver.resolve(request);
+        ExportFormat011 exportFormat = ExportFormat011.of(format);
+
+        if (exportFormat == ExportFormat011.XLSX) {
+            byte[] bytes = exportUseCase.exportXlsx(AuditObjectCodes011.JULY_DICTIONARY, operator);
+            String filename = "julyDictionary.xlsx";
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(bytes);
+        }
 
         return Response011.success(funcName, exportUseCase.export(AuditObjectCodes011.JULY_DICTIONARY, operator));
+    }
+
+    /**
+     * Import an xlsx workbook (master + children). Upserts by dictionaryCode;
+     * replaces items for codes present on the master sheet.
+     *
+     * @param file    multipart xlsx file
+     * @param request http request
+     * @return import result envelope
+     */
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "导入字典 xlsx（upsert 主表；文件中出现的 code Replace 明细）")
+    public Response011<ImportResult> importXlsx(@RequestParam("file") MultipartFile file, HttpServletRequest request)
+            throws Exception {
+        String funcName = "import";
+        Operator011 operator = Operator011Resolver.resolve(request);
+        byte[] bytes = file == null ? null : file.getBytes();
+
+        return Response011.success(funcName,
+                importUseCase.importXlsx(AuditObjectCodes011.JULY_DICTIONARY, bytes, operator));
     }
 }

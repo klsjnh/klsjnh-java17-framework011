@@ -20,7 +20,6 @@ import com.klsjnh.domain.iam.user.JulyUserAuditRow;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.iam.user.entity.JulyUserAuditPo;
 import com.klsjnh.infrastructure.iam.user.mapper.JulyUserAuditMapper;
-import com.klsjnh.infrastructure.iam.user.UserAuditRecorder;
 
 import org.springframework.stereotype.Repository;
 
@@ -32,7 +31,7 @@ import java.util.List;
 
 /**
  * Read-side implementation for the user audit trail on MyBatis-Plus (query
- * only — the append-only write path is the UserAuditRecorder).
+ * only — the append-only write path is {@code UserAuditRecorder}).
  */
 
 @Repository

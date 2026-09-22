@@ -59,4 +59,31 @@ public interface ExportProvider {
      * @return rows, empty when the offset is past the end
      */
     List<Map<String, Object>> exportRows(int offset, int limit);
+
+    /**
+     * Sheet layout for multi-sheet formats (xlsx). Default: a single
+     * {@code master} sheet using {@link #columns()}.
+     *
+     * @return sheet specs in order
+     */
+    default List<ExportSheetSpec> sheetSpecs() {
+        return List.of(new ExportSheetSpec("master", columns()));
+    }
+
+    /**
+     * Fetch one batch of rows for a named sheet. Default delegates
+     * {@code master} to {@link #exportRows}; other names return empty.
+     *
+     * @param sheetName sheet name
+     * @param offset    row offset, 0 based
+     * @param limit     max rows
+     * @return rows
+     */
+    default List<Map<String, Object>> exportSheetRows(String sheetName, int offset, int limit) {
+        if ("master".equals(sheetName)) {
+            return exportRows(offset, limit);
+        }
+
+        return List.of();
+    }
 }

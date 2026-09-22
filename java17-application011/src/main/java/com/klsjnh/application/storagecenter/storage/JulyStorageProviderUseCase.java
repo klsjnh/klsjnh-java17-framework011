@@ -256,6 +256,19 @@ public class JulyStorageProviderUseCase {
     }
 
     /**
+     * The buckets of one storage instance (children, ordered) — the read-side
+     * counterpart used by the master + children query.
+     *
+     * @param id storage id
+     * @return bucket rows
+     */
+    public List<JulyStorageProviderBucket> buckets(String id) {
+        require(id);
+
+        return bucketRepository.findByPkMt(id);
+    }
+
+    /**
      * Probe a saved storage instance, using its default bucket.
      *
      * @param id storage id

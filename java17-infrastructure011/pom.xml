@@ -73,6 +73,16 @@
             <artifactId>minio</artifactId>
         </dependency>
 
+        <!-- 平台 xlsx 导入导出 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+        </dependency>
+
         <!-- 调度引擎 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

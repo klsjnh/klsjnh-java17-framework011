@@ -24,7 +24,7 @@ import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderQuerySpec;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderRepository;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.persistence.sql.QuotedLiteral;
 import com.klsjnh.infrastructure.storagecenter.storage.entity.JulyStorageProviderPo;
@@ -46,7 +46,7 @@ import java.util.List;
 
 @Repository
 public class JulyStorageProviderRepositoryImpl
-        extends BaseMasterSubRepository011<JulyStorageProviderPo, JulyStorageProviderMapper>
+        extends BaseMasterSubRepository<JulyStorageProviderPo, JulyStorageProviderMapper>
         implements JulyStorageProviderRepository {
 
     /**

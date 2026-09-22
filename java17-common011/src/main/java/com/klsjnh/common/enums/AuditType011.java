@@ -20,7 +20,7 @@ package com.klsjnh.common.enums;
  * <p>
  * IUD events (INSERT / UPDATE / DELETE) are recorded at the WEB layer (controller
  * IUD actions), never in the application service; auth and platform events
- * (LOGIN / LOGOUT / ... / EXPORT / BACKUP) are recorded where the action itself
+ * (LOGIN / LOGOUT / ... / EXPORT / IMPORT / BACKUP) are recorded where the action itself
  * lives.
  * </p>
  */
@@ -50,6 +50,9 @@ public enum AuditType011 {
 
     /** Platform export. */
     EXPORT("EXPORT"),
+
+    /** Platform import. */
+    IMPORT("IMPORT"),
 
     /** Platform backup. */
     BACKUP("BACKUP");

@@ -21,7 +21,7 @@ import com.klsjnh.domain.shared.EntityId;
 
 import com.klsjnh.infrastructure.iam.role.entity.JulyRolePo;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.iam.role.mapper.JulyRoleMapper;
 
@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * Repository implementation for the JulyRole aggregate on the master-sub base
- * (BaseMasterSubRepository011).
+ * (BaseMasterSubRepository).
  * <p>
  * {@link #getChildServices()} is intentionally empty: role_permissions uses the
  * toggle-dr replace strategy (revive / stop), not cascade delete.
@@ -43,7 +43,7 @@ import java.util.List;
 
 @Repository
 public class JulyRoleRepositoryImpl
-        extends BaseMasterSubRepository011<JulyRolePo, JulyRoleMapper>
+        extends BaseMasterSubRepository<JulyRolePo, JulyRoleMapper>
         implements JulyRoleRepository {
 
     /**

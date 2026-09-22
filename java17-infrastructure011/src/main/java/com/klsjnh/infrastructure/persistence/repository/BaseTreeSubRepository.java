@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * Tree master-sub repository base: a tree master ({@code parent_id}) that also
- * owns child tables ({@code pk_mt}) — {@link BaseMasterSubRepository011} plus
+ * owns child tables ({@code pk_mt}) — {@link BaseMasterSubRepository} plus
  * {@link #selectTree()}. The tree assembly rules live in {@link TreeAssembler};
  * the cascade rules in {@code MasterSubSupport}.
  * <p>
@@ -41,7 +41,7 @@ import java.util.List;
  */
 
 public abstract class BaseTreeSubRepository<T extends TreePo<T>, M extends BaseMapper<T>>
-        extends BaseMasterSubRepository011<T, M> {
+        extends BaseMasterSubRepository<T, M> {
 
     /**
      * Create the tree master-sub repository base.

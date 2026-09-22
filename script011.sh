@@ -74,6 +74,11 @@ EOF
 # with the git pre-push hook — do NOT duplicate it elsewhere)
 do_gate() {
   echo "[$(NOW)] Standards check (node) ..."
+  if [ ! -d "$PROJECT_ROOT/tools/node_modules/tree-sitter" ]; then
+    echo "ERROR: tools/node_modules missing tree-sitter — run: npm --prefix tools install" >&2
+    echo "       (Node 18+; e.g. nvm at D:/Environment/nvm)" >&2
+    exit 1
+  fi
   node "$PROJECT_ROOT/tools/check-klsjnh-standards.mjs" "$PROJECT_ROOT"
 
   echo ""

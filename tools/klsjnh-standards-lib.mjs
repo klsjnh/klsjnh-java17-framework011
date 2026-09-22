@@ -700,34 +700,28 @@ export function testJavadocEnglish(path, content, violations) {
 }
 
 /**
- * Point-read actions (015 §6.2): a single row is addressed by a key, so the
- * request is trivially expressible as a query string. These MUST be
- * @GetMapping — safe + idempotent per RFC 9110.
+ * Point-read actions (016 §6.2): a single row / keyed read addressed so the
+ * request fits a query string. These MUST be @GetMapping.
  *
- * Naming rule: "getByXxx" is a point read (getById / getByCode / getByName...).
+ * Naming: any `getXxx` (getById / getWithChildren / getTree / getBucket...).
  */
-const POINT_READ_ACTIONS = new Set(['getById']);
+const POINT_READ_PATTERN = /^get[A-Z]\w*$/;
 
 /**
- * Conditional-read actions (015 §6.2): a list / page / tree query carries a
- * filter object whose shape is open-ended (nested lists, date ranges, dynamic
- * criteria) and does not fit a query string. These are safe + idempotent in
- * semantics but are deliberately mapped with @PostMapping and the filter VO in
- * the JSON body — the same trade-off Elasticsearch makes with POST _search.
- * The gate therefore accepts either GET or POST here.
- *
- * "getBy..." is point read; "select..." is conditional read.
+ * Conditional-read actions (016 §6.2): filter-shaped queries. GET or POST OK.
+ * Naming: any `selectXxx`.
  */
-const SELECT_READ_ACTIONS = new Set([
-  'selectListByPage', 'selectTree', 'selectUserMenuTree', 'selectList', 'select',
-]);
-
-/** Match getBy<Something> point reads (getById is listed explicitly). */
-const POINT_READ_PATTERN = /^getBy[A-Z]\w*$/;
+const SELECT_READ_PATTERN = /^select[A-Z]\w*$|^select$/;
 
 /**
- * Write-purpose action names: unsafe, so the handler MUST be mapped with
- * @PostMapping.
+ * Other safe GET reads that are not `get*` / `select*` (object download etc.).
+ * Must stay @GetMapping; anything else unknown defaults to write → POST.
+ */
+const SAFE_GET_PATTERN = /^(stat|download|read|presign)[A-Z]\w*$/;
+
+/**
+ * Known write-purpose action names (documentation / clarity). Unknown actions
+ * that are not point/select/safe-get also require @PostMapping (016 §6.2).
  */
 const WRITE_ACTIONS = new Set([
   'insert', 'update', 'upsert', 'logicDelete', 'logicDeleteBatch', 'delete', 'deleteBatch',
@@ -794,10 +788,11 @@ export function testApiUrlStandards(path, content, violations) {
     });
   }
 
-  // Rule B: HTTP method must match the action semantics (RFC 9110).
-  //   point read (getByXxx)  -> @GetMapping, id via query string
-  //   conditional read (selectXxx) -> GET or POST; POST carries a filter VO
-  //   write (insert/update/...)    -> @PostMapping
+  // Rule B: HTTP method must match the action semantics (RFC 9110 / 016 §6.2).
+  //   point read (getXxx)          -> @GetMapping
+  //   conditional read (selectXxx) -> GET or POST
+  //   other safe GET (stat/download/read/presign) -> @GetMapping
+  //   known write OR any other unknown action     -> @PostMapping (default)
   const mappingPattern = /@(?:Get|Post|Put|Delete|Patch)Mapping\s*\(([^)]*)\)/g;
   while ((match = mappingPattern.exec(content)) !== null) {
     const action = extractAction(match[1]);
@@ -805,9 +800,11 @@ export function testApiUrlStandards(path, content, violations) {
       continue;
     }
     const httpMethod = extractHttpMethod(match[0]);
-    const isPointRead = POINT_READ_ACTIONS.has(action) || POINT_READ_PATTERN.test(action);
-    const isSelectRead = SELECT_READ_ACTIONS.has(action);
+    const isPointRead = POINT_READ_PATTERN.test(action);
+    const isSelectRead = SELECT_READ_PATTERN.test(action);
+    const isSafeGet = SAFE_GET_PATTERN.test(action);
     const isWrite = WRITE_ACTIONS.has(action);
+    const isUnknownWrite = !isPointRead && !isSelectRead && !isSafeGet;
 
     if (isPointRead && httpMethod !== 'GET') {
       violations.push({
@@ -817,17 +814,24 @@ export function testApiUrlStandards(path, content, violations) {
         detail: `point read "${action}" must be @GetMapping, found @${httpMethod}Mapping`,
         fix: 'a key-addressed read is safe + idempotent — map it with @GetMapping and pass the key via the query string',
       });
-    } else if (isWrite && httpMethod !== 'POST') {
+    } else if (isSafeGet && httpMethod !== 'GET') {
       violations.push({
         file: path,
         line: lineOf(content, match.index),
         rule: 'api-method',
-        detail: `write action "${action}" must be @PostMapping, found @${httpMethod}Mapping`,
-        fix: 'write actions are unsafe — map them with @PostMapping and pass parameters via the JSON body',
+        detail: `safe read "${action}" must be @GetMapping, found @${httpMethod}Mapping`,
+        fix: 'stat/download/read/presign actions are safe + idempotent — map them with @GetMapping',
+      });
+    } else if ((isWrite || isUnknownWrite) && httpMethod !== 'POST') {
+      violations.push({
+        file: path,
+        line: lineOf(content, match.index),
+        rule: 'api-method',
+        detail: `write/unknown action "${action}" must be @PostMapping, found @${httpMethod}Mapping`,
+        fix: 'write (and unknown) actions are unsafe by default — map them with @PostMapping; rename to getXxx/selectXxx if this is a read',
       });
     }
-    // isSelectRead: deliberately unconstrained. A filter object does not fit a
-    // query string; POST with a *Vo011 body is the accepted form (015 §6.2).
+    // isSelectRead: deliberately unconstrained (016 §6.2).
 
     // Rule C: delete arity must match the action name. "logicDelete" takes a
     // single id (IdVo011); "logicDeleteBatch" takes an id-list VO (IdsVo011).

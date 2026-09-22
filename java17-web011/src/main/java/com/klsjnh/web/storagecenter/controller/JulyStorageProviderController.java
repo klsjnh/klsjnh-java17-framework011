@@ -210,6 +210,28 @@ public class JulyStorageProviderController {
     }
 
     /**
+     * Read a storage instance together with its buckets (master + children).
+     * <p>
+     * Read side only: buckets are Incremental children (physical resources with
+     * their own create / remove endpoints), so there is no whole save here.
+     * </p>
+     *
+     * @param id storage id
+     * @return envelope with the storage instance and its bucket list
+     */
+    @GetMapping("/getWithChildren")
+    @Operation(summary = "主+子联查（存储实例 + 桶列表）；桶为 Incremental，无整存")
+    public Response011<java.util.Map<String, Object>> getWithChildren(@RequestParam("id") String id) {
+        String funcName = "get with children";
+
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("master", julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getById(id)));
+        result.put("buckets", julyStorageProviderConverter.toBucketVoList(julyStorageProviderUseCase.buckets(id)));
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
      * Probe a saved instance or a draft config.
      *
      * @param vo probe request

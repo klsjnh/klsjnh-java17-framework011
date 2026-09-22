@@ -26,7 +26,7 @@ import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.infrastructure.datasource.sync.entity.JulySyncRulePo;
 import com.klsjnh.infrastructure.datasource.sync.mapper.JulySyncRuleMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.persistence.sql.QuotedLiteral;
 import com.klsjnh.infrastructure.persistence.support.SortSupport;
@@ -45,7 +45,7 @@ import java.util.List;
  */
 
 @Repository
-public class JulySyncRuleRepositoryImpl extends BaseMasterSubRepository011<JulySyncRulePo, JulySyncRuleMapper>
+public class JulySyncRuleRepositoryImpl extends BaseMasterSubRepository<JulySyncRulePo, JulySyncRuleMapper>
         implements JulySyncRuleRepository {
 
     /**

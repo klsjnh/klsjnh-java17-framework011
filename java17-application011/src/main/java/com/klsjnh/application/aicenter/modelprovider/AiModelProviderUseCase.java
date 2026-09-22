@@ -287,6 +287,48 @@ public class AiModelProviderUseCase {
     }
 
     /**
+     * Whole save (provider + api keys, one transaction): a blank id inserts the
+     * provider and a present id updates it, then the existing api keys are
+     * logically deleted and the given list is inserted (Replace strategy).
+     *
+     * @param id           provider id, blank inserts a new provider
+     * @param providerCode provider code, used on insert only
+     * @param sortOrder    sort order
+     * @param providerName provider name
+     * @param baseUrl      interface base url
+     * @param models       model list
+     * @param status       row status, null keeps the stored one
+     * @param remark       remark
+     * @param apis         api key rows replacing the old children, nullable
+     * @return provider id
+     */
+    @Transactional
+    public String saveWhole(String id, String providerCode, Integer sortOrder, String providerName, String baseUrl,
+            String models, String status, String remark, List<AiModelProviderApiCommand> apis) {
+        String providerId = id == null || id.isBlank()
+                ? insert(providerCode, sortOrder, providerName, baseUrl, models, remark)
+                : update(id, providerName, sortOrder, baseUrl, models, status, remark);
+
+        for (AiModelProviderApi api : apiRepository.findByMaster(providerId)) {
+            apiRepository.logicDeleteById(api.id().value());
+        }
+
+        if (apis == null || apis.isEmpty()) {
+            return providerId;
+        }
+
+        int order = 1;
+
+        for (AiModelProviderApiCommand api : apis) {
+            insertApi(providerCode, api.sortOrder() == null ? order : api.sortOrder(), api.apiCode(), api.apiName(),
+                    api.apiKey(), api.remark());
+            order++;
+        }
+
+        return providerId;
+    }
+
+    /**
      * Probe a provider with its default enabled api key.
      *
      * @param providerCode provider code

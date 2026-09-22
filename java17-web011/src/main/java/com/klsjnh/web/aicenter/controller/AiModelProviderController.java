@@ -22,6 +22,7 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.IdVo011;
 
+import com.klsjnh.application.aicenter.modelprovider.AiModelProviderApiCommand;
 import com.klsjnh.application.aicenter.modelprovider.AiModelProviderUseCase;
 import com.klsjnh.application.platform011.export.ExportUseCase;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
@@ -38,6 +39,7 @@ import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiUpdateVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderInsertVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderQueryVo011;
+import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderSaveWholeVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderTestResultVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderTestVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderUpdateVo011;
@@ -56,7 +58,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AiModelProvider HTTP adapter: provider and api key management, plus the
@@ -269,6 +274,48 @@ public class AiModelProviderController {
 
         return Response011.success(funcName,
                 aiModelProviderConverter.toTestResultVo(aiModelProviderUseCase.testConnectionApi(idVo.getId())));
+    }
+
+    /**
+     * Whole save: provider + api keys in one transaction (children replaced).
+     *
+     * @param vo request
+     * @return envelope with the provider id
+     */
+    @PostMapping("/saveWhole")
+    @Operation(summary = "整存提供商 + 密钥（主+子，一个事务；子表替换）")
+    public Response011<IdVo011> saveWhole(@RequestBody AiModelProviderSaveWholeVo011 vo) {
+        String funcName = "save whole";
+
+        List<AiModelProviderApiCommand> apis = new ArrayList<>();
+
+        for (AiModelProviderApiInsertVo011 row : vo.getApis()) {
+            apis.add(new AiModelProviderApiCommand(row.getApiCode(), row.getApiName(), row.getApiKey(),
+                    row.getSortOrder(), row.getRemark()));
+        }
+
+        return Response011.successId(funcName, aiModelProviderUseCase.saveWhole(vo.getId(), vo.getProviderCode(),
+                vo.getSortOrder(), vo.getProviderName(), vo.getBaseUrl(), vo.getModels(), vo.getStatus(),
+                vo.getRemark(), apis));
+    }
+
+    /**
+     * Read a provider together with its api keys (master + children).
+     *
+     * @param id provider id
+     * @return envelope with the provider and its api list
+     */
+    @GetMapping("/getWithChildren")
+    @Operation(summary = "主+子联查（提供商 + 密钥列表）")
+    public Response011<Map<String, Object>> getWithChildren(@RequestParam("id") String id) {
+        String funcName = "get with children";
+
+        AiModelProvider provider = aiModelProviderUseCase.getById(id);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("master", aiModelProviderConverter.toVo(provider));
+        result.put("apis", aiModelProviderConverter.toApiVoList(aiModelProviderUseCase.getApiList(provider.providerCode())));
+
+        return Response011.success(funcName, result);
     }
 
     /**

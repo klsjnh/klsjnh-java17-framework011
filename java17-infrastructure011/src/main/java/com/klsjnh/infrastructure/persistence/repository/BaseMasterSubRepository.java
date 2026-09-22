@@ -1,6 +1,6 @@
 package com.klsjnh.infrastructure.persistence.repository;
 
-/*                BaseMasterSubRepository011 class
+/*                BaseMasterSubRepository class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
@@ -12,6 +12,8 @@ package com.klsjnh.infrastructure.persistence.repository;
  *
  *      2026.09.12  base master sub repository class
  *      2026.09.21  renamed from BaseMasterSubRepository021; cascade rules extracted to MasterSubSupport
+ *      2026.09.22  three-grain API (saveMaster/getMaster/getChildren) + registration notes
+ *      2026.09.22  renamed from BaseMasterSubRepository011 (019 task A, suffix dropped)
  *
  */
 
@@ -75,7 +77,7 @@ import java.util.Map;
  * @param <M> master mapper type
  */
 
-public abstract class BaseMasterSubRepository011<T extends BasePo, M extends BaseMapper<T>>
+public abstract class BaseMasterSubRepository<T extends BasePo, M extends BaseMapper<T>>
         extends BaseRepository<T, M> {
 
     /**
@@ -84,7 +86,7 @@ public abstract class BaseMasterSubRepository011<T extends BasePo, M extends Bas
      * @param mapper       master mapper
      * @param commonMapper native sql mapper
      */
-    protected BaseMasterSubRepository011(M mapper, CommonMapper commonMapper) {
+    protected BaseMasterSubRepository(M mapper, CommonMapper commonMapper) {
         super(mapper, commonMapper);
     }
 

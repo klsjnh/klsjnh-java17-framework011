@@ -24,7 +24,7 @@ import com.klsjnh.domain.shared.EntityId;
 
 import com.klsjnh.infrastructure.iam.user.entity.JulyUserPo;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.iam.user.mapper.JulyUserMapper;
 import com.klsjnh.infrastructure.iam.role.repository.JulyUserRoleRepositoryImpl;
@@ -40,7 +40,7 @@ import java.util.List;
 
 /**
  * Repository implementation for the JulyUser aggregate: master-sub with the
- * user_role child registered for cascade (BaseMasterSubRepository011).
+ * user_role child registered for cascade (BaseMasterSubRepository).
  * <p>
  * user_audit is structurally a child but append-only, so it is deliberately
  * NOT registered in {@link #getChildServices()}.
@@ -49,7 +49,7 @@ import java.util.List;
 
 @Repository
 public class JulyUserRepositoryImpl
-        extends BaseMasterSubRepository011<JulyUserPo, JulyUserMapper>
+        extends BaseMasterSubRepository<JulyUserPo, JulyUserMapper>
         implements JulyUserRepository {
 
     /**

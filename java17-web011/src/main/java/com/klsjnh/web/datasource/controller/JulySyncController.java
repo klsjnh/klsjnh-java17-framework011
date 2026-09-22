@@ -30,6 +30,7 @@ import com.klsjnh.web.datasource.vo.julysync.JulySyncInsertVo011;
 import com.klsjnh.web.datasource.vo.julysync.JulySyncQueryVo011;
 import com.klsjnh.web.datasource.vo.julysync.JulySyncRuleVo011;
 import com.klsjnh.web.datasource.vo.julysync.JulySyncRunVo011;
+import com.klsjnh.web.datasource.vo.julysync.JulySyncSaveWholeVo011;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -128,6 +129,78 @@ public class JulySyncController {
         String funcName = "sync rule get by code";
 
         return Response011.success(funcName, toVo(syncRuleUseCase.getByCode(syncCode)));
+    }
+
+    /**
+     * Whole save: rule + column mappings in one transaction (columns replaced).
+     *
+     * @param vo request
+     * @return envelope with the rule id
+     */
+    @PostMapping("/saveWhole")
+    @Operation(summary = "整存同步规则 + 列映射（主+子，一个事务；子表替换）")
+    public Response011<IdVo011> saveWhole(@RequestBody JulySyncSaveWholeVo011 vo) {
+        String funcName = "sync rule save whole";
+
+        List<SyncColumnCommand> columns = new ArrayList<>();
+
+        if (vo.getColumns() != null) {
+            for (JulySyncColumnVo011 column : vo.getColumns()) {
+                columns.add(new SyncColumnCommand(column.getSourceColumn(), column.getSourceType(),
+                        column.getTargetColumn(), column.getTargetType(), column.getTransform(), column.getSortOrder()));
+            }
+        }
+
+        String id = syncRuleUseCase.saveWhole(vo.getId(), vo.getSyncCode(), vo.getSyncName(), vo.getSourceDsCode(),
+                vo.getSourceKind(), vo.getSourceData(), vo.getTargetDsCode(), vo.getTargetKind(), vo.getTargetData(),
+                vo.getMode(), vo.getSyncKey(), vo.getConflict(), vo.getPageSize(), vo.getRemark(), vo.getStatus(),
+                columns);
+
+        return Response011.successId(funcName, id);
+    }
+
+    /**
+     * Read a rule together with its column mappings (master + children).
+     *
+     * @param id rule id
+     * @return envelope with the rule and its column list
+     */
+    @GetMapping("/getWithChildren")
+    @Operation(summary = "主+子联查（同步规则 + 列映射）")
+    public Response011<java.util.Map<String, Object>> getWithChildren(@RequestParam("id") String id) {
+        String funcName = "sync rule get with children";
+
+        java.util.Map<String, Object> source = syncRuleUseCase.getWithChildren(id);
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("master", toVo((JulySyncRule) source.get("master")));
+
+        List<JulySyncColumnVo011> columns = new ArrayList<>();
+
+        for (Object row : (List<?>) source.get("columns")) {
+            columns.add(toColumnVo((com.klsjnh.domain.datasource.sync.JulySyncRuleColumn) row));
+        }
+
+        result.put("columns", columns);
+
+        return Response011.success(funcName, result);
+    }
+
+    /**
+     * Map a column aggregate to its response VO.
+     *
+     * @param column column aggregate
+     * @return response VO
+     */
+    private JulySyncColumnVo011 toColumnVo(com.klsjnh.domain.datasource.sync.JulySyncRuleColumn column) {
+        JulySyncColumnVo011 vo = new JulySyncColumnVo011();
+        vo.setSourceColumn(column.sourceColumn());
+        vo.setSourceType(column.sourceType());
+        vo.setTargetColumn(column.targetColumn());
+        vo.setTargetType(column.targetType());
+        vo.setTransform(column.transform());
+        vo.setSortOrder(column.sortOrder());
+
+        return vo;
     }
 
     /**

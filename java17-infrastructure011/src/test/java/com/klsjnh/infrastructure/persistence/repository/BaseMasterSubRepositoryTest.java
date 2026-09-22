@@ -1,6 +1,6 @@
 package com.klsjnh.infrastructure.persistence.repository;
 
-/*                BaseMasterSubRepository011Test class
+/*                BaseMasterSubRepositoryTest class
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
@@ -28,12 +28,12 @@ import java.util.List;
  * insert on a blank id, update on a present id, and reject a null master.
  */
 
-class BaseMasterSubRepository011Test {
+class BaseMasterSubRepositoryTest {
 
     /**
      * Minimal concrete repository over the generic {@link BasePo}.
      */
-    private static final class TestRepo extends BaseMasterSubRepository011<BasePo, BaseMapper<BasePo>> {
+    private static final class TestRepo extends BaseMasterSubRepository<BasePo, BaseMapper<BasePo>> {
 
         /**
          * Create the repository.

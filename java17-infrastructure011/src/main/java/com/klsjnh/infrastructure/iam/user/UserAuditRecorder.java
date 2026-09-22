@@ -5,12 +5,13 @@ package com.klsjnh.infrastructure.iam.user;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.22
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  user audit recorder class
+ *      2026.09.22  REQUIRES_NEW kept as documented redline exception (017)
  *
  */
 
@@ -31,6 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Writes user audit rows (append-only). A failed audit write logs a warning
  * and never affects the business transaction.
+ * <p>
+ * {@code @Transactional(REQUIRES_NEW)} is an explicit tech-debt-redline
+ * exception (docs/017 §011.013): the audit row must survive a rollback of the
+ * surrounding business transaction. Do not copy this pattern to other
+ * infrastructure classes.
+ * </p>
  */
 
 @Component

@@ -42,7 +42,7 @@ application-*.yaml
 !application-development.yml
 *.local
 
-# ---- node（tools/*.mjs 只用 Node 标准库，防误装依赖）----
+# ---- node（AST 门禁依赖：tools/package.json → tools/node_modules，不入库）----
 node_modules/
 
 # ---- 本地备份（不入库）----

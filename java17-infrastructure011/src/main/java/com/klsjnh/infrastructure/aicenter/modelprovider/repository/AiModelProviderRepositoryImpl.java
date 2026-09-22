@@ -25,7 +25,7 @@ import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.infrastructure.aicenter.modelprovider.entity.AiModelProviderPo;
 import com.klsjnh.infrastructure.aicenter.modelprovider.mapper.AiModelProviderMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
@@ -44,7 +44,7 @@ import java.util.List;
 
 @Repository
 public class AiModelProviderRepositoryImpl
-        extends BaseMasterSubRepository011<AiModelProviderPo, AiModelProviderMapper>
+        extends BaseMasterSubRepository<AiModelProviderPo, AiModelProviderMapper>
         implements AiModelProviderRepository {
 
     /**

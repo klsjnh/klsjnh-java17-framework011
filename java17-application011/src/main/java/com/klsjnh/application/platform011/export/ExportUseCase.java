@@ -26,6 +26,10 @@ import com.klsjnh.domain.iam.user.UserAuditPort;
 import com.klsjnh.domain.platform011.export.ExportColumn;
 import com.klsjnh.domain.platform011.export.ExportProvider;
 import com.klsjnh.domain.platform011.export.ExportResult;
+import com.klsjnh.domain.platform011.export.ExportSheet;
+import com.klsjnh.domain.platform011.export.ExportSheetSpec;
+import com.klsjnh.domain.platform011.export.ExportWorkbook;
+import com.klsjnh.domain.platform011.export.XlsxWorkbookPort;
 
 import org.springframework.stereotype.Service;
 
@@ -52,8 +56,9 @@ import java.util.Map;
 public class ExportUseCase {
 
     /**
-     * Rows fetched per database round trip. Bounds the load a single export
-     * can put on the database (product decision, code-enforced).
+     * Rows fetched per database round trip when collecting an export. The
+     * exporter loops until a short batch signals the end — this is a batch
+     * size, not a total row cap.
      */
     public static final int BATCH_SIZE = 500;
 
@@ -68,6 +73,11 @@ public class ExportUseCase {
     private final ExportProviderRegistry registry;
 
     /**
+     * Xlsx codec port.
+     */
+    private final XlsxWorkbookPort xlsxWorkbookPort;
+
+    /**
      * User audit port.
      */
     private final UserAuditPort userAuditPort;
@@ -75,11 +85,14 @@ public class ExportUseCase {
     /**
      * Create the use case.
      *
-     * @param registry      export provider registry
-     * @param userAuditPort user audit port
+     * @param registry         export provider registry
+     * @param xlsxWorkbookPort xlsx port
+     * @param userAuditPort    user audit port
      */
-    public ExportUseCase(ExportProviderRegistry registry, UserAuditPort userAuditPort) {
+    public ExportUseCase(ExportProviderRegistry registry, XlsxWorkbookPort xlsxWorkbookPort,
+            UserAuditPort userAuditPort) {
         this.registry = registry;
+        this.xlsxWorkbookPort = xlsxWorkbookPort;
         this.userAuditPort = userAuditPort;
     }
 
@@ -129,17 +142,66 @@ public class ExportUseCase {
     }
 
     /**
+     * Collect every sheet into an xlsx workbook (paged with {@link #BATCH_SIZE}
+     * per database round trip until exhausted).
+     *
+     * @param objectCode object code
+     * @param operator   current operator
+     * @return xlsx bytes
+     */
+    public byte[] exportXlsx(String objectCode, Operator011 operator) {
+        String funcName = "export xlsx";
+
+        if (operator == null || !operator.authenticated()) {
+            throw BusinessException.unauthorized(funcName + ": not authenticated");
+        }
+
+        ExportProvider provider = registry.get(objectCode);
+
+        if (provider == null) {
+            throw BusinessException.badRequest(funcName + ": unknown export object " + objectCode);
+        }
+
+        List<ExportSheet> sheets = new ArrayList<>();
+        int totalRows = 0;
+
+        for (ExportSheetSpec spec : provider.sheetSpecs()) {
+            List<Map<String, Object>> rows = collectSheet(provider, spec.name());
+            totalRows += rows.size();
+            sheets.add(new ExportSheet(spec.name(), spec.columns(), rows));
+        }
+
+        userAuditPort.record(operator.id(), operator.userAccount(), AuditType011.EXPORT, objectCode,
+                "export xlsx " + totalRows + " rows", operator.ip());
+
+        logger.info("{} {} collected {} rows across {} sheets", funcName, objectCode, totalRows, sheets.size());
+
+        return xlsxWorkbookPort.write(new ExportWorkbook(objectCode, sheets));
+    }
+
+    /**
      * Drive the provider batch by batch until a short batch signals the end.
      *
      * @param provider export provider
      * @return all rows the provider's live query returns
      */
     private List<Map<String, Object>> collect(ExportProvider provider) {
+        return collectSheet(provider, "master");
+    }
+
+    /**
+     * Collect one sheet in {@link #BATCH_SIZE} pages until exhausted.
+     *
+     * @param provider  export provider
+     * @param sheetName sheet name
+     * @return all rows
+     */
+    private List<Map<String, Object>> collectSheet(ExportProvider provider, String sheetName) {
         List<Map<String, Object>> rows = new ArrayList<>();
         int offset = 0;
 
         while (true) {
-            List<Map<String, Object>> batch = provider.exportRows(offset, BATCH_SIZE);
+            List<Map<String, Object>> batch = provider.exportSheetRows(sheetName, offset, BATCH_SIZE);
 
             if (batch == null || batch.isEmpty()) {
                 break;

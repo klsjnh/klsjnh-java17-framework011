@@ -47,7 +47,7 @@ import java.util.Map;
  * Master-sub use case for the prompt aggregate: master = business domain tree
  * (july_ai_domain), child = prompt (july_ai_domain_prompt).
  * <p>
- * Three save granularities, matching {@code BaseMasterSubRepository011}:
+ * Three save granularities, matching {@code BaseMasterSubRepository}:
  * master only (insert / update), whole (saveWhole: master + children in one
  * transaction, children replaced) and child only (insertDetail / updateDetail).
  * A {@code storage} prompt writes its body to the storage center and keeps only

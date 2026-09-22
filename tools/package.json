@@ -1,0 +1,12 @@
+{
+  "name": "klsjnh-standards-tools",
+  "private": true,
+  "description": "Local deps for tools/check-klsjnh-standards.mjs (tree-sitter AST). Install: npm --prefix tools install",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "tree-sitter": "0.21.1",
+    "tree-sitter-java": "0.23.5"
+  }
+}

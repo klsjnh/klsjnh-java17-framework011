@@ -24,7 +24,10 @@ public enum ExportFormat011 {
     JSON("json"),
 
     /** CSV with UTF-8 BOM for Excel (text/csv). */
-    CSV("csv");
+    CSV("csv"),
+
+    /** Native Excel workbook (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet). */
+    XLSX("xlsx");
 
     /**
      * Config code.

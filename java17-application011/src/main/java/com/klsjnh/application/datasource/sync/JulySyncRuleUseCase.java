@@ -129,6 +129,76 @@ public class JulySyncRuleUseCase {
     }
 
     /**
+     * Whole save (rule + column mappings, one transaction): a blank id inserts
+     * the rule and a present id updates it, then the old columns are logically
+     * deleted and the given list is inserted (Replace strategy).
+     *
+     * @param id           rule id, blank inserts a new rule
+     * @param syncCode     sync code, used on insert only
+     * @param syncName     sync name
+     * @param sourceDsCode source datasource code
+     * @param sourceKind   source kind
+     * @param sourceData   source data
+     * @param targetDsCode target datasource code
+     * @param targetKind   target kind
+     * @param targetData   target data
+     * @param mode         mode
+     * @param syncKey      business key columns
+     * @param conflict     conflict strategy
+     * @param pageSize     page size
+     * @param remark       remark
+     * @param status       row status, null keeps the stored one
+     * @param columns      column mappings replacing the old children, nullable
+     * @return rule id
+     */
+    @Transactional
+    public String saveWhole(String id, String syncCode, String syncName, String sourceDsCode, String sourceKind,
+            String sourceData, String targetDsCode, String targetKind, String targetData, String mode, String syncKey,
+            String conflict, Integer pageSize, String remark, String status, List<SyncColumnCommand> columns) {
+        String ruleId = id == null || id.isBlank() ? EntityId.generate().value() : id;
+
+        if (id == null || id.isBlank()) {
+            JulySyncRule rule = JulySyncRule.create(EntityId.of(ruleId), syncCode, syncName, sourceDsCode, sourceKind,
+                    sourceData, targetDsCode, targetKind, targetData, mode, syncKey, conflict, pageSize, remark,
+                    AuditInfo.empty());
+            ruleRepository.insert(rule);
+        } else {
+            JulySyncRule rule = ruleRepository.findById(ruleId);
+            if (rule == null) {
+                throw BusinessException.recordNotFound("sync rule: " + ruleId);
+            }
+            rule.update(syncName, sourceDsCode, sourceKind, sourceData, targetDsCode, targetKind, targetData, mode,
+                    syncKey, conflict, pageSize, remark, status);
+            ruleRepository.update(rule);
+        }
+
+        columnRepository.logicDeleteByMaster(ruleId);
+        insertColumns(ruleId, columns);
+
+        return ruleId;
+    }
+
+    /**
+     * Read a rule together with its column mappings (master + children).
+     *
+     * @param id rule id
+     * @return map with {@code "master"} and {@code "columns"}
+     */
+    public java.util.Map<String, Object> getWithChildren(String id) {
+        JulySyncRule rule = ruleRepository.findById(id);
+
+        if (rule == null) {
+            throw BusinessException.recordNotFound("sync rule: " + id);
+        }
+
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("master", rule);
+        result.put("columns", columnRepository.findByMaster(id));
+
+        return result;
+    }
+
+    /**
      * Page query.
      *
      * @param query page query

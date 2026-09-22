@@ -23,7 +23,7 @@ import com.klsjnh.domain.system011.dictionary.JulyDictionaryQuerySpec;
 import com.klsjnh.domain.system011.dictionary.JulyDictionaryRepository;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.system011.dictionary.entity.JulyDictionaryPo;
 import com.klsjnh.infrastructure.system011.dictionary.mapper.JulyDictionaryMapper;
@@ -44,7 +44,7 @@ import java.util.List;
 
 @Repository
 public class JulyDictionaryRepositoryImpl
-        extends BaseMasterSubRepository011<JulyDictionaryPo, JulyDictionaryMapper>
+        extends BaseMasterSubRepository<JulyDictionaryPo, JulyDictionaryMapper>
         implements JulyDictionaryRepository {
 
     /**
