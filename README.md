@@ -43,8 +43,8 @@ web ──► application ──► domain ◄── infrastructure
 | 模块 | 层 | 内容 |
 |------|-----|------|
 | java17-common011 | common | 枚举（FrameworkStatus011 / HttpCodeEnum011 / Status011 / AuditType011 / ExportFormat011）· 开放字符串常量（DatabaseTypes011 / StorageProviderCodes011 / MessageProviderTypes011 / AuditObjectCodes011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 · 工具（DateUtil011 / StringUtil011 / MarkdownUtil011 / HttpUtil011） |
-| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（kernel Port + 方言 SPI `SqlDialectPort011` + management）· storagecenter（object：ObjectStoragePort / ObjectStorageProviderFactory SPI；storage：JulyStorageProvider / JulyStorageProviderBucket）· messagecenter（channel SPI `MessageChannelPort` / template / message）· system011（menu / config / organization / scheduler / dictionary）· aicenter（modelprovider：AiModelProvider + Api + Probe；inference / image / audio：能力 SPI；capability：AiCapabilityPort / AiMedia；media：AiMediaStorePort）· platform011（export / backup Port） |
-| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· aicenter（模型接入 + 推理 / 图片 / 语音 + 产物落盘闸）· storagecenter（实例 / 桶 / 对象 + 在线编辑）· **messagecenter（send / 渠道 / 模板 / 记录）** · platform011（export / backup） |
+| java17-domain011 | domain | shared（EntityId / AuditInfo）· iam（用户/角色 + Port）· datasource（kernel Port + 方言 SPI `SqlDialectPort011` + management）· storagecenter（object：ObjectStoragePort / ObjectStorageProviderFactory SPI；storage：JulyStorageProvider / JulyStorageProviderBucket）· messagecenter（channel SPI `MessageChannelPort` / template / message）· system011（menu / config / organization / scheduler / dictionary）· aicenter（modelprovider：AiModelProvider + Api + Probe；inference / image / audio：能力 SPI；capability：AiCapabilityPort / AiMedia；media：AiMediaStorePort）· platform011（export / importdata / backup Port） |
+| java17-application011 | application | system011（config / menu / organization / scheduler / dictionary）· iam（user / role）· aicenter（模型接入 + 推理 / 图片 / 语音 + 产物落盘闸）· storagecenter（实例 / 桶 / 对象 + 在线编辑）· **messagecenter（send / 渠道 / 模板 / 记录）** · platform011（export / importdata / backup） |
 | java17-infrastructure011 | infrastructure | 基座家族五层（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ AuditMetaObjectHandler · system011 / datasource / aicenter / storagecenter / messagecenter 持久化 · 动态数据源路由 + 方言注册表 + 探针 · provider 注册表（local011/minio011/s3011）+ Resolver + 播种 · 通用 OpenAI 兼容适配器（inference/image/tts/asr）· 内置渠道（inapp / webhook）· IAM 适配器（bcrypt / JWT / 审计记录器） |
 | java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 6 组（system011 / iam / storagecenter / datasource / aicenter / messagecenter） |
 | java17-app011 | app | 唯一 main + 配置 + 参考样板（demo11 纵切面 / Demo011Scheduler）+ 启动播种（ci011 / storage） |
@@ -111,7 +111,7 @@ docker compose -f deploy/docker-compose.yml logs -f app
 | ✅ | 仓库基座家族（BaseRepository / 011 / Tree / Tree011 / MasterSub021）+ 审计自动填充 |
 | ✅ | 编码规则门禁（正则 + AST，经 script011.sh 强制） |
 | ✅ | system011：配置（023）· 组织（013）· 用户（015）· 角色（016）· 菜单（011）· 调度（022）· 数据字典（027） |
-| ✅ | platform011：数据导出（025，注册制 Provider / EXPORT 审计）+ 备份（BACKUP 审计） |
+| ✅ | platform011：数据导出（025，注册制 Provider / EXPORT 审计）+ 数据导入（032，xlsx；Controller 按需；IMPORT 审计）+ 备份（BACKUP 审计） |
 | ✅ | datasource：数据源管理（026，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页 + **分页方言开放 SPI**，内置 mysql/postgresql/oracle/sqlserver） |
 | ✅ | aicenter：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 三大能力（030，**推理（SSE 流式）/ 图片 / 语音（TTS+ASR）**，能力 SPI + 通用 OpenAI 兼容适配器 + 产物落盘 + 本地存储闸，id/code 解析、model 直传）· **提示词管理（主子表 + `render` 公共件）** |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（029，**主子表** `july_storage_provider` + `_bucket` + 桶/对象 + readText/saveText + 预签名 + **provider 注册表**） |
