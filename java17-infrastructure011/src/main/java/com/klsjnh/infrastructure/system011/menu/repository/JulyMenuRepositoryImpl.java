@@ -21,7 +21,7 @@ import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseTreeRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseTreeRepository;
 import com.klsjnh.infrastructure.system011.menu.entity.JulyMenuPo;
 import com.klsjnh.infrastructure.system011.menu.mapper.JulyMenuMapper;
 
@@ -35,13 +35,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyMenu aggregate on the tree + sort
- * base (BaseTreeRepository011).
+ * Repository implementation for the JulyMenu aggregate on the tree base
+ * (BaseTreeRepository; default order sort_order, id).
  */
 
 @Repository
 public class JulyMenuRepositoryImpl
-        extends BaseTreeRepository011<JulyMenuPo, JulyMenuMapper>
+        extends BaseTreeRepository<JulyMenuPo, JulyMenuMapper>
         implements JulyMenuRepository {
 
     /**
@@ -178,19 +178,6 @@ public class JulyMenuRepositoryImpl
     @Override
     public List<JulyMenu> getTree() {
         return toAggregateTree(super.selectTree());
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Menu tree orders by sort_order first, then id.</p>
-     */
-    @Override
-    protected com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JulyMenuPo> treeWrapper() {
-        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<JulyMenuPo> wrapper = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
-
-        return wrapper;
     }
 
     /**

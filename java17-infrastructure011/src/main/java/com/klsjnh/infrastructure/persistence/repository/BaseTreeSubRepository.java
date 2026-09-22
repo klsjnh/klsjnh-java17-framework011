@@ -16,6 +16,7 @@ package com.klsjnh.infrastructure.persistence.repository;
 
 import com.klsjnh.infrastructure.persistence.entity.TreePo;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 import com.klsjnh.infrastructure.persistence.support.TreeAssembler;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -64,16 +65,15 @@ public abstract class BaseTreeSubRepository<T extends TreePo<T>, M extends BaseM
     /**
      * Build the wrapper used by {@link #selectTree()}.
      * <p>
-     * Default orders by {@code id}; subclasses override for other ordering (the
-     * 011 tier orders by {@code sort_order} / {@code id}).
+     * Defaults to the business order {@code sort_order ASC, id ASC} via
+     * {@link SortSupport}. A tree table <b>without</b> a {@code sort_order}
+     * column must override this method and order explicitly (e.g. by
+     * {@code id}) — the default would fail on the missing column.
      * </p>
      *
      * @return ordered query wrapper
      */
     protected QueryWrapper<T> treeWrapper() {
-        QueryWrapper<T> wrapper = new QueryWrapper<>();
-        wrapper.orderByAsc("id");
-
-        return wrapper;
+        return SortSupport.sortedWrapper();
     }
 }

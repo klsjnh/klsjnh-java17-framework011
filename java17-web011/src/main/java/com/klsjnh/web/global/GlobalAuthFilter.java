@@ -19,8 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.klsjnh.common.constant.FrameConst011;
-import com.klsjnh.common.identity.Operator011;
-import com.klsjnh.common.identity.OperatorContext011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.domain.iam.auth.AuthTokenPort;
@@ -69,11 +67,11 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     /**
-     * Paths that never require a token.
+     * Paths that never require a token (login entries of the IAM user module).
      */
     private static final List<String> WHITELIST_PATHS = List.of(
-            "/klsjnh/system011/julyUser/v1/login",
-            "/klsjnh/system011/julyUser/v1/loginByUserName");
+            WebPaths011.IAM_USER + "/login",
+            WebPaths011.IAM_USER + "/loginByUserName");
 
     /**
      * Path prefixes that never require a token (API docs, error page).
@@ -150,7 +148,6 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
         if (identity != null) {
             request.setAttribute(FrameConst011.OPERATOR_ID, identity.id());
             request.setAttribute(FrameConst011.OPERATOR_ACCOUNT, identity.userAccount());
-            OperatorContext011.set(new Operator011(identity.id(), identity.userAccount(), null));
         }
 
         try {
@@ -161,7 +158,6 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } finally {
-            OperatorContext011.clear();
             MDC.remove(FrameConst011.TRACE_ID);
         }
     }

@@ -26,6 +26,7 @@ import com.klsjnh.infrastructure.aicenter.prompt.entity.JulyAiDomainPromptPo;
 import com.klsjnh.infrastructure.aicenter.prompt.mapper.JulyAiDomainPromptMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -111,9 +112,8 @@ public class JulyAiDomainPromptRepositoryImpl
     public List<JulyAiDomainPrompt> findByMaster(String pkMt) {
         QueryWrapper<JulyAiDomainPromptPo> wrapper = new QueryWrapper<>();
         wrapper.eq("pk_mt", pkMt)
-                .eq("status", Status011.ENABLED.getCode())
-                .orderByAsc("sort_order")
-                .orderByAsc("id");
+                .eq("status", Status011.ENABLED.getCode());
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream().map(this::toAggregate).toList();
     }
@@ -202,7 +202,7 @@ public class JulyAiDomainPromptRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

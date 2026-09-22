@@ -26,6 +26,13 @@ import java.util.List;
 /**
  * Tree persistence PO: BasePo plus parent_id and the non-column children list
  * used by tree assembly.
+ * <p>
+ * This is the <b>unsorted</b> tree shape: it declares no {@code sort_order}
+ * column. Tree repositories default to ordering by {@code sort_order, id}, so a
+ * table built on this PO must override {@code treeWrapper()} and order
+ * explicitly — otherwise the generated SQL references a column that does not
+ * exist. Prefer {@link TreePo011} (tree + sort_order) for real tables.
+ * </p>
  *
  * @param <T> concrete tree PO type
  */

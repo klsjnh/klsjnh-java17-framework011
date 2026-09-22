@@ -26,6 +26,7 @@ import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.system011.dictionary.entity.JulyDictionaryItemPo;
 import com.klsjnh.infrastructure.system011.dictionary.mapper.JulyDictionaryItemMapper;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -135,7 +136,7 @@ public class JulyDictionaryItemRepositoryImpl
             wrapper.eq("status", status);
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream()
                 .map(this::toAggregate)

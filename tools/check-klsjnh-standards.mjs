@@ -9,6 +9,7 @@
 import { fileURLToPath } from 'node:url';
 import { relPath, resolveProjectRoot, runStandardsCheck } from './klsjnh-standards-lib.mjs';
 import { createAstChecker } from './klsjnh-standards-ast.mjs';
+import { createDocChecker } from './klsjnh-standards-doc.mjs';
 
 async function main() {
   const scriptDir = fileURLToPath(new URL('.', import.meta.url));
@@ -21,6 +22,11 @@ async function main() {
   const astViolations = await ast.check(projectRoot);
   console.log(`ast checks (funcName / log-concat, tree-sitter): ${astViolations.length} issue(s) ...`);
   violations.push(...astViolations);
+
+  const doc = await createDocChecker();
+  const docViolations = await doc.check(projectRoot);
+  console.log(`doc checks (doc-api-path): ${docViolations.length} issue(s) ...`);
+  violations.push(...docViolations);
 
   if (violations.length > 0) {
     console.error(`klsjnh standards check FAILED (${violations.length} issue(s)) — fix manually (AI-assisted); the fixer script has been removed ...`);

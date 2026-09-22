@@ -21,9 +21,10 @@ import com.klsjnh.domain.system011.organization.JulyOrganization;
 import com.klsjnh.domain.system011.organization.JulyOrganizationRepository;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
-import com.klsjnh.infrastructure.persistence.repository.BaseTreeRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseTreeRepository;
 import com.klsjnh.infrastructure.system011.organization.entity.JulyOrganizationPo;
 import com.klsjnh.infrastructure.system011.organization.mapper.JulyOrganizationMapper;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -35,13 +36,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyOrganization aggregate on the tree +
- * sort base (BaseTreeRepository011).
+ * Repository implementation for the JulyOrganization aggregate on the tree base
+ * (BaseTreeRepository; default order sort_order, id).
  */
 
 @Repository
 public class JulyOrganizationRepositoryImpl
-        extends BaseTreeRepository011<JulyOrganizationPo, JulyOrganizationMapper>
+        extends BaseTreeRepository<JulyOrganizationPo, JulyOrganizationMapper>
         implements JulyOrganizationRepository {
 
     /**
@@ -154,7 +155,8 @@ public class JulyOrganizationRepositoryImpl
     @Override
     public List<JulyOrganization> findChildren(String parentId) {
         QueryWrapper<JulyOrganizationPo> wrapper = new QueryWrapper<>();
-        wrapper.eq("parent_id", parentId).orderByAsc("sort_order").orderByAsc("id");
+        wrapper.eq("parent_id", parentId);
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream().map(this::toAggregate).toList();
     }
@@ -187,19 +189,6 @@ public class JulyOrganizationRepositoryImpl
     @Override
     public List<JulyOrganization> getTree() {
         return toAggregateTree(super.selectTree());
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Organization tree orders by sort_order first, then id.</p>
-     */
-    @Override
-    protected QueryWrapper<JulyOrganizationPo> treeWrapper() {
-        QueryWrapper<JulyOrganizationPo> wrapper = new QueryWrapper<>();
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
-
-        return wrapper;
     }
 
     /**

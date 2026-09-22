@@ -24,10 +24,12 @@ import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderQuerySpec;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderRepository;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.persistence.sql.QuotedLiteral;
 import com.klsjnh.infrastructure.storagecenter.storage.entity.JulyStorageProviderPo;
 import com.klsjnh.infrastructure.storagecenter.storage.mapper.JulyStorageProviderMapper;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -37,23 +39,38 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyStorageProvider aggregate on the base
- * repository (july_storage_provider, business unique column storage_code).
+ * Repository implementation for the JulyStorageProvider aggregate on the
+ * master-sub base (july_storage_provider master, july_storage_provider_bucket
+ * child; business unique column storage_code).
  */
 
 @Repository
 public class JulyStorageProviderRepositoryImpl
-        extends BaseRepository<JulyStorageProviderPo, JulyStorageProviderMapper>
+        extends BaseMasterSubRepository011<JulyStorageProviderPo, JulyStorageProviderMapper>
         implements JulyStorageProviderRepository {
+
+    /**
+     * Bucket (child) repository.
+     */
+    private final JulyStorageProviderBucketRepositoryImpl bucketRepository;
 
     /**
      * Create the repository.
      *
-     * @param mapper       mybatis-plus mapper
-     * @param commonMapper native sql mapper
+     * @param mapper           mybatis-plus mapper
+     * @param commonMapper     native sql mapper
+     * @param bucketRepository bucket child repository
      */
-    public JulyStorageProviderRepositoryImpl(JulyStorageProviderMapper mapper, CommonMapper commonMapper) {
+    public JulyStorageProviderRepositoryImpl(JulyStorageProviderMapper mapper, CommonMapper commonMapper,
+            JulyStorageProviderBucketRepositoryImpl bucketRepository) {
         super(mapper, commonMapper);
+        this.bucketRepository = bucketRepository;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected List<BaseRepository<?, ?>> getChildServices() {
+        return List.of(bucketRepository);
     }
 
     /**
@@ -257,7 +274,7 @@ public class JulyStorageProviderRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

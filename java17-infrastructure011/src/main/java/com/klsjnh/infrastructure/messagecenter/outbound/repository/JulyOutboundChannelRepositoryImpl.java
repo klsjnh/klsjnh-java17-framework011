@@ -26,6 +26,7 @@ import com.klsjnh.infrastructure.messagecenter.outbound.entity.JulyOutboundChann
 import com.klsjnh.infrastructure.messagecenter.outbound.mapper.JulyOutboundChannelMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -234,7 +235,7 @@ public class JulyOutboundChannelRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

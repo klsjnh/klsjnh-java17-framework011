@@ -25,6 +25,7 @@ import com.klsjnh.infrastructure.datasource.sync.entity.JulySyncRuleColumnPo;
 import com.klsjnh.infrastructure.datasource.sync.mapper.JulySyncRuleColumnMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -89,9 +90,8 @@ public class JulySyncRuleColumnRepositoryImpl
     public List<JulySyncRuleColumn> findByMaster(String pkMt) {
         QueryWrapper<JulySyncRuleColumnPo> wrapper = new QueryWrapper<>();
         wrapper.eq("pk_mt", pkMt)
-                .eq("status", Status011.ENABLED.getCode())
-                .orderByAsc("sort_order")
-                .orderByAsc("id");
+                .eq("status", Status011.ENABLED.getCode());
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream()
                 .map(this::toAggregate)

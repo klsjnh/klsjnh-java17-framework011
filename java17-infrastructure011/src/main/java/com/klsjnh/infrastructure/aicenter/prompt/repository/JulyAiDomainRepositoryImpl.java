@@ -11,7 +11,8 @@ package com.klsjnh.infrastructure.aicenter.prompt.repository;
  *          modify history
  *
  *      2026.09.21  july ai domain repository impl class
- *      2026.09.21  extends BaseTreeSubRepository011 (tree + master-sub)
+ *      2026.09.21  tree + master-sub repository (BaseTreeSubRepository)
+ *      2026.09.22  base chain simplified (sort via SortSupport)
  *
  */
 
@@ -27,7 +28,8 @@ import com.klsjnh.infrastructure.aicenter.prompt.entity.JulyAiDomainPo;
 import com.klsjnh.infrastructure.aicenter.prompt.mapper.JulyAiDomainMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
-import com.klsjnh.infrastructure.persistence.repository.BaseTreeSubRepository011;
+import com.klsjnh.infrastructure.persistence.repository.BaseTreeSubRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -40,11 +42,11 @@ import java.util.List;
  * Repository implementation for the JulyAiDomain aggregate (july_ai_domain,
  * business unique column domain_code): a tree master (parent_id + sort_order)
  * whose child table is july_ai_domain_prompt (pk_mt), hence
- * {@link BaseTreeSubRepository011}.
+ * {@link BaseTreeSubRepository}.
  */
 
 @Repository
-public class JulyAiDomainRepositoryImpl extends BaseTreeSubRepository011<JulyAiDomainPo, JulyAiDomainMapper>
+public class JulyAiDomainRepositoryImpl extends BaseTreeSubRepository<JulyAiDomainPo, JulyAiDomainMapper>
         implements JulyAiDomainRepository {
 
     /**
@@ -202,7 +204,7 @@ public class JulyAiDomainRepositoryImpl extends BaseTreeSubRepository011<JulyAiD
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

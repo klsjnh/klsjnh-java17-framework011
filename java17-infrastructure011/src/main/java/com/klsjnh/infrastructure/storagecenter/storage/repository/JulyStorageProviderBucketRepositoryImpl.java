@@ -27,6 +27,7 @@ import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.persistence.sql.QuotedLiteral;
 import com.klsjnh.infrastructure.storagecenter.storage.entity.JulyStorageProviderBucketPo;
 import com.klsjnh.infrastructure.storagecenter.storage.mapper.JulyStorageProviderBucketMapper;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -137,9 +138,8 @@ public class JulyStorageProviderBucketRepositoryImpl
     @Override
     public List<JulyStorageProviderBucket> findByPkMt(String pkMt) {
         QueryWrapper<JulyStorageProviderBucketPo> wrapper = new QueryWrapper<>();
-        wrapper.eq("pk_mt", pkMt)
-                .orderByAsc("sort_order")
-                .orderByAsc("id");
+        wrapper.eq("pk_mt", pkMt);
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream()
                 .map(this::toAggregate)

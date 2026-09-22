@@ -23,9 +23,11 @@ import com.klsjnh.domain.system011.dictionary.JulyDictionaryQuerySpec;
 import com.klsjnh.domain.system011.dictionary.JulyDictionaryRepository;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.system011.dictionary.entity.JulyDictionaryPo;
 import com.klsjnh.infrastructure.system011.dictionary.mapper.JulyDictionaryMapper;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -35,23 +37,38 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyDictionary aggregate on the base
- * repository (july_dictionary, business unique column dictionary_code).
+ * Repository implementation for the JulyDictionary aggregate on the master-sub
+ * base (july_dictionary master, july_dictionary_item child; business unique
+ * column dictionary_code).
  */
 
 @Repository
 public class JulyDictionaryRepositoryImpl
-        extends BaseRepository<JulyDictionaryPo, JulyDictionaryMapper>
+        extends BaseMasterSubRepository011<JulyDictionaryPo, JulyDictionaryMapper>
         implements JulyDictionaryRepository {
+
+    /**
+     * Item (child) repository.
+     */
+    private final JulyDictionaryItemRepositoryImpl itemRepository;
 
     /**
      * Create the repository.
      *
-     * @param mapper       mybatis-plus mapper
-     * @param commonMapper native sql mapper
+     * @param mapper         mybatis-plus mapper
+     * @param commonMapper   native sql mapper
+     * @param itemRepository item child repository
      */
-    public JulyDictionaryRepositoryImpl(JulyDictionaryMapper mapper, CommonMapper commonMapper) {
+    public JulyDictionaryRepositoryImpl(JulyDictionaryMapper mapper, CommonMapper commonMapper,
+            JulyDictionaryItemRepositoryImpl itemRepository) {
         super(mapper, commonMapper);
+        this.itemRepository = itemRepository;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected List<BaseRepository<?, ?>> getChildServices() {
+        return List.of(itemRepository);
     }
 
     /**
@@ -167,9 +184,8 @@ public class JulyDictionaryRepositoryImpl
     @Override
     public List<JulyDictionary> findAllEnabled() {
         QueryWrapper<JulyDictionaryPo> wrapper = new QueryWrapper<>();
-        wrapper.eq("status", Status011.ENABLED.getCode())
-                .orderByAsc("sort_order")
-                .orderByAsc("id");
+        wrapper.eq("status", Status011.ENABLED.getCode());
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream()
                 .map(this::toAggregate)
@@ -244,7 +260,7 @@ public class JulyDictionaryRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

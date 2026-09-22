@@ -25,7 +25,9 @@ import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.infrastructure.aicenter.modelprovider.entity.AiModelProviderPo;
 import com.klsjnh.infrastructure.aicenter.modelprovider.mapper.AiModelProviderMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -35,23 +37,38 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 
 /**
- * Repository implementation for the AiModelProvider aggregate on the base
- * repository (july_ai_model_provider, business unique column provider_code).
+ * Repository implementation for the AiModelProvider aggregate on the master-sub
+ * base (july_ai_model_provider master, july_ai_model_provider_api child;
+ * business unique column provider_code).
  */
 
 @Repository
 public class AiModelProviderRepositoryImpl
-        extends BaseRepository<AiModelProviderPo, AiModelProviderMapper>
+        extends BaseMasterSubRepository011<AiModelProviderPo, AiModelProviderMapper>
         implements AiModelProviderRepository {
+
+    /**
+     * Api key (child) repository.
+     */
+    private final AiModelProviderApiRepositoryImpl apiRepository;
 
     /**
      * Create the repository.
      *
-     * @param mapper       mybatis-plus mapper
-     * @param commonMapper native sql mapper
+     * @param mapper        mybatis-plus mapper
+     * @param commonMapper  native sql mapper
+     * @param apiRepository api key child repository
      */
-    public AiModelProviderRepositoryImpl(AiModelProviderMapper mapper, CommonMapper commonMapper) {
+    public AiModelProviderRepositoryImpl(AiModelProviderMapper mapper, CommonMapper commonMapper,
+            AiModelProviderApiRepositoryImpl apiRepository) {
         super(mapper, commonMapper);
+        this.apiRepository = apiRepository;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected List<BaseRepository<?, ?>> getChildServices() {
+        return List.of(apiRepository);
     }
 
     /**
@@ -167,9 +184,8 @@ public class AiModelProviderRepositoryImpl
     @Override
     public List<AiModelProvider> findAllEnabled() {
         QueryWrapper<AiModelProviderPo> wrapper = new QueryWrapper<>();
-        wrapper.eq("status", Status011.ENABLED.getCode())
-                .orderByAsc("sort_order")
-                .orderByAsc("id");
+        wrapper.eq("status", Status011.ENABLED.getCode());
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream()
                 .map(this::toAggregate)
@@ -245,7 +261,7 @@ public class AiModelProviderRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

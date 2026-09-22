@@ -33,8 +33,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyRole aggregate: master of the
- * role_permissions child (BaseMasterSubRepository011).
+ * Repository implementation for the JulyRole aggregate on the master-sub base
+ * (BaseMasterSubRepository011).
+ * <p>
+ * {@link #getChildServices()} is intentionally empty: role_permissions uses the
+ * toggle-dr replace strategy (revive / stop), not cascade delete.
+ * </p>
  */
 
 @Repository

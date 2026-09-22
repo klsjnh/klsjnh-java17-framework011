@@ -26,6 +26,7 @@ import com.klsjnh.infrastructure.messagecenter.inbound.entity.JulyInboundTemplat
 import com.klsjnh.infrastructure.messagecenter.inbound.mapper.JulyInboundTemplateMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -237,7 +238,7 @@ public class JulyInboundTemplateRepositoryImpl
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

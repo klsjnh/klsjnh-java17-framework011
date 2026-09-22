@@ -39,8 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyUser aggregate: master of the
- * user_role / user_audit children (BaseMasterSubRepository011).
+ * Repository implementation for the JulyUser aggregate: master-sub with the
+ * user_role child registered for cascade (BaseMasterSubRepository011).
+ * <p>
+ * user_audit is structurally a child but append-only, so it is deliberately
+ * NOT registered in {@link #getChildServices()}.
+ * </p>
  */
 
 @Repository

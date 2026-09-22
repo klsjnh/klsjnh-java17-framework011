@@ -26,6 +26,7 @@ import com.klsjnh.infrastructure.aicenter.modelprovider.entity.AiModelProviderAp
 import com.klsjnh.infrastructure.aicenter.modelprovider.mapper.AiModelProviderApiMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -135,7 +136,7 @@ public class AiModelProviderApiRepositoryImpl
             wrapper.eq("status", status);
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return mapper.selectList(wrapper).stream()
                 .map(this::toAggregate)

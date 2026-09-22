@@ -18,7 +18,7 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（三能力 + 提示词管理已实现）** · **017.datasource-center 数据源中心（能力一/二、能力三 S1 已实现；含 016 动态数据源底册）** · **031.persistence-center 持久化中心（形态 1–8 已实现）** · 020 容器化部署 |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（三能力 + 提示词管理已实现）** · **017.datasource-center 数据源中心（能力一/二、能力三 S1 已实现；含 016 动态数据源底册）** · **031.persistence-center 持久化中心（形态 1–8 已实现；[017 排序基座精简](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md) 已落地；[018 主子表 API 对称化](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 定案待编码）** · 020 容器化部署 |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
 | requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** |
 | requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 能力（推理 / 图片 / 语音 / 提示词） / 031 数据源中心（读写分页 / 类型契约 / 同步 S1） 均已编码；IAM 各主题按 011→013→编码 推进 |

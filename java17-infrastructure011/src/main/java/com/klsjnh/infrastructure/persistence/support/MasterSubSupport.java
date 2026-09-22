@@ -48,8 +48,14 @@ public final class MasterSubSupport {
     }
 
     /**
-     * Save a single child list under the master: old children are logically
-     * deleted, then the given list is inserted (replace strategy).
+     * Save a single child list under the master — <b>Replace strategy</b>: old
+     * children are logically deleted, then the given list is inserted.
+     * <p>
+     * Incremental editing is a different path: call the child repository
+     * directly ({@code insert} / {@code update} / {@code logicDelete}) for
+     * row-by-row adds / edits / deletes. Never route incremental edits through
+     * this method — it would wipe the untouched rows.
+     * </p>
      *
      * @param masterId     master id
      * @param childService the child repository

@@ -26,8 +26,10 @@ import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.infrastructure.datasource.sync.entity.JulySyncRulePo;
 import com.klsjnh.infrastructure.datasource.sync.mapper.JulySyncRuleMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
+import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository011;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.persistence.sql.QuotedLiteral;
+import com.klsjnh.infrastructure.persistence.support.SortSupport;
 
 import org.springframework.stereotype.Repository;
 
@@ -37,22 +39,37 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 
 /**
- * Repository implementation for the JulySyncRule aggregate on the base
- * repository (july_sync_rule, business unique column sync_code).
+ * Repository implementation for the JulySyncRule aggregate on the master-sub
+ * base (july_sync_rule master, july_sync_rule_column child; business unique
+ * column sync_code).
  */
 
 @Repository
-public class JulySyncRuleRepositoryImpl extends BaseRepository<JulySyncRulePo, JulySyncRuleMapper>
+public class JulySyncRuleRepositoryImpl extends BaseMasterSubRepository011<JulySyncRulePo, JulySyncRuleMapper>
         implements JulySyncRuleRepository {
+
+    /**
+     * Column (child) repository.
+     */
+    private final JulySyncRuleColumnRepositoryImpl columnRepository;
 
     /**
      * Create the repository.
      *
-     * @param mapper       mybatis-plus mapper
-     * @param commonMapper native sql mapper
+     * @param mapper           mybatis-plus mapper
+     * @param commonMapper     native sql mapper
+     * @param columnRepository column child repository
      */
-    public JulySyncRuleRepositoryImpl(JulySyncRuleMapper mapper, CommonMapper commonMapper) {
+    public JulySyncRuleRepositoryImpl(JulySyncRuleMapper mapper, CommonMapper commonMapper,
+            JulySyncRuleColumnRepositoryImpl columnRepository) {
         super(mapper, commonMapper);
+        this.columnRepository = columnRepository;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected List<BaseRepository<?, ?>> getChildServices() {
+        return List.of(columnRepository);
     }
 
     /** {@inheritDoc} */
@@ -163,7 +180,7 @@ public class JulySyncRuleRepositoryImpl extends BaseRepository<JulySyncRulePo, J
             wrapper.eq("status", query.status());
         }
 
-        wrapper.orderByAsc("sort_order").orderByAsc("id");
+        SortSupport.orderBySortThenId(wrapper);
 
         return wrapper;
     }

@@ -34,6 +34,7 @@ import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.iam.converter.JulyUserConverter;
 
+import com.klsjnh.web.global.WebPaths011;
 import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.iam.vo.julyuser.JulyUserAssignRolesVo011;
 import com.klsjnh.web.iam.vo.julyuser.JulyUserChangePasswordVo011;
@@ -66,7 +67,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Tag(name = "IAM - 用户管理")
 @RestController
-@RequestMapping("/klsjnh/iam/julyUser/v1")
+@RequestMapping(WebPaths011.IAM_USER)
 public class JulyUserController {
 
 

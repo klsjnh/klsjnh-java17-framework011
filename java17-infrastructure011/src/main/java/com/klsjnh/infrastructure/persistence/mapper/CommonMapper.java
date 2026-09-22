@@ -24,7 +24,7 @@ import org.apache.ibatis.annotations.Update;
  * <p>
  * <b>Injection guard:</b> the statement is spliced raw ({@code ${sql}}) —
  * never splice user input; identifier values must pass a charset whitelist at
- * the call site (see BaseRepository011#physicalDelete).
+ * the call site (see BaseRepository#physicalDelete).
  * </p>
  */
 
