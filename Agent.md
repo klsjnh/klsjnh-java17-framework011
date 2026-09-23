@@ -19,6 +19,7 @@ docs/
 ├── 016.coding-standards.md    # Coding standards for THIS language
 ├── 017.tech-debt-redlines.md  # Tech-debt redlines (reference impl audit)
 ├── 019.backend-api-review.md  # Backend API quality review (contract-level)
+├── 020.business-project-quickstart.md  # Consumer quickstart (scaffold business projects on this framework)
 ├── infrastructure011/         # Architecture topics (架构类需求承载地: design / architecture / usage)
 ├── requirement011/            # Raw requirements (普通需求 — business perspective)
 ├── requirement013/            # Detailed design (两源合流 · 对接代码)
@@ -41,6 +42,7 @@ docs/
 | `011→013` | [docs/requirement011/](docs/requirement011/) → [docs/requirement013/](docs/requirement013/) | 需求两源（普通类） | 业务诉求 → 详细设计（对接代码） |
 | `infrastructure011` | [docs/infrastructure011/](docs/infrastructure011/) | 架构专题 · 架构类需求承载地 | 平台能力的设计思路 / 整体架构 / 怎么用（架构类需求合流至 `requirement013`） |
 | `015` | [015.project-info.md](docs/015.project-info.md) | 项目事实卡 | 本项目事实（栈 / 构建 / 运行 / 能力）—— **具体命令在这里** |
+| `020` | [020.business-project-quickstart.md](docs/020.business-project-quickstart.md) | 业务项目快捷手册（消费者） | 在本框架上脚手架业务工程；配套 [提示词](docs/020.business-project-quickstart.prompt.md) |
 
 > **路径是协议，内容是实例**：上表每一项对应的**文件位置**在任意项目里一字不改（见上方目录树）；变的只是各文件里的文章。  
 > **日常动态文件**：每日工作日志 (`docs/{YYYY-MM-DD}.md`)、原始对话 (`docs/{YYYY-MM-DD}-chat.md`) 与历史归档 (`docs/archive011/`) 按需在处理具体任务或追溯历史上下文时加载。

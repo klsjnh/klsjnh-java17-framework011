@@ -13,6 +13,7 @@
 | [016.coding-standards.md](016.coding-standards.md) | 编码规则（真实代码示例 + 门禁规则映射） |
 | [017.tech-debt-redlines.md](017.tech-debt-redlines.md) | 技术债红线（参考实现踩过的坑 + 不可回退的硬约束） |
 | 019.backend-api-review.md | 后端接口质量评审（契约层已知缺口 / 哪些不能信 Swagger） |
+| [020.business-project-quickstart.md](020.business-project-quickstart.md) | **业务项目快捷手册**（消费者脚手架 / Boot / july_* / SqlRoutingPort；[提示词](020.business-project-quickstart.prompt.md)） |
 
 ## 专题与知识库
 
@@ -42,7 +43,7 @@
 | 017 | 在用 | 顶层 017.tech-debt-redlines；infrastructure011/017.datasource-center 数据源中心（原 `017.topic-datasource` 已折入其 `016.topic-datasource`） |
 | 018 | 在用 | infrastructure011/018 IAM 总设计 |
 | 019 | 在用 | 顶层 019.backend-api-review；infrastructure011 存储中心（现 `011.storage-center/`，019 底册已拆） |
-| 020 | 在用 | infrastructure011/020 容器化部署 |
+| 020 | 在用 | **顶层** 020.business-project-quickstart（业务项目消费者快捷手册 + `.prompt`）；infrastructure011/020 容器化部署 |
 | 021 | 在用 | infrastructure011 消息中心（现 `013.message-center/`，021 底册已拆；平台架构能力 · 多渠道可插拔 · P1 已实现） |
 | 022 | 在用 | requirement011/013 july-scheduler（定时任务） |
 | 023 | 在用 | requirement011/013 july-config（配置管理） |
