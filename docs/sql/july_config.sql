@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS july_config (
     create_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_code         VARCHAR(60)  GENERATED ALWAYS AS (IF(dr = '0', code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_code (code)
+    UNIQUE KEY uk_code (alive_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 配置管理';

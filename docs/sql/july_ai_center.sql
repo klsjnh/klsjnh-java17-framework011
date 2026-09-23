@@ -26,8 +26,9 @@ CREATE TABLE IF NOT EXISTS july_ai_model_provider (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_provider_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', provider_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=provider_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_provider_code (provider_code)
+    UNIQUE KEY uk_provider_code (alive_provider_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型接入011 - 提供商管理';
 
 CREATE TABLE IF NOT EXISTS july_ai_model_provider_api (
@@ -44,8 +45,9 @@ CREATE TABLE IF NOT EXISTS july_ai_model_provider_api (
     create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr          VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_key   VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, api_code), NULL)) STORED COMMENT '存活唯一键（dr=0 时=pk_mt#api_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_pk_mt_api_code (pk_mt, api_code),
+    UNIQUE KEY uk_pk_mt_api_code (alive_key),
     KEY idx_pk_mt_sort (pk_mt, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型接入011 - 提供商密钥';
 
@@ -68,8 +70,9 @@ CREATE TABLE IF NOT EXISTS july_ai_domain (
     create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr          VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_domain_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', domain_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=domain_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_domain_code (domain_code),
+    UNIQUE KEY uk_domain_code (alive_domain_code),
     KEY idx_parent_id (parent_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 中心 - 提示词业务域（主表 · 树）';
 
@@ -95,7 +98,8 @@ CREATE TABLE IF NOT EXISTS july_ai_domain_prompt (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'   COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_prompt_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', prompt_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=prompt_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_prompt_code (prompt_code),
+    UNIQUE KEY uk_prompt_code (alive_prompt_code),
     KEY idx_pk_mt_sort (pk_mt, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 中心 - 提示词（子表）';

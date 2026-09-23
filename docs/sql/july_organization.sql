@@ -18,8 +18,9 @@ CREATE TABLE IF NOT EXISTS july_organization (
     create_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_org_code     VARCHAR(30)  GENERATED ALWAYS AS (IF(dr = '0', org_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=org_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_org_code (org_code),
+    UNIQUE KEY uk_org_code (alive_org_code),
     KEY idx_parent_id (parent_id),
     KEY idx_pk_user (pk_user)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 组织机构';

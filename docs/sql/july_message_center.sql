@@ -25,8 +25,9 @@ CREATE TABLE IF NOT EXISTS july_message_outbound_channel (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_channel_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', channel_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=channel_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_channel_code (channel_code)
+    UNIQUE KEY uk_channel_code (alive_channel_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心011 - 出站渠道配置';
 
 CREATE TABLE IF NOT EXISTS july_message_outbound_template (
@@ -44,8 +45,9 @@ CREATE TABLE IF NOT EXISTS july_message_outbound_template (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_template_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', template_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=template_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_template_code (template_code)
+    UNIQUE KEY uk_template_code (alive_template_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心011 - 出站消息模板';
 
 CREATE TABLE IF NOT EXISTS july_message_outbound (
@@ -90,8 +92,9 @@ CREATE TABLE IF NOT EXISTS july_message_inbound_channel (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_channel_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', channel_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=channel_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_channel_code (channel_code)
+    UNIQUE KEY uk_channel_code (alive_channel_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心011 - 入站渠道配置';
 
 CREATE TABLE IF NOT EXISTS july_message_inbound_template (
@@ -109,8 +112,9 @@ CREATE TABLE IF NOT EXISTS july_message_inbound_template (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_template_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', template_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=template_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_template_code (template_code)
+    UNIQUE KEY uk_template_code (alive_template_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心011 - 入站消息模板';
 
 CREATE TABLE IF NOT EXISTS july_message_inbound (
@@ -130,7 +134,8 @@ CREATE TABLE IF NOT EXISTS july_message_inbound (
     create_time    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr             VARCHAR(3)    NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_key      VARCHAR(200)  GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', channel_code, raw_message_id), NULL)) STORED COMMENT '存活唯一键（dr=0 时=channel_code#raw_message_id）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_channel_msg (channel_code, raw_message_id),
+    UNIQUE KEY uk_channel_msg (alive_key),
     KEY idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息中心011 - 入站接收记录';

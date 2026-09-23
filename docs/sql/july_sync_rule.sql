@@ -28,8 +28,9 @@ CREATE TABLE IF NOT EXISTS july_sync_rule (
     create_time    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr             VARCHAR(3)    NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_sync_code VARCHAR(60)  GENERATED ALWAYS AS (IF(dr = '0', sync_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=sync_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sync_code (sync_code)
+    UNIQUE KEY uk_sync_code (alive_sync_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据源中心 - 同步规则（主表）';
 
 CREATE TABLE IF NOT EXISTS july_sync_rule_column (
@@ -48,7 +49,8 @@ CREATE TABLE IF NOT EXISTS july_sync_rule_column (
     create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr            VARCHAR(3)   NOT NULL DEFAULT '0'   COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_key     VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, source_column), NULL)) STORED COMMENT '存活唯一键（dr=0 时=pk_mt#source_column）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_pk_mt_source_column (pk_mt, source_column),
+    UNIQUE KEY uk_pk_mt_source_column (alive_key),
     KEY idx_pk_mt_sort (pk_mt, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据源中心 - 同步列对照（明细表）';

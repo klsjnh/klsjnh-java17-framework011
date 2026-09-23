@@ -17,8 +17,9 @@ CREATE TABLE IF NOT EXISTS july_role (
     create_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_role_code    VARCHAR(30)  GENERATED ALWAYS AS (IF(dr = '0', role_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=role_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_role_code (role_code)
+    UNIQUE KEY uk_role_code (alive_role_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 角色管理';
 
 -- 附属表：角色-权限（挂菜单；一行 = 角色 × 菜单 × 权限标识快照；toggle 替换）
@@ -33,7 +34,8 @@ CREATE TABLE IF NOT EXISTS july_role_permissions (
     create_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_key          VARCHAR(300) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, pk_menu, permission_code), NULL)) STORED COMMENT '存活唯一键（dr=0 时=pk_mt#pk_menu#permission_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_role_menu_code (pk_mt, pk_menu, permission_code),
+    UNIQUE KEY uk_role_menu_code (alive_key),
     KEY idx_pk_menu (pk_menu)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 角色_权限';

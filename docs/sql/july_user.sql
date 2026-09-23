@@ -21,8 +21,9 @@ CREATE TABLE IF NOT EXISTS july_user (
     create_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_user_account VARCHAR(30)  GENERATED ALWAYS AS (IF(dr = '0', user_account, NULL)) STORED COMMENT '存活唯一键（dr=0 时=user_account）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_user_account (user_account)
+    UNIQUE KEY uk_user_account (alive_user_account)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 用户管理';
 
 -- 附属表：用户-角色关联（pk_mt → july_user.id，pk_role → july_role.id；toggle 替换）
@@ -36,8 +37,9 @@ CREATE TABLE IF NOT EXISTS july_user_role (
     create_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_key          VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, pk_role), NULL)) STORED COMMENT '存活唯一键（dr=0 时=pk_mt#pk_role）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_user_role (pk_mt, pk_role),
+    UNIQUE KEY uk_user_role (alive_key),
     KEY idx_pk_role (pk_role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 用户_角色';
 

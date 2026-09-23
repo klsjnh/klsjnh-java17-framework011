@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS july_dictionary (
     create_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr               VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_dictionary_code VARCHAR(60) GENERATED ALWAYS AS (IF(dr = '0', dictionary_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=dictionary_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_dictionary_code (dictionary_code)
+    UNIQUE KEY uk_dictionary_code (alive_dictionary_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 数据字典';
 
 CREATE TABLE IF NOT EXISTS july_dictionary_item (
@@ -36,7 +37,8 @@ CREATE TABLE IF NOT EXISTS july_dictionary_item (
     create_time  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
     update_time  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改日期',
     dr           VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '删除标记（0 正常 / 1 已删除）',
+    alive_key    VARCHAR(200) GENERATED ALWAYS AS (IF(dr = '0', CONCAT_WS('#', pk_mt, item_code), NULL)) STORED COMMENT '存活唯一键（dr=0 时=pk_mt#item_code）',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_pk_mt_item_code (pk_mt, item_code),
+    UNIQUE KEY uk_pk_mt_item_code (alive_key),
     KEY idx_pk_mt_sort (pk_mt, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 数据字典明细';
