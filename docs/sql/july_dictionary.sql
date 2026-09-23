@@ -1,9 +1,10 @@
 -- ============================================================
 -- july_dictionary / july_dictionary_item — 系统管理-数据字典（主子表）
 -- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
--- 设计：docs/requirement011/035.topic-dictionary.md
--- 方案：docs/requirement013/035.topic-dictionary.md
+-- 设计：docs/requirement011/027.topic-dictionary.md
+-- 方案：docs/requirement013/027.topic-dictionary.md
 -- 边界：程序读入口 getByType（无 HTTP 端点）；本期不加缓存，每次查库
+-- 唯一键：业务 UNIQUE 须落在 alive_* 生成列（见 base-entity-columns.sql / 031/020 任务）
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS july_dictionary (

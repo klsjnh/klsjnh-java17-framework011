@@ -53,6 +53,9 @@
 --   alive_key VARCHAR(200) GENERATED ALWAYS AS (IF(dr='0', CONCAT_WS('#', pk_mt, item_code), NULL)) STORED,
 --   UNIQUE KEY uk_pk_mt_item_code (alive_key)
 -- 存量表迁移脚本：docs/sql/logic-delete-unique-fix.sql
+-- 收口任务（CREATE 真源 + 补全 fix）：docs/infrastructure011/031.persistence-center/020.topic-alive-unique-ddl-complete.md
+-- 样板：docs/sql/july_demo011.sql（CREATE 即含 alive_code）
+-- 注意：sort_order 模板默认 9999；个别主题（如字典）业务定案可为 0，以主题 CREATE 为准
 -- ============================================================
 
 

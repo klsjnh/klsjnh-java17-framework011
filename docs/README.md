@@ -18,10 +18,10 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（三能力 + 提示词管理已实现）** · **017.datasource-center 数据源中心（能力一/二、能力三 S1 已实现；含 016 动态数据源底册）** · **031.persistence-center 持久化中心（形态 1–8；[017](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md)/[018](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 已落地；[019 后续](infrastructure011/031.persistence-center/019.topic-persistence-followups.md) 可选）** · 020 容器化部署 |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（三能力 + 提示词管理已实现）** · **017.datasource-center 数据源中心（能力一/二、能力三 S1 已实现；含 016 动态数据源底册）** · **031.persistence-center 持久化中心（[017](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md)/[018](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 已落地；[019](infrastructure011/031.persistence-center/019.topic-persistence-followups.md)；[020 alive_* DDL](infrastructure011/031.persistence-center/020.topic-alive-unique-ddl-complete.md) 待编码）** · 020 容器化部署 |
 | [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
-| requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（xlsx/多 sheet，已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码；xlsx 导入导出打样）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** · 032 平台导入（已编码，Controller 按需） |
-| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面 / 030 AI 能力（推理 / 图片 / 语音 / 提示词） / 031 数据源中心（读写分页 / 类型契约 / 同步 S1） / 032 平台导入 均已编码；IAM 各主题按 011→013→编码 推进 |
+| requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（xlsx/多 sheet，已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码；xlsx 导入导出打样）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** · 032 平台导入（已编码，Controller 按需）。存储管理面业务诉求并入架构底册，无独立 `requirement011/029` |
+| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面（迁移/管理面） / 030 AI 能力 / 031 数据源中心 / 032 平台导入 均已编码；IAM 主题 **代码已齐**，requirement013 补档仍可跟 |
 | archive011/ | 历史工作日志归档 |
 
 > **两源一汇（2026-09-20 约定）**：架构类需求（平台能力演进）入 `infrastructure011/`；普通需求（业务诉求）入 `requirement011/`；两路合流至 `requirement013/`（详细设计 · 对接代码）。判据见 [011.agreements.md](011.agreements.md) §015。
@@ -50,7 +50,7 @@
 | 026 | 在用 | requirement011/013 数据源管理（datasource 域 / july_datasource） |
 | 027 | 在用 | requirement011 数据字典（system011 / july_dictionary） |
 | 028 | 在用 | requirement011/013 AI 模型接入（aicenter / july_ai_model_provider） |
-| 029 | 在用 | requirement011/013 存储中心管理面（storagecenter / july_storage_provider + july_storage_provider_bucket） |
+| 029 | 在用 | requirement013 存储中心管理面（`029.topic-storage-migration.md`）；架构底册 `infrastructure011/011.storage-center/`（**无** `requirement011/029`） |
 | 030 | 在用 | requirement011/013 AI 模型调用（推理 / 文生图 / 图生图 / TTS / 语音识别 / 提示词，aicenter） |
 | 031 | 在用 | requirement013 数据源中心（读写分页 / 类型契约 / 同步 S1，datasource）；infrastructure011/031 持久化中心（形态 1–8；[017](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md)/[018](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 已验收落地；[019](infrastructure011/031.persistence-center/019.topic-persistence-followups.md) 可选） |
 | 032 | 在用 | requirement011/013 平台导入（xlsx；与 025 导出对称；字典打样） |
