@@ -11,6 +11,8 @@ package com.klsjnh.web.aicenter.vo.aiimage;
  *          modify history
  *
  *      2026.09.19  ai image request vo 011 class
+ *      2026.09.24  document text / image / text+image modes
+ *      2026.09.24  require storageCode|storageId + bucketCode|bucketId
  *
  */
 
@@ -19,8 +21,10 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Image generation request: provider / key may be an id or a code; an input
- * image (url or base64) turns it into image-to-image.
+ * Image generation request: provider / key may be an id or a code. Modes:
+ * prompt only = text-to-image; prompt + imageUrl/imageBase64 = image-to-image /
+ * text+image-to-image. Persistence requires an explicit storage locator
+ * (no framework default).
  */
 
 @Data
@@ -50,8 +54,8 @@ public class AiImageRequestVo011 {
     @Schema(description = "返回形态（url / bytes / b64；留空用默认）")
     private String returnType;
 
-    /** Text prompt. */
-    @Schema(description = "提示词", requiredMode = Schema.RequiredMode.REQUIRED)
+    /** Text prompt (required; also the edit instruction when an input image is set). */
+    @Schema(description = "提示词（必填；有输入图时为编辑/图生图指令）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String prompt;
 
     /** Output size (e.g. 1024x1024), optional. */
@@ -74,11 +78,27 @@ public class AiImageRequestVo011 {
     @Schema(description = "负面提示词")
     private String negativePrompt;
 
-    /** Input image url (image-to-image), optional. */
-    @Schema(description = "输入图 URL（图生图，可选）")
+    /** Input image url (image-to-image / text+image-to-image), optional. */
+    @Schema(description = "输入图 URL（有则图生图/文图生图；可选）")
     private String imageUrl;
 
-    /** Input image base64 (image-to-image), optional. */
-    @Schema(description = "输入图 base64（图生图，可选）")
+    /** Input image base64 (image-to-image / text+image-to-image), optional. */
+    @Schema(description = "输入图 base64（有则图生图/文图生图；可选）")
     private String imageBase64;
+
+    /** Storage instance code (preferred). Required with bucket unless storageId is set. */
+    @Schema(description = "存储实例 code（优先；与 storageId 二选一必传）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String storageCode;
+
+    /** Storage instance id, alternative to storageCode. */
+    @Schema(description = "存储实例 id（与 storageCode 二选一）")
+    private String storageId;
+
+    /** Bucket code within the instance (preferred). Required with storage unless bucketId is set. */
+    @Schema(description = "桶 code（优先；与 bucketId 二选一必传；缺参 400，不走默认桶）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String bucketCode;
+
+    /** Bucket id, alternative to bucketCode. */
+    @Schema(description = "桶 id（与 bucketCode 二选一）")
+    private String bucketId;
 }

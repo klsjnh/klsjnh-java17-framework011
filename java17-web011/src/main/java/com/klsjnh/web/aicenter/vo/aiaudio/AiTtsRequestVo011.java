@@ -11,6 +11,7 @@ package com.klsjnh.web.aicenter.vo.aiaudio;
  *          modify history
  *
  *      2026.09.19  ai tts request vo 011 class
+ *      2026.09.24  require storageCode|storageId + bucketCode|bucketId
  *
  */
 
@@ -19,7 +20,8 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Speech synthesis request: provider / key may be an id or a code.
+ * Speech synthesis request: provider / key may be an id or a code. Persistence
+ * requires an explicit storage locator (no framework default).
  */
 
 @Data
@@ -76,4 +78,20 @@ public class AiTtsRequestVo011 {
     /** Sample rate in Hz, optional. */
     @Schema(description = "采样率（Hz）")
     private Integer sampleRate;
+
+    /** Storage instance code (preferred). Required with bucket unless storageId is set. */
+    @Schema(description = "存储实例 code（优先；与 storageId 二选一必传）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String storageCode;
+
+    /** Storage instance id, alternative to storageCode. */
+    @Schema(description = "存储实例 id（与 storageCode 二选一）")
+    private String storageId;
+
+    /** Bucket code within the instance (preferred). Required with storage unless bucketId is set. */
+    @Schema(description = "桶 code（优先；与 bucketId 二选一必传；缺参 400，不走默认桶）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String bucketCode;
+
+    /** Bucket id, alternative to bucketCode. */
+    @Schema(description = "桶 id（与 bucketCode 二选一）")
+    private String bucketId;
 }

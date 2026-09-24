@@ -19,6 +19,7 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.image.AiImageUseCase;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
+import com.klsjnh.domain.aicenter.media.AiMediaLocation;
 import com.klsjnh.domain.aicenter.media.AiMediaRef;
 
 import com.klsjnh.web.aicenter.converter.AiMediaConverter;
@@ -42,7 +43,7 @@ import java.util.Base64;
  * image-to-image when an input image is given).
  */
 
-@Tag(name = "AI中心011 - 文生图/图生图")
+@Tag(name = "AI中心011 - 文生图/图生图/文图生图")
 @RestController
 @RequestMapping("/klsjnh/aicenter/julyAiImage/v1")
 public class AiImageController {
@@ -75,7 +76,7 @@ public class AiImageController {
      * @return image artifact in the requested form
      */
     @PostMapping("/generate")
-    @Operation(summary = "文生图 / 图生图（provider/api 支持 id 或 code；有输入图即图生图）")
+    @Operation(summary = "文生图 / 图生图 / 文图生图（必传 storageCode|storageId + bucketCode|bucketId；缺参 400；有输入图即图生图/文图生图）")
     public Response011<AiImageResponseVo011> generate(@RequestBody AiImageRequestVo011 vo) {
         String funcName = "ai image generate";
 
@@ -85,8 +86,11 @@ public class AiImageController {
         byte[] imageBytes = StringUtil011.isBlank(vo.getImageBase64()) ? null
                 : Base64.getDecoder().decode(vo.getImageBase64());
 
+        AiMediaLocation location = new AiMediaLocation(vo.getStorageCode(), vo.getStorageId(), vo.getBucketCode(),
+                vo.getBucketId());
+
         AiMediaRef ref = aiImageUseCase.generate(target, vo.getPrompt(), vo.getSize(), vo.getSteps(), vo.getSeed(),
-                vo.getGuidanceScale(), vo.getNegativePrompt(), vo.getImageUrl(), imageBytes);
+                vo.getGuidanceScale(), vo.getNegativePrompt(), vo.getImageUrl(), imageBytes, location);
 
         return Response011.success(funcName, aiMediaConverter.toImageVo(ref));
     }

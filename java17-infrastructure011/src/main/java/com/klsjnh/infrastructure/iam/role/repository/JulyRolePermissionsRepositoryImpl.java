@@ -14,7 +14,7 @@ package com.klsjnh.infrastructure.iam.role.repository;
  *
  */
 
-import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
+import com.klsjnh.domain.iam.role.JulyRolePermissionsRepository;
 
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;

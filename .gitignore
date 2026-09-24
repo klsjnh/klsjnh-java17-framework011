@@ -48,6 +48,6 @@ node_modules/
 # ---- 本地备份（不入库）----
 .backup011/
 
-# ---- deploy runtime (logs/data/storage) ----
-deploy/runtime/
-deploy/java011/
+# ---- deploy runtime (logs/data/storage) —— 落地件在 docs/deploy/ ----
+docs/deploy/runtime/
+docs/deploy/java011/

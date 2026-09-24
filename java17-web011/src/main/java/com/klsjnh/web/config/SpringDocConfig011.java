@@ -84,7 +84,7 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * System management group (scheduler / user / role / audit / menu).
+     * System management group (config / scheduler / dictionary only).
      *
      * @return grouped open api
      */
@@ -99,7 +99,7 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * IAM group (identity / access: user, role, audit).
+     * IAM group (identity / access: organization, menu, user, role, audit, perm).
      *
      * @return grouped open api
      */

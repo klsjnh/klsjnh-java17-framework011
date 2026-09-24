@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS july_organization (
     UNIQUE KEY uk_org_code (alive_org_code),
     KEY idx_parent_id (parent_id),
     KEY idx_pk_user (pk_user)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 组织机构';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 组织机构';
 
 -- ------------------------------------------------------------
 -- 菜单（树：目录 / 菜单 / 按钮；权限标识挂菜单）
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS july_menu (
     PRIMARY KEY (id),
     UNIQUE KEY uk_menu_code (alive_menu_code),
     KEY idx_parent_id (parent_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 菜单管理';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 菜单管理';
 
 -- ------------------------------------------------------------
 -- 角色（主表）
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS july_role (
     alive_role_code    VARCHAR(30)  GENERATED ALWAYS AS (IF(dr = '0', role_code, NULL)) STORED COMMENT '存活唯一键（dr=0 时=role_code）',
     PRIMARY KEY (id),
     UNIQUE KEY uk_role_code (alive_role_code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 角色管理';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 角色管理';
 
 -- ------------------------------------------------------------
 -- 用户（主表；pk_org → july_organization，可空）
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS july_user (
     alive_user_account VARCHAR(30)  GENERATED ALWAYS AS (IF(dr = '0', user_account, NULL)) STORED COMMENT '存活唯一键（dr=0 时=user_account）',
     PRIMARY KEY (id),
     UNIQUE KEY uk_user_account (alive_user_account)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 用户管理';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 用户管理';
 
 -- ------------------------------------------------------------
 -- 用户-角色关联（pk_mt → july_user.id，pk_role → july_role.id；toggle）
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS july_user_role (
     PRIMARY KEY (id),
     UNIQUE KEY uk_user_role (alive_key),
     KEY idx_pk_role (pk_role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 用户_角色';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 用户_角色';
 
 -- ------------------------------------------------------------
 -- 用户审计（append-only：只插不改不删，不参与级联）
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS july_user_audit (
     PRIMARY KEY (id),
     KEY idx_user_account (user_account),
     KEY idx_audit_type (audit_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 用户审计';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 用户审计';
 
 -- ------------------------------------------------------------
 -- 角色-权限（菜单通道 pk_menu；直授通道 pk_menu=''；toggle）
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS july_role_permissions (
     PRIMARY KEY (id),
     UNIQUE KEY uk_role_menu_code (alive_key),
     KEY idx_pk_menu (pk_menu)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统管理 - 角色_权限';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='IAM 中心 - 角色_权限';
 
 -- ------------------------------------------------------------
 -- 权限目录：对象 / 动作（P3；permission_code = 模块:对象:动作）

@@ -42,7 +42,15 @@ public class AiImageResponseVo011 {
     @Schema(description = "媒体类型（如 image/png）")
     private String mimeType;
 
+    /** Storage instance code used for the write. */
+    @Schema(description = "存储实例 code（落盘所用；业务可自记，见存储中心 016 规约）")
+    private String storageCode;
+
+    /** Physical bucket name used for the write. */
+    @Schema(description = "物理桶名（落盘所用；业务可自记）")
+    private String bucket;
+
     /** Storage object key of the persisted artifact. */
-    @Schema(description = "存储对象 key（落盘后，生命周期归使用方）")
+    @Schema(description = "对象键 objectKey（落盘后，生命周期归使用方；可自记）")
     private String storageKey;
 }

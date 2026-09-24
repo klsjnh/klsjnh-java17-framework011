@@ -22,7 +22,7 @@ import com.klsjnh.domain.iam.role.JulyUserRoleRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.system011.config.JulyConfigPermissionCodes011;
-import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
+import com.klsjnh.domain.iam.role.JulyRolePermissionsRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

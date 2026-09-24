@@ -24,7 +24,7 @@ import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.iam.role.JulyRole;
 import com.klsjnh.domain.iam.role.JulyRoleRepository;
 import com.klsjnh.domain.iam.role.JulyUserRoleRepository;
-import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
+import com.klsjnh.domain.iam.role.JulyRolePermissionsRepository;
 
 import org.springframework.stereotype.Component;
 

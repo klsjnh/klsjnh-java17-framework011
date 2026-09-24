@@ -12,6 +12,7 @@ package com.klsjnh.application.aicenter.audio;
  *
  *      2026.09.19  ai tts use case class
  *      2026.09.20  local-storage gate + media persistence
+ *      2026.09.24  call-time storage locator; drop local gate / defaults
  *
  */
 
@@ -20,11 +21,11 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
-import com.klsjnh.application.aicenter.media.AiMediaStorageGate;
 import com.klsjnh.domain.aicenter.audio.AiTtsPort;
 import com.klsjnh.domain.aicenter.audio.AiTtsRequest;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.capability.AiMedia;
+import com.klsjnh.domain.aicenter.media.AiMediaLocation;
 import com.klsjnh.domain.aicenter.media.AiMediaRef;
 import com.klsjnh.domain.aicenter.media.AiMediaStorePort;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
@@ -33,9 +34,10 @@ import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
 import org.springframework.stereotype.Service;
 
 /**
- * AI speech synthesis use case: requires local storage, resolves the provider /
- * key by id or code, dispatches to the tts capability port, then persists the
- * audio and returns a reference. The consumer owns the artifact lifecycle.
+ * AI speech synthesis use case: resolves the provider / key by id or code,
+ * dispatches to the tts capability port, then persists the audio at the
+ * caller-supplied storage location and returns a reference. The consumer owns
+ * the artifact lifecycle. No pre-bound default storage.
  */
 
 @Service
@@ -52,33 +54,25 @@ public class AiTtsUseCase {
     private final AiCapabilityRegistry registry;
 
     /**
-     * Local storage gate.
-     */
-    private final AiMediaStorageGate storageGate;
-
-    /**
-     * Media store.
+     * Media store port.
      */
     private final AiMediaStorePort mediaStore;
 
     /**
      * Create the use case.
      *
-     * @param resolver    provider resolver
-     * @param registry    capability registry
-     * @param storageGate local storage gate
-     * @param mediaStore  media store
+     * @param resolver   provider resolver
+     * @param registry   capability registry
+     * @param mediaStore media store
      */
-    public AiTtsUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorageGate storageGate,
-            AiMediaStorePort mediaStore) {
+    public AiTtsUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore) {
         this.resolver = resolver;
         this.registry = registry;
-        this.storageGate = storageGate;
         this.mediaStore = mediaStore;
     }
 
     /**
-     * Synthesize speech.
+     * Synthesize speech and persist it at the given storage location.
      *
      * @param target      routing / output header
      * @param input       text to synthesize
@@ -88,10 +82,11 @@ public class AiTtsUseCase {
      * @param volume      volume multiplier, nullable
      * @param format      audio format, nullable
      * @param sampleRate  sample rate, nullable
+     * @param location    storage instance + bucket locator (required)
      * @return persisted media reference, never null
      */
     public AiMediaRef synthesize(AiInvokeTarget target, String input, String voice, String instruction, Double speed,
-            Double volume, String format, Integer sampleRate) {
+            Double volume, String format, Integer sampleRate, AiMediaLocation location) {
         if (target == null) {
             throw BusinessException.badRequest("target is required");
         }
@@ -100,7 +95,9 @@ public class AiTtsUseCase {
             throw BusinessException.badRequest("input is required");
         }
 
-        storageGate.assertLocalStorageAvailable();
+        if (location == null) {
+            throw BusinessException.badRequest("storage location is required");
+        }
 
         AiModelProvider provider = resolver.resolveProvider(target.providerCode(), target.providerId());
         AiModelProviderApi api = resolver.resolveApi(provider, target.keyCode(), target.keyId());
@@ -119,6 +116,6 @@ public class AiTtsUseCase {
 
         AiMedia media = port.synthesize(request);
 
-        return mediaStore.save(media);
+        return mediaStore.save(media, location);
     }
 }

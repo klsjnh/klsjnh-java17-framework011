@@ -12,6 +12,7 @@ package com.klsjnh.application.aicenter.image;
  *
  *      2026.09.19  ai image use case class
  *      2026.09.20  local-storage gate + media persistence
+ *      2026.09.24  call-time storage locator; drop local gate / defaults
  *
  */
 
@@ -20,11 +21,11 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
-import com.klsjnh.application.aicenter.media.AiMediaStorageGate;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.capability.AiMedia;
 import com.klsjnh.domain.aicenter.image.AiImagePort;
 import com.klsjnh.domain.aicenter.image.AiImageRequest;
+import com.klsjnh.domain.aicenter.media.AiMediaLocation;
 import com.klsjnh.domain.aicenter.media.AiMediaRef;
 import com.klsjnh.domain.aicenter.media.AiMediaStorePort;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
@@ -33,10 +34,11 @@ import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
 import org.springframework.stereotype.Service;
 
 /**
- * AI image generation use case: requires local storage, resolves the provider /
- * key by id or code, dispatches to the capability port (text-to-image or
- * image-to-image, chosen by the presence of an input image), then persists the
- * artifact and returns a reference. The consumer owns the artifact lifecycle.
+ * AI image generation use case: resolves the provider / key by id or code,
+ * dispatches to the capability port (text-to-image or image-to-image, chosen by
+ * the presence of an input image), then persists the artifact at the
+ * caller-supplied storage location and returns a reference. The consumer owns
+ * the artifact lifecycle. No pre-bound default storage.
  */
 
 @Service
@@ -53,33 +55,25 @@ public class AiImageUseCase {
     private final AiCapabilityRegistry registry;
 
     /**
-     * Local storage gate.
-     */
-    private final AiMediaStorageGate storageGate;
-
-    /**
-     * Media store.
+     * Media store port.
      */
     private final AiMediaStorePort mediaStore;
 
     /**
      * Create the use case.
      *
-     * @param resolver    provider resolver
-     * @param registry    capability registry
-     * @param storageGate local storage gate
-     * @param mediaStore  media store
+     * @param resolver   provider resolver
+     * @param registry   capability registry
+     * @param mediaStore media store
      */
-    public AiImageUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorageGate storageGate,
-            AiMediaStorePort mediaStore) {
+    public AiImageUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore) {
         this.resolver = resolver;
         this.registry = registry;
-        this.storageGate = storageGate;
         this.mediaStore = mediaStore;
     }
 
     /**
-     * Generate an image.
+     * Generate an image and persist it at the given storage location.
      *
      * @param target          routing / output header
      * @param prompt          text prompt
@@ -90,10 +84,12 @@ public class AiImageUseCase {
      * @param negativePrompt  negative prompt, nullable
      * @param imageUrl        input image url (image-to-image), nullable
      * @param imageBytes      input image bytes (image-to-image), nullable
+     * @param location        storage instance + bucket locator (required)
      * @return persisted media reference, never null
      */
     public AiMediaRef generate(AiInvokeTarget target, String prompt, String size, Integer steps, Long seed,
-            Double guidanceScale, String negativePrompt, String imageUrl, byte[] imageBytes) {
+            Double guidanceScale, String negativePrompt, String imageUrl, byte[] imageBytes,
+            AiMediaLocation location) {
         if (target == null) {
             throw BusinessException.badRequest("target is required");
         }
@@ -102,7 +98,9 @@ public class AiImageUseCase {
             throw BusinessException.badRequest("prompt is required");
         }
 
-        storageGate.assertLocalStorageAvailable();
+        if (location == null) {
+            throw BusinessException.badRequest("storage location is required");
+        }
 
         AiModelProvider provider = resolver.resolveProvider(target.providerCode(), target.providerId());
         AiModelProviderApi api = resolver.resolveApi(provider, target.keyCode(), target.keyId());
@@ -120,7 +118,7 @@ public class AiImageUseCase {
 
         AiMedia media = port.generate(request);
 
-        return mediaStore.save(media);
+        return mediaStore.save(media, location);
     }
 
     /**

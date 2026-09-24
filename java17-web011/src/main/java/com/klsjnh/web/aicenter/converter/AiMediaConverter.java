@@ -12,6 +12,7 @@ package com.klsjnh.web.aicenter.converter;
  *
  *      2026.09.19  ai media converter class
  *      2026.09.20  map persisted media reference
+ *      2026.09.24  map full locator (storageCode / bucket / objectKey)
  *
  */
 
@@ -24,8 +25,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Converter between the persisted media reference and the image / tts response
- * VOs. The artifact is delivered as a url plus its storage key; the consumer
- * owns the lifecycle.
+ * VOs. The artifact is delivered as a locator (storageCode / bucket /
+ * objectKey) plus url; the consumer owns the lifecycle.
  */
 
 @Component
@@ -41,7 +42,9 @@ public class AiMediaConverter {
         AiImageResponseVo011 vo = new AiImageResponseVo011();
         vo.setReturnType("url");
         vo.setUrl(ref.url());
-        vo.setStorageKey(ref.storageKey());
+        vo.setStorageCode(ref.storageCode());
+        vo.setBucket(ref.bucket());
+        vo.setStorageKey(ref.objectKey());
         vo.setMimeType(ref.mimeType());
 
         return vo;
@@ -57,7 +60,9 @@ public class AiMediaConverter {
         AiTtsResponseVo011 vo = new AiTtsResponseVo011();
         vo.setReturnType("url");
         vo.setUrl(ref.url());
-        vo.setStorageKey(ref.storageKey());
+        vo.setStorageCode(ref.storageCode());
+        vo.setBucket(ref.bucket());
+        vo.setStorageKey(ref.objectKey());
         vo.setMimeType(ref.mimeType());
 
         return vo;

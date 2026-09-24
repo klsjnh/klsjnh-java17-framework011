@@ -29,9 +29,9 @@ import com.klsjnh.domain.iam.role.JulyRoleRepository;
 import com.klsjnh.domain.iam.user.JulyUser;
 import com.klsjnh.domain.iam.user.JulyUserRepository;
 import com.klsjnh.domain.iam.role.JulyUserRoleRepository;
-import com.klsjnh.domain.system011.menu.JulyMenu;
-import com.klsjnh.domain.system011.menu.JulyMenuRepository;
-import com.klsjnh.domain.system011.menu.JulyRolePermissionsRepository;
+import com.klsjnh.domain.iam.menu.JulyMenu;
+import com.klsjnh.domain.iam.menu.JulyMenuRepository;
+import com.klsjnh.domain.iam.role.JulyRolePermissionsRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 

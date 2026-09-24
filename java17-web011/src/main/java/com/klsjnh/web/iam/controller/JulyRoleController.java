@@ -30,7 +30,7 @@ import com.klsjnh.application.iam.role.JulyRoleUseCase;
 import com.klsjnh.application.platform011.backup.BackupUseCase;
 import com.klsjnh.application.platform011.export.ExportUseCase;
 
-import com.klsjnh.web.system011.converter.JulyMenuConverter;
+import com.klsjnh.web.iam.converter.JulyMenuConverter;
 import com.klsjnh.web.iam.converter.JulyRoleConverter;
 import com.klsjnh.web.iam.converter.JulyUserConverter;
 
@@ -41,7 +41,7 @@ import com.klsjnh.web.iam.vo.julyrole.JulyRoleInsertVo011;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleQueryVo011;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleUpdateVo011;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleVo011;
-import com.klsjnh.web.system011.vo.julymenu.JulyMenuVo011;
+import com.klsjnh.web.iam.vo.julymenu.JulyMenuVo011;
 import com.klsjnh.web.iam.vo.julyuser.JulyUserVo011;
 import com.klsjnh.web.util.Operator011Resolver;
 

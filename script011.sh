@@ -96,6 +96,33 @@ do_build011() {
 # The gate is enforced by the single commit entry (this script, default
 # command) — no git hooks layer (by design).
 
+# Version bump: major.minor.patch; each step patch+=1;
+# patch>99 → patch=0, minor+=1; minor>99 → minor=0, major+=1.
+# .vf stores "X.Y.Z"; legacy single integer N is treated as 0.0.N.
+bump_version() {
+  local raw major minor patch
+  raw="$(echo "$1" | tr -d '[:space:]')"
+  [ -n "$raw" ] || raw="0"
+  if [[ "$raw" =~ ^[0-9]+$ ]]; then
+    major=0; minor=0; patch="$raw"
+  elif [[ "$raw" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    major="${BASH_REMATCH[1]}"; minor="${BASH_REMATCH[2]}"; patch="${BASH_REMATCH[3]}"
+  else
+    echo "ERROR: invalid .vf version '$raw' (want N or X.Y.Z)" >&2
+    exit 1
+  fi
+  patch=$((patch + 1))
+  if [ "$patch" -gt 99 ]; then
+    patch=0
+    minor=$((minor + 1))
+  fi
+  if [ "$minor" -gt 99 ]; then
+    minor=0
+    major=$((major + 1))
+  fi
+  echo "${major}.${minor}.${patch}"
+}
+
 # default: gate + version bump + commit + push
 do_push() {
   do_gate
@@ -104,7 +131,7 @@ do_push() {
   echo ""
   echo "[$(NOW)] Preparing commit ..."
   vf="$PROJECT_ROOT/.vf"
-  [ -f "$vf" ] || echo 0 > "$vf"
+  [ -f "$vf" ] || echo "0.0.0" > "$vf"
   HAS_CHANGES=$(git status --porcelain | wc -l)
   HAS_UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null | wc -l || echo 0)
 
@@ -114,10 +141,10 @@ do_push() {
   fi
 
   if [ "$HAS_CHANGES" -gt 0 ]; then
-    v=$(expr $(cat "$vf") + 1)
+    v="$(bump_version "$(cat "$vf")")"
     echo "$v" > "$vf"
     git add .
-    git commit -m "ver 0.0.$v ..."
+    git commit -m "ver $v ..."
     echo "[$(NOW)] Commit done"
   fi
 

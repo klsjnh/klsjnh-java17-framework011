@@ -22,6 +22,7 @@ import com.klsjnh.application.aicenter.audio.AiAsrUseCase;
 import com.klsjnh.application.aicenter.audio.AiTtsUseCase;
 import com.klsjnh.domain.aicenter.audio.AiAsrResult;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
+import com.klsjnh.domain.aicenter.media.AiMediaLocation;
 import com.klsjnh.domain.aicenter.media.AiMediaRef;
 
 import com.klsjnh.web.aicenter.converter.AiMediaConverter;
@@ -87,15 +88,18 @@ public class AiAudioController {
      * @return persisted audio reference
      */
     @PostMapping("/synthesize")
-    @Operation(summary = "文字转语音（provider/api 支持 id 或 code）")
+    @Operation(summary = "文字转语音（必传 storageCode|storageId + bucketCode|bucketId；缺参 400）")
     public Response011<AiTtsResponseVo011> synthesize(@RequestBody AiTtsRequestVo011 vo) {
         String funcName = "ai tts synthesize";
 
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
                 vo.getModel(), vo.getReturnType());
 
+        AiMediaLocation location = new AiMediaLocation(vo.getStorageCode(), vo.getStorageId(), vo.getBucketCode(),
+                vo.getBucketId());
+
         AiMediaRef ref = aiTtsUseCase.synthesize(target, vo.getInput(), vo.getVoice(), vo.getInstruction(),
-                vo.getSpeed(), vo.getVolume(), vo.getFormat(), vo.getSampleRate());
+                vo.getSpeed(), vo.getVolume(), vo.getFormat(), vo.getSampleRate(), location);
 
         return Response011.success(funcName, aiMediaConverter.toTtsVo(ref));
     }
