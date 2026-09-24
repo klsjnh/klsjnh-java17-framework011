@@ -5,13 +5,14 @@ package com.klsjnh.web.system011.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.13
- *      @modifydate
+ *      @modifydate 2026.09.24
  *
  *===========================================
  *          modify history
  *
  *      2026.09.13  july config controller class
  *      2026.09.15  insert VO extracted to the julyconfig sub-package
+ *      2026.09.24  pass operator into use case for permission checks
  *
  */
 
@@ -26,8 +27,6 @@ import com.klsjnh.common.response.Response011;
 import com.klsjnh.domain.system011.config.JulyConfig;
 import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.application.system011.config.JulyConfigUseCase;
-import com.klsjnh.application.platform011.backup.BackupUseCase;
-import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.system011.converter.JulyConfigConverter;
 
@@ -39,7 +38,6 @@ import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,13 +53,13 @@ import jakarta.servlet.http.HttpServletRequest;
  * JulyConfig HTTP adapter: admin CRUD over runtime key-value parameters.
  * There is deliberately NO getByCode HTTP endpoint — config reading is a
  * program behavior (JulyConfigUseCase.getByCode), not a management action.
+ * Permission checks live in the use case (operator resolved here).
  */
 
 @Tag(name = "系统管理 - 配置管理")
 @RestController
 @RequestMapping("/klsjnh/system011/julyConfig/v1")
 public class JulyConfigController {
-
 
     /**
      * JulyConfig use case.
@@ -74,60 +72,49 @@ public class JulyConfigController {
     private final JulyConfigConverter julyConfigConverter;
 
     /**
-     * Export use case (platform capability).
-     */
-    private final ExportUseCase exportUseCase;
-
-    /**
-     * Backup use case (platform capability).
-     */
-    private final BackupUseCase backupUseCase;
-
-    /**
      * Create the controller.
      *
-     * @param julyConfigUseCase       july config use case
-     * @param julyConfigConverter     response julyConfigConverter
-     * @param exportUseCase export use case
-     * @param backupUseCase backup use case
+     * @param julyConfigUseCase   july config use case
+     * @param julyConfigConverter response julyConfigConverter
      */
-    public JulyConfigController(JulyConfigUseCase julyConfigUseCase, JulyConfigConverter julyConfigConverter,
-            ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
+    public JulyConfigController(JulyConfigUseCase julyConfigUseCase, JulyConfigConverter julyConfigConverter) {
         this.julyConfigUseCase = julyConfigUseCase;
         this.julyConfigConverter = julyConfigConverter;
-        this.exportUseCase = exportUseCase;
-        this.backupUseCase = backupUseCase;
     }
 
     /**
      * Insert a new config entry.
      *
-     * @param vo insert request
+     * @param vo      insert request
+     * @param request http request
      * @return envelope with the new config id
      */
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/insert")
     @Operation(summary = "新增配置（code 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyConfigUseCase.insert(vo.getCode(), vo.getData(), vo.getStatus(),
-                vo.getRemark()));
+        return Response011.successId(funcName, julyConfigUseCase.insert(operator.id(), vo.getCode(), vo.getData(),
+                vo.getStatus(), vo.getRemark()));
     }
 
     /**
      * Update the value of a config entry (code immutable).
      *
-     * @param vo update request
+     * @param vo      update request
+     * @param request http request
      * @return envelope with the config id
      */
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/update")
     @Operation(summary = "修改配置值（code 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        julyConfigUseCase.update(vo.getId(), vo.getData(), vo.getStatus(), vo.getRemark());
+        julyConfigUseCase.update(operator.id(), vo.getId(), vo.getData(), vo.getStatus(), vo.getRemark());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -135,16 +122,18 @@ public class JulyConfigController {
     /**
      * Logic delete a config entry.
      *
-     * @param idVo request with the config id
+     * @param idVo    request with the config id
+     * @param request http request
      * @return envelope with the config id
      */
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        julyConfigUseCase.logicDelete(idVo.getId());
+        julyConfigUseCase.logicDelete(operator.id(), idVo.getId());
 
         return Response011.successId(funcName, idVo.getId());
     }
@@ -152,30 +141,37 @@ public class JulyConfigController {
     /**
      * Find a config entry by primary key (safe + idempotent, hence GET).
      *
-     * @param id config id, passed as a query parameter
+     * @param id      config id, passed as a query parameter
+     * @param request http request
      * @return config detail
      */
     @GetMapping("/getById")
     @Operation(summary = "主键查询（id 走 query）")
-    public Response011<JulyConfigVo011> getById(@RequestParam("id") String id) {
+    public Response011<JulyConfigVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyConfigConverter.toVo(julyConfigUseCase.getById(id)));
+        return Response011.success(funcName,
+                julyConfigConverter.toVo(julyConfigUseCase.getById(operator.id(), id)));
     }
 
     /**
      * Page query with an optional keyword filter.
      *
-     * @param vo page query request
+     * @param vo      page query request
+     * @param request http request
      * @return page result of config rows
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（code/data 模糊过滤）")
-    public Response011<PageResult011<JulyConfigVo011>> selectListByPage(@RequestBody JulyConfigQueryVo011 vo) {
+    public Response011<PageResult011<JulyConfigVo011>> selectListByPage(@RequestBody JulyConfigQueryVo011 vo,
+            HttpServletRequest request) {
         String funcName = "select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyConfig> page = julyConfigUseCase.selectListByPage(pageQuery, vo.getKeyword(), vo.getStatus());
+        PageResult011<JulyConfig> page = julyConfigUseCase.selectListByPage(operator.id(), pageQuery, vo.getKeyword(),
+                vo.getStatus());
 
         return Response011.success(funcName, page.withRows(julyConfigConverter.toVoList(page.rows())));
     }
@@ -191,16 +187,14 @@ public class JulyConfigController {
     @Operation(summary = "导出全部配置（分批取数，写 EXPORT 审计）")
     public Response011<ExportResult> export(HttpServletRequest request) {
         String funcName = "export";
-
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        ExportResult result = exportUseCase.export(AuditObjectCodes011.JULY_CONFIG, operator);
-
-        return Response011.success(funcName, result);
+        return Response011.success(funcName, julyConfigUseCase.export(operator));
     }
 
     /**
      * Back every config row up into the storage center, keyed by timestamp.
+     * Success returns the storage object key only (no config row payload).
      *
      * @param request http request (operator from the auth filter)
      * @return envelope with the stored object key
@@ -209,11 +203,8 @@ public class JulyConfigController {
     @Operation(summary = "备份全部配置到存储中心（写 BACKUP 审计）")
     public Response011<String> backup011(HttpServletRequest request) {
         String funcName = "backup";
-
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        String key = backupUseCase.backup(AuditObjectCodes011.JULY_CONFIG, operator);
-
-        return Response011.success(funcName, key);
+        return Response011.success(funcName, julyConfigUseCase.backup(operator));
     }
 }

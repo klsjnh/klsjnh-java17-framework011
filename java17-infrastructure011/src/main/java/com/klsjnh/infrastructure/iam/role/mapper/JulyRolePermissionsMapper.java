@@ -57,12 +57,14 @@ public interface JulyRolePermissionsMapper extends BaseMapper<JulyRolePermission
     int stopByMenu(@Param("pkMt") String pkMt, @Param("pkMenu") String pkMenu);
 
     /**
-     * Menu ids currently granted to a role.
+     * Menu ids currently granted to a role (excludes blank pk_menu = direct
+     * code grants).
      *
      * @param pkMt role id
      * @return menu id list
      */
-    @Select("SELECT pk_menu FROM july_role_permissions WHERE pk_mt = #{pkMt} AND dr = '0'")
+    @Select("SELECT pk_menu FROM july_role_permissions WHERE pk_mt = #{pkMt} AND dr = '0'"
+            + " AND pk_menu != ''")
     List<String> selectMenuIds(@Param("pkMt") String pkMt);
 
     /**
@@ -74,4 +76,15 @@ public interface JulyRolePermissionsMapper extends BaseMapper<JulyRolePermission
     @Select("SELECT permission_code FROM july_role_permissions WHERE pk_mt = #{pkMt} AND dr = '0'"
             + " AND permission_code != ''")
     List<String> selectPermissionCodes(@Param("pkMt") String pkMt);
+
+    /**
+     * Stop one direct permission-code grant (blank pk_menu).
+     *
+     * @param pkMt           role id
+     * @param permissionCode permission code
+     * @return affected row count
+     */
+    @Update("UPDATE july_role_permissions SET dr = '1' WHERE pk_mt = #{pkMt} AND pk_menu = ''"
+            + " AND permission_code = #{permissionCode}")
+    int stopByCode(@Param("pkMt") String pkMt, @Param("permissionCode") String permissionCode);
 }

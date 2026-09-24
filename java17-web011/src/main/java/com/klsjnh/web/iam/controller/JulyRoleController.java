@@ -36,6 +36,7 @@ import com.klsjnh.web.iam.converter.JulyUserConverter;
 
 import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleAssignMenusVo011;
+import com.klsjnh.web.iam.vo.julyrole.JulyRoleAssignObjectActionsVo011;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleInsertVo011;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleQueryVo011;
 import com.klsjnh.web.iam.vo.julyrole.JulyRoleUpdateVo011;
@@ -183,6 +184,37 @@ public class JulyRoleController {
         julyRoleUseCase.assignMenus(vo.getId(), vo.getPkMenus());
 
         return Response011.successId(funcName, vo.getId());
+    }
+
+    /**
+     * Assign catalog object actions to a role (replace within that object).
+     *
+     * @param vo assign request
+     * @return envelope with the role id
+     */
+    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_ROLE)
+    @PostMapping("/assignObjectActions")
+    @Operation(summary = "角色按对象授权动作（对象内整存替换，直授码）")
+    public Response011<IdVo011> assignObjectActions(@RequestBody JulyRoleAssignObjectActionsVo011 vo) {
+        String funcName = "assign object actions";
+
+        julyRoleUseCase.assignObjectActions(vo.getId(), vo.getObjectCode(), vo.getActionCodes());
+
+        return Response011.successId(funcName, vo.getId());
+    }
+
+    /**
+     * Permission codes currently held by a role (safe + idempotent, hence GET).
+     *
+     * @param id role id, passed as a query parameter
+     * @return permission codes
+     */
+    @GetMapping("/getPermissionCodes")
+    @Operation(summary = "角色已授权限码列表")
+    public Response011<List<String>> getPermissionCodes(@RequestParam("id") String id) {
+        String funcName = "get permission codes";
+
+        return Response011.success(funcName, julyRoleUseCase.listPermissionCodes(id));
     }
 
     /**

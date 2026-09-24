@@ -116,4 +116,42 @@ public class JulyRolePermissionsRepositoryImpl
     public List<String> findPermissionCodes(String pkMt) {
         return mapper.selectPermissionCodes(pkMt);
     }
+
+    /**
+     * Grant one permission code directly (blank pk_menu).
+     *
+     * @param pkMt           role id
+     * @param permissionCode permission code
+     */
+    @Override
+    public void grantByCode(String pkMt, String permissionCode) {
+        if (permissionCode == null || permissionCode.isBlank()) {
+            return;
+        }
+
+        String code = permissionCode.trim();
+
+        if (mapper.revive(pkMt, "", code) == 0) {
+            JulyRolePermissionsPo po = new JulyRolePermissionsPo();
+            po.setPkMt(pkMt);
+            po.setPkMenu("");
+            po.setPermissionCode(code);
+            mapper.insert(po);
+        }
+    }
+
+    /**
+     * Revoke one direct permission-code grant.
+     *
+     * @param pkMt           role id
+     * @param permissionCode permission code
+     */
+    @Override
+    public void revokeByCode(String pkMt, String permissionCode) {
+        if (permissionCode == null || permissionCode.isBlank()) {
+            return;
+        }
+
+        mapper.stopByCode(pkMt, permissionCode.trim());
+    }
 }

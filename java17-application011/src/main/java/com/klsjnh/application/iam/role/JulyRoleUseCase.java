@@ -19,7 +19,11 @@ import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
+import com.klsjnh.common.util.StringUtil011;
 
+import com.klsjnh.domain.iam.perm.JulyPermAction;
+import com.klsjnh.domain.iam.perm.JulyPermActionRepository;
+import com.klsjnh.domain.iam.perm.JulyPermObjectRepository;
 import com.klsjnh.domain.iam.role.JulyRole;
 import com.klsjnh.domain.iam.role.JulyRoleRepository;
 import com.klsjnh.domain.iam.user.JulyUser;
@@ -34,7 +38,10 @@ import com.klsjnh.domain.shared.EntityId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * JulyRole use cases: role CRUD with built-in role protection.
@@ -69,6 +76,16 @@ public class JulyRoleUseCase {
     private final JulyUserRepository userRepository;
 
     /**
+     * Permission object catalog.
+     */
+    private final JulyPermObjectRepository permObjectRepository;
+
+    /**
+     * Permission action catalog.
+     */
+    private final JulyPermActionRepository permActionRepository;
+
+    /**
      * Create the use case.
      *
      * @param repository                july role repository
@@ -76,15 +93,20 @@ public class JulyRoleUseCase {
      * @param rolePermissionsRepository role permissions junction repository
      * @param userRoleRepository        user role junction repository
      * @param userRepository            july user repository
+     * @param permObjectRepository      permission object catalog
+     * @param permActionRepository      permission action catalog
      */
     public JulyRoleUseCase(JulyRoleRepository repository, JulyMenuRepository menuRepository,
             JulyRolePermissionsRepository rolePermissionsRepository, JulyUserRoleRepository userRoleRepository,
-            JulyUserRepository userRepository) {
+            JulyUserRepository userRepository, JulyPermObjectRepository permObjectRepository,
+            JulyPermActionRepository permActionRepository) {
         this.repository = repository;
         this.menuRepository = menuRepository;
         this.rolePermissionsRepository = rolePermissionsRepository;
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
+        this.permObjectRepository = permObjectRepository;
+        this.permActionRepository = permActionRepository;
     }
 
     /**
@@ -120,6 +142,72 @@ public class JulyRoleUseCase {
                 rolePermissionsRepository.revokeByMenu(id, pkMenu);
             }
         }
+    }
+
+    /**
+     * Assign permission actions of one catalog object to a role (replace
+     * strategy within that object): desired action codes are granted by
+     * permission_code with blank pk_menu; other catalog codes of the same
+     * object that the role currently holds are revoked (menu-channel rows with
+     * the same code are left untouched).
+     *
+     * @param id          role id
+     * @param objectCode  catalog object code (e.g. julyScheduler)
+     * @param actionCodes action codes to keep under that object
+     */
+    @Transactional
+    public void assignObjectActions(String id, String objectCode, List<String> actionCodes) {
+        require(id);
+
+        if (StringUtil011.isBlank(objectCode)) {
+            throw BusinessException.badRequest("objectCode is required");
+        }
+
+        String object = objectCode.trim();
+
+        if (permObjectRepository.findByCode(object) == null) {
+            throw BusinessException.badRequest("permission object not found: " + object);
+        }
+
+        List<JulyPermAction> catalogActions = permActionRepository.findEnabledByObjectCode(object);
+        Set<String> catalogCodes = catalogActions.stream().map(JulyPermAction::permissionCode)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        Set<String> desiredActions = actionCodes == null ? Set.of()
+                : actionCodes.stream().filter(s -> s != null && !s.isBlank()).map(String::trim)
+                        .collect(Collectors.toCollection(HashSet::new));
+
+        Set<String> desiredCodes = new HashSet<>();
+
+        for (String actionCode : desiredActions) {
+            JulyPermAction action = permActionRepository.findByObjectAndAction(object, actionCode);
+
+            if (action == null) {
+                throw BusinessException.badRequest(
+                        "permission action not found: object=" + object + ", action=" + actionCode);
+            }
+
+            desiredCodes.add(action.permissionCode());
+            rolePermissionsRepository.grantByCode(id, action.permissionCode());
+        }
+
+        for (String held : rolePermissionsRepository.findPermissionCodes(id)) {
+            if (catalogCodes.contains(held) && !desiredCodes.contains(held)) {
+                rolePermissionsRepository.revokeByCode(id, held);
+            }
+        }
+    }
+
+    /**
+     * Permission codes currently held by a role (menu + direct grants).
+     *
+     * @param id role id
+     * @return permission codes
+     */
+    public List<String> listPermissionCodes(String id) {
+        require(id);
+
+        return rolePermissionsRepository.findPermissionCodes(id);
     }
 
     /**

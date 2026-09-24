@@ -5,13 +5,14 @@ package com.klsjnh.domain.iam.role;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate 2026.09.15
+ *      @modifydate 2026.09.24
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july role class
  *      2026.09.15  add changeStatus (status editable via update)
+ *      2026.09.24  add createBuiltin factory for permission demo
  *
  */
 
@@ -99,6 +100,21 @@ public class JulyRole {
     public static JulyRole create(EntityId id, String roleCode, String roleName, String remark, AuditInfo audit) {
         validate(roleCode, roleName);
         return new JulyRole(id, roleCode, roleName, "0", remark, Status011.ENABLED.getCode(), audit);
+    }
+
+    /**
+     * Factory for a built-in role (full permission bypass at runtime).
+     *
+     * @param id       primary key
+     * @param roleCode role code, unique, max 30
+     * @param roleName role name, max 60
+     * @param remark   remark
+     * @param audit    audit info
+     * @return new built-in aggregate
+     */
+    public static JulyRole createBuiltin(EntityId id, String roleCode, String roleName, String remark, AuditInfo audit) {
+        validate(roleCode, roleName);
+        return new JulyRole(id, roleCode, roleName, "1", remark, Status011.ENABLED.getCode(), audit);
     }
 
     /**

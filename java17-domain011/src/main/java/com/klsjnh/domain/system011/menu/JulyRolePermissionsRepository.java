@@ -57,4 +57,21 @@ public interface JulyRolePermissionsRepository {
      * @return permission code list
      */
     List<String> findPermissionCodes(String pkMt);
+
+    /**
+     * Grant one permission code directly (no menu): uses blank pk_menu so
+     * menu assignMenus does not own the row. Toggle semantics.
+     *
+     * @param pkMt           role id
+     * @param permissionCode non-blank permission code
+     */
+    void grantByCode(String pkMt, String permissionCode);
+
+    /**
+     * Revoke one direct permission-code grant (blank pk_menu row).
+     *
+     * @param pkMt           role id
+     * @param permissionCode permission code
+     */
+    void revokeByCode(String pkMt, String permissionCode);
 }

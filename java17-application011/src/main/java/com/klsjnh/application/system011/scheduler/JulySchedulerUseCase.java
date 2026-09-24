@@ -5,12 +5,13 @@ package com.klsjnh.application.system011.scheduler;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.24
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july scheduler use case class
+ *      2026.09.24  explicit permission checks (julyScheduler P3 blueprint)
  *
  */
 
@@ -20,7 +21,9 @@ import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.system011.scheduler.JulyScheduler;
+import com.klsjnh.domain.system011.scheduler.JulySchedulerPermissionCodes011;
 import com.klsjnh.domain.system011.scheduler.JulySchedulerRepository;
 import com.klsjnh.domain.system011.scheduler.SchedulerPort;
 import com.klsjnh.domain.shared.AuditInfo;
@@ -33,11 +36,8 @@ import java.util.List;
 
 /**
  * JulyScheduler use cases: CRUD plus start / stop / runOnce with scheduler
- * engine sync.
- * <p>
- * Every public method is a transaction boundary; the scheduler engine calls
- * are idempotent (in-memory engine, rebuildable from the database).
- * </p>
+ * engine sync. Management actions assert permission codes via
+ * {@link AuthorizationPort}.
  */
 
 @Service
@@ -54,19 +54,28 @@ public class JulySchedulerUseCase {
     private final SchedulerPort schedulerPort;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
-     * @param repository    july scheduler repository
-     * @param schedulerPort scheduler engine port
+     * @param repository         july scheduler repository
+     * @param schedulerPort      scheduler engine port
+     * @param authorizationPort  authorization port
      */
-    public JulySchedulerUseCase(JulySchedulerRepository repository, SchedulerPort schedulerPort) {
+    public JulySchedulerUseCase(JulySchedulerRepository repository, SchedulerPort schedulerPort,
+            AuthorizationPort authorizationPort) {
         this.repository = repository;
         this.schedulerPort = schedulerPort;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
      * Insert a new scheduler task (defaults to stopped).
      *
+     * @param operatorId       operator user id
      * @param schedulerCode    scheduler code, unique
      * @param schedulerName    scheduler name
      * @param schedulerHandler handler content (Spring bean name)
@@ -75,8 +84,10 @@ public class JulySchedulerUseCase {
      * @return new task id
      */
     @Transactional
-    public String insert(String schedulerCode, String schedulerName, String schedulerHandler, String schedulerCron,
-            String remark) {
+    public String insert(String operatorId, String schedulerCode, String schedulerName, String schedulerHandler,
+            String schedulerCron, String remark) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.INSERT);
+
         validateCron(schedulerCron);
 
         if (repository.findByCode(schedulerCode) != null) {
@@ -94,6 +105,7 @@ public class JulySchedulerUseCase {
      * Update basics and runtime status; the engine is re-synced after save
      * (remove, then register again when the new status is running).
      *
+     * @param operatorId       operator user id
      * @param id               task id
      * @param schedulerName    scheduler name
      * @param schedulerHandler handler content
@@ -103,8 +115,10 @@ public class JulySchedulerUseCase {
      * @return updated task id
      */
     @Transactional
-    public String update(String id, String schedulerName, String schedulerHandler, String schedulerCron, String status,
-            String remark) {
+    public String update(String operatorId, String id, String schedulerName, String schedulerHandler,
+            String schedulerCron, String status, String remark) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.UPDATE);
+
         Status011 target = Status011.of(status);
 
         if (target == null) {
@@ -133,11 +147,14 @@ public class JulySchedulerUseCase {
      * Logic delete a single task; a running task is removed from the engine
      * first.
      *
-     * @param id task id
+     * @param operatorId operator user id
+     * @param id         task id
      * @return deleted task id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.LOGIC_DELETE);
+
         if (repository.findById(id) == null) {
             throw BusinessException.recordNotFound(id);
         }
@@ -153,11 +170,14 @@ public class JulySchedulerUseCase {
      * batch (404) so the transaction rolls back. On success each task is first
      * removed from the engine, then the rows are deleted in one statement.
      *
-     * @param ids task ids
+     * @param operatorId operator user id
+     * @param ids        task ids
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.LOGIC_DELETE);
+
         List<String> normalized = ids == null ? List.of()
                 : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
 
@@ -188,23 +208,29 @@ public class JulySchedulerUseCase {
     /**
      * Find by primary key.
      *
-     * @param id task id
+     * @param operatorId operator user id
+     * @param id         task id
      * @return aggregate
      */
-    public JulyScheduler getById(String id) {
+    public JulyScheduler getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.SELECT);
+
         return require(id);
     }
 
     /**
      * Page query with optional keyword filters.
      *
+     * @param operatorId   operator user id
      * @param pageQuery    page query, null falls back to page 1 / size 10
      * @param codeKeyword  scheduler code keyword, nullable
      * @param nameKeyword  scheduler name keyword, nullable
      * @return page result
      */
-    public PageResult011<JulyScheduler> selectListByPage(PageQuery011 pageQuery, String codeKeyword,
+    public PageResult011<JulyScheduler> selectListByPage(String operatorId, PageQuery011 pageQuery, String codeKeyword,
             String nameKeyword) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.SELECT);
+
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         List<JulyScheduler> rows = repository.findPage(query.offset(), query.pageSize(), codeKeyword, nameKeyword);
         long total = repository.count(codeKeyword, nameKeyword);
@@ -215,11 +241,14 @@ public class JulySchedulerUseCase {
     /**
      * Start the task: status to running + register in the engine.
      *
-     * @param id task id
+     * @param operatorId operator user id
+     * @param id         task id
      * @return started task id
      */
     @Transactional
-    public String start(String id) {
+    public String start(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.START);
+
         JulyScheduler scheduler = require(id);
         scheduler.start();
         repository.update(scheduler);
@@ -231,11 +260,14 @@ public class JulySchedulerUseCase {
     /**
      * Stop the task: status to stopped + remove from the engine.
      *
-     * @param id task id
+     * @param operatorId operator user id
+     * @param id         task id
      * @return stopped task id
      */
     @Transactional
-    public String stop(String id) {
+    public String stop(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.STOP);
+
         JulyScheduler scheduler = require(id);
         scheduler.stop();
         repository.update(scheduler);
@@ -247,10 +279,13 @@ public class JulySchedulerUseCase {
     /**
      * Trigger the handler once immediately; does not change the runtime status.
      *
-     * @param id task id
+     * @param operatorId operator user id
+     * @param id         task id
      * @return triggered task id
      */
-    public String runOnce(String id) {
+    public String runOnce(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.EXECUTE_ONCE);
+
         JulyScheduler scheduler = require(id);
         schedulerPort.triggerOnce(scheduler.id().value(), scheduler.schedulerHandler());
 

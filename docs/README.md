@@ -19,10 +19,10 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地** · 整体底层架构设计：011 架构选型 · 013 目录结构 · 015 配置体系 · 018 IAM 总设计 · **011.storage-center 存储中心** · **013.message-center 消息中心** · **015.ai-center AI 中心（三能力 + 提示词管理已实现）** · **017.datasource-center 数据源中心（能力一/二、能力三 S1 已实现；含 016 动态数据源底册）** · **031.persistence-center 持久化中心（[017](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md)/[018](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 已落地；[019](infrastructure011/031.persistence-center/019.topic-persistence-followups.md)；[020 alive_* DDL](infrastructure011/031.persistence-center/020.topic-alive-unique-ddl-complete.md) 已落地）** · 020 容器化部署 |
-| [sql/](sql/) | DDL 唯一真源（base-entity-columns.sql 公共列模板 + 各 july_*.sql） |
-| requirement011/ | 普通需求（业务诉求）：011 菜单 · 013 组织 · 015 用户 · 016 角色 · 022 julyScheduler（已编码）· 023 配置管理（已编码）· 025 平台导出（xlsx/多 sheet，已编码）· 026 数据源管理（datasource 域，已编码）· 027 数据字典（已编码；xlsx 导入导出打样）· 028 AI 模型接入（aicenter，已编码）· 030 AI 模型调用 + **AI 能力（推理/图片/语音，已编码）** · 032 平台导入（已编码，Controller 按需）。存储管理面业务诉求并入架构底册，无独立 `requirement011/029` |
-| requirement013/ | 详细设计 · 技术方案（两源合流 · 对接代码）：022 julyScheduler / 023 配置管理 / 026 datasource / 027 数据字典 / 028 aicenter / 029 存储中心管理面（迁移/管理面） / 030 AI 能力 / 031 数据源中心 / 032 平台导入 均已编码；IAM 主题 **代码已齐**，requirement013 补档仍可跟 |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地**：011 选型 · 013 结构 · 015 配置 · **[018.iam-center IAM 中心](infrastructure011/018.iam-center/011.topic-design.md)**（组织/用户/菜单/角色/目录/opt-in 核对；动态权限详篇 [016](infrastructure011/018.iam-center/016.topic-dynamic-permission.md)）· 011.storage · 013.message · 015.ai · 017.datasource · 031.persistence · **[033 机密加密](infrastructure011/033.topic-platform-security.md)**（SecretCipher；权限互引 018，不双写）· 020 部署 |
+| [sql/](sql/) | DDL 唯一真源（见 [sql/README](sql/README.md)）：公共列模板 + `july_*.sql`；中心级 **`july_center_<slug>.sql`**（[iam](sql/july_center_iam.sql) / [ai](sql/july_center_ai.sql) / [message](sql/july_center_message.sql)） |
+| requirement011/ | 普通需求：011 菜单 · 013 组织 · 015 用户 · 016 角色（IAM 业务侧，架构见 018）· 022 调度 · 023 配置 · 025 导出 · 026 数据源 · 027 字典 · 028/030 AI · 032 导入（均已编码）。无独立 `requirement011/029` |
+| requirement013/ | 详细设计 · 对接代码：022/023/026/027/028/029/030/031/032 均已编码；IAM **代码已齐**，013 补档可选 |
 | archive011/ | 历史工作日志归档 |
 
 > **两源一汇（2026-09-20 约定）**：架构类需求（平台能力演进）入 `infrastructure011/`；普通需求（业务诉求）入 `requirement011/`；两路合流至 `requirement013/`（详细设计 · 对接代码）。判据见 [011.agreements.md](011.agreements.md) §015。
@@ -41,7 +41,7 @@
 | 015 | 在用 | project-info；infrastructure011/015 配置体系；requirement011/015 july-user |
 | 016 | 在用 | coding-standards；requirement011/016 july-role（原 infrastructure011/016 持久化体系已删除，折入 031 持久化中心） |
 | 017 | 在用 | 顶层 017.tech-debt-redlines；infrastructure011/017.datasource-center 数据源中心（原 `017.topic-datasource` 已折入其 `016.topic-datasource`） |
-| 018 | 在用 | infrastructure011/018 IAM 总设计 |
+| 018 | 在用 | infrastructure011/018.iam-center **IAM 中心**（011 设计 · 013 架构 · 015 用法 · **016 动态权限详篇**） |
 | 019 | 在用 | 顶层 019.backend-api-review；infrastructure011 存储中心（现 `011.storage-center/`，019 底册已拆） |
 | 020 | 在用 | **顶层** 020.business-project-quickstart（业务项目消费者快捷手册 + `.prompt`）；infrastructure011/020 容器化部署 |
 | 021 | 在用 | infrastructure011 消息中心（现 `013.message-center/`，021 底册已拆；平台架构能力 · 多渠道可插拔 · P1 已实现） |
@@ -55,10 +55,11 @@
 | 030 | 在用 | requirement011/013 AI 模型调用（推理 / 文生图 / 图生图 / TTS / 语音识别 / 提示词，aicenter） |
 | 031 | 在用 | requirement013 数据源中心（读写分页 / 类型契约 / 同步 S1，datasource）；infrastructure011/031 持久化中心（形态 1–8；[017](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md)/[018](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 已验收落地；[019](infrastructure011/031.persistence-center/019.topic-persistence-followups.md) 可选） |
 | 032 | 在用 | requirement011/013 平台导入（xlsx；与 025 导出对称；字典打样） |
+| 033 | 在用 | infrastructure011/033 机密加密存储提案（SecretCipher only；权限 → 018/016） |
 
 > 历史：`020 / 021`（并入 019）、`022 / 023 / 025 / 026 / 027 / 028`（旧主题/角色/组织等）为 **2026-09-14 前的历史占用**，号不回收；本表仅登记**现行**用途。
 
-**下一可用编号：033。**（044/046/048/049 含 4，跳过）
+**下一可用编号：035。**（034 含 4 跳过；044/046/048/049 含 4，跳过）
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。
