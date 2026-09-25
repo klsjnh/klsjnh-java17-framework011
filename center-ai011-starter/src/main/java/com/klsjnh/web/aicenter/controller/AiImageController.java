@@ -30,7 +30,6 @@ import com.klsjnh.web.aicenter.vo.aiimage.AiImageResponseVo011;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +43,6 @@ import java.util.Base64;
  * image-to-image when an input image is given).
  */
 
-@ConditionalOnClass(name = "com.klsjnh.infrastructure.aicenter.media.AiMediaStore011")
 @Tag(name = "AI中心011 - 文生图/图生图/文图生图")
 @RestController
 @RequestMapping("/klsjnh/aicenter/julyAiImage/v1")

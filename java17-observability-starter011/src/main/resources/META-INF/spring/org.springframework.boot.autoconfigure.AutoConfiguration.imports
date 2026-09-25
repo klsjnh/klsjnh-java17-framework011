@@ -1,2 +1,3 @@
 com.klsjnh.observability.ObservabilityAutoConfiguration011
 com.klsjnh.observability.QuartzObservabilityAutoConfiguration011
+com.klsjnh.observability.StorageObservabilityAutoConfiguration011

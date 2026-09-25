@@ -21,6 +21,12 @@
             <groupId>com.klsjnh</groupId>
             <artifactId>java17-core011</artifactId>
         </dependency>
+        <!-- media persistence resolves storage instances via the storage center -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>center-storage011-starter</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>org.projectlombok</groupId>

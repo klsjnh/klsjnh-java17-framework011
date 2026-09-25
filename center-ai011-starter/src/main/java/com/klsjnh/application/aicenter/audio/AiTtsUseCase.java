@@ -31,7 +31,6 @@ import com.klsjnh.domain.aicenter.media.AiMediaStorePort;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 
 /**
@@ -41,7 +40,6 @@ import org.springframework.stereotype.Service;
  * the artifact lifecycle. No pre-bound default storage.
  */
 
-@ConditionalOnClass(name = "com.klsjnh.infrastructure.aicenter.media.AiMediaStore011")
 @Service
 public class AiTtsUseCase {
 

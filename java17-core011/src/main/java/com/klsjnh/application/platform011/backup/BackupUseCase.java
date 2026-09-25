@@ -31,6 +31,7 @@ import com.klsjnh.domain.storagecenter.object.StorageDefaultsPort;
 import com.klsjnh.domain.storagecenter.object.StorageResolverPort;
 import com.klsjnh.application.platform011.export.ExportUseCase;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -69,14 +70,16 @@ public class BackupUseCase {
     private final ExportUseCase exportUseCase;
 
     /**
-     * Storage resolver (table-driven adapter lookup).
+     * Storage resolver (table-driven adapter lookup). Soft dependency: the
+     * implementation ships with the storage starter, which may be absent.
      */
-    private final StorageResolverPort storageResolver;
+    private final ObjectProvider<StorageResolverPort> storageResolver;
 
     /**
      * Configuration-declared storage defaults (active adapter default bucket).
+     * Soft dependency, see {@link #storageResolver}.
      */
-    private final StorageDefaultsPort storageDefaults;
+    private final ObjectProvider<StorageDefaultsPort> storageDefaults;
 
     /**
      * User audit port.
@@ -94,16 +97,48 @@ public class BackupUseCase {
      * Create the use case.
      *
      * @param exportUseCase   export use case
-     * @param storageResolver storage resolver
-     * @param storageDefaults configuration-declared storage defaults
+     * @param storageResolver storage resolver provider
+     * @param storageDefaults configuration-declared storage defaults provider
      * @param userAuditPort   user audit port
      */
-    public BackupUseCase(ExportUseCase exportUseCase, StorageResolverPort storageResolver,
-            StorageDefaultsPort storageDefaults, UserAuditPort userAuditPort) {
+    public BackupUseCase(ExportUseCase exportUseCase, ObjectProvider<StorageResolverPort> storageResolver,
+            ObjectProvider<StorageDefaultsPort> storageDefaults, UserAuditPort userAuditPort) {
         this.exportUseCase = exportUseCase;
         this.storageResolver = storageResolver;
         this.storageDefaults = storageDefaults;
         this.userAuditPort = userAuditPort;
+    }
+
+    /**
+     * Require the storage resolver, failing with a clear message when the
+     * storage starter is not on the classpath.
+     *
+     * @return storage resolver
+     */
+    private StorageResolverPort resolver() {
+        StorageResolverPort port = storageResolver.getIfAvailable();
+
+        if (port == null) {
+            throw BusinessException.forbidden("storage capability not enabled — add center-storage011-starter");
+        }
+
+        return port;
+    }
+
+    /**
+     * Require the storage defaults, failing with a clear message when the
+     * storage starter is not on the classpath.
+     *
+     * @return storage defaults
+     */
+    private StorageDefaultsPort defaults() {
+        StorageDefaultsPort port = storageDefaults.getIfAvailable();
+
+        if (port == null) {
+            throw BusinessException.forbidden("storage capability not enabled — add center-storage011-starter");
+        }
+
+        return port;
     }
 
     /**
@@ -135,7 +170,7 @@ public class BackupUseCase {
         }
 
         ExportResult result = exportUseCase.export(objectCode, operator);
-        ObjectStoragePort storagePort = storageResolver.resolve(null);
+        ObjectStoragePort storagePort = resolver().resolve(null);
         String bucket = resolveBucket(storagePort);
         String key = objectKey(objectCode);
 
@@ -168,7 +203,7 @@ public class BackupUseCase {
      * @return bucket name
      */
     private String resolveBucket(ObjectStoragePort storagePort) {
-        String bucket = storageDefaults.defaultBucket();
+        String bucket = defaults().defaultBucket();
 
         return bucket == null || bucket.isBlank() ? storagePort.defaultBucket() : bucket;
     }

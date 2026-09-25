@@ -25,6 +25,13 @@
             <groupId>com.klsjnh</groupId>
             <artifactId>java17-data-mybatis-starter011</artifactId>
         </dependency>
+        <!-- optional: storage health indicator is conditional on the repository class -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>center-storage011-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- optional: Quartz health indicator is conditional on the engine class -->
         <dependency>
             <groupId>com.klsjnh</groupId>

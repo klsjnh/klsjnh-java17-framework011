@@ -19,17 +19,17 @@ import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderRepository;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.stereotype.Component;
 
 /**
  * Health indicator for the storage center management table. Verifies the
  * persistence layer answers and reports whether the seeded {@code default}
  * provider row exists. Adapter connectivity is deliberately NOT probed —
  * resolving a provider builds a client (and may create buckets), which is a
- * side effect a health check must not trigger.
+ * side effect a health check must not trigger. Registered by
+ * {@link StorageObservabilityAutoConfiguration011} so a missing storage
+ * starter never loads this class.
  */
 
-@Component
 public class StorageProviderHealthIndicator011 implements HealthIndicator {
 
     /**

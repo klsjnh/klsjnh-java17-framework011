@@ -76,7 +76,21 @@ export async function createDocChecker() {
       const bases = [];
 
       const sources = [];
-      await walk(join(projectRoot, 'java17-core011', 'src', 'main', 'java'), (n) => n.endsWith('.java'), sources);
+      // Controllers may live in any framework module (core or center starters):
+      // scan every module directory that carries src/main/java.
+      const rootEntries = await readdir(projectRoot, { withFileTypes: true });
+      for (const entry of rootEntries) {
+        if (!entry.isDirectory()) {
+          continue;
+        }
+
+        const moduleJava = join(projectRoot, entry.name, 'src', 'main', 'java');
+        const hasJava = await readdir(join(projectRoot, entry.name)).then(
+            (names) => names.includes('src')).catch(() => false);
+        if (hasJava) {
+          await walk(moduleJava, (n) => n.endsWith('.java'), sources);
+        }
+      }
 
       for (const file of sources) {
         const source = await readFile(file, 'utf8');

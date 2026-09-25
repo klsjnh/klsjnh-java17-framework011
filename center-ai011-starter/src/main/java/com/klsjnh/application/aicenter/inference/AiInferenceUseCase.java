@@ -31,7 +31,6 @@ import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
 import com.klsjnh.domain.iam.user.UserAuditPort;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -46,7 +45,6 @@ import java.util.stream.Stream;
  * injected by other use cases (AI self-development) as well as exposed over HTTP.
  */
 
-@ConditionalOnClass(name = "com.klsjnh.infrastructure.aicenter.media.AiMediaStore011")
 @Service
 public class AiInferenceUseCase {
 
