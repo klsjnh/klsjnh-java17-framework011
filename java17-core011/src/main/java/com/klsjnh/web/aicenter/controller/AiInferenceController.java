@@ -30,6 +30,7 @@ import com.klsjnh.web.aicenter.vo.aichat.AiChatResponseVo011;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,6 +54,7 @@ import java.util.stream.Stream;
  * {@link AiInferenceUseCase}.
  */
 
+@ConditionalOnClass(name = "com.klsjnh.infrastructure.aicenter.media.AiMediaStore011")
 @Tag(name = "AI中心011 - 推理")
 @RestController
 @RequestMapping("/klsjnh/aicenter/julyAiInference/v1")

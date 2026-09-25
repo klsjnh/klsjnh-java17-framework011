@@ -29,6 +29,7 @@ import com.klsjnh.domain.system011.scheduler.SchedulerPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,7 @@ import java.util.List;
  * {@link AuthorizationPort}.
  */
 
+@ConditionalOnClass(name = "com.klsjnh.infrastructure.system011.scheduler.SchedulerEngine")
 @Service
 public class JulySchedulerUseCase {
 

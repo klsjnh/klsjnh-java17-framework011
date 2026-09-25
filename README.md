@@ -41,16 +41,16 @@ web ──► application ──► domain ◄── infrastructure
 | java17-security-autoconfigure011 | 安全装配 | JWT 签发/校验 · bcrypt · 授权/运行态适配器 · GlobalAuthFilter（**归一化白名单** + /actuator/health）· AuditLogAspect（IUD 审计）· 审计记录器 · krt.jwt/status 绑定 |
 | java17-security-starter011 | 安全启动 | 聚合 security-autoconfigure + jjwt + spring-security-crypto |
 | java17-data-mybatis-starter011 | 数据启动 | Druid + JDBC 驱动（mysql/oracle/sqlserver runtime）· 动态数据源 kernel（池 / 路由 / 方言 SPI 4+4 / 探针 / 同步引擎依赖面）· **框架 Mapper 自动装配**（AutoConfiguration.imports，消费方只声明自己的 @MapperScan） |
-| java17-storage-local011-starter | 存储-本地 | local011 适配器 + provider 工厂（零 SDK） |
-| java17-storage-minio011-starter | 存储-MinIO | minio011 适配器 + provider 工厂 + MinIO SDK |
+| center-storage011-starter | 存储 | local011 + minio011 适配器与工厂（provider 按 `krt.storage-center.default-type` 运行时选择；厂商走 SPI） |
 | java17-scheduler-quartz-starter011 | 调度 | Quartz 引擎（RAMJobStore）+ Handler 注册表 + 启动重注册 |
-| java17-message-starter011 | 消息 | 内置出站渠道 inapp / webhook（厂商渠道 SPI 扩展） |
-| java17-ai-starter011 | AI | OpenAI 兼容适配器（inference / tts / asr / image）+ agnes / sensenova · 媒体落盘 · krt.ai-center 绑定 |
+| center-message011-starter | 消息 | 内置出站渠道 inapp / webhook（厂商渠道 SPI 扩展） |
+| center-ai011-starter | AI | OpenAI 兼容适配器（inference / tts / asr / image）+ agnes / sensenova · 媒体落盘 · krt.ai-center 绑定 |
 | java17-observability-starter011 | 可观测性 | actuator + Prometheus · traceId MDC 过滤器（白名单路径也有 traceId）· 健康指示器（动态数据源池 / 存储默认行 / Quartz 引擎） |
 | java17-test011 | 测试套件 | JUnit5 + Mockito + AssertJ 聚合 · BaseUseCaseTest011 基类（严格 stub 的用例单测基座） |
 | java17-reference-app011 | 参考应用 | 唯一 main + 配置 + demo11 样板 + 演示账号播种（demo 内容已移出框架） |
 
 > **装配单轨**：宿主主类**不扫描任何框架包**——core 与 starter 通过 `META-INF/spring/...AutoConfiguration.imports` 自注册（core 定向扫描自己的 application/web/infrastructure 三层包），框架 Mapper 由 data-starter 自动装配；`AuthChainPresenceCheck011` 熔断兜底：web 应用若缺安全链（未引 security-starter）**直接拒绝启动**。业务项目主类只扫自己的包。
+> **命名口径**：三个中心类 starter 无 `java17-` 前缀，统一 `center-<名>011-starter`（center-ai011 / center-message011 / center-storage011）；框架内部模块保持 `java17-*`。
 > 原 KrtConfig011 已解散为三个绑定类：`KrtSecurityConfig011`（krt.status/jwt/web）· `KrtDatasourceConfig011`（krt.ci011，core）· `KrtAiConfig011`（krt.ai-center，ai-starter）。
 
 ## 平台能力中心

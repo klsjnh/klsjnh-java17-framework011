@@ -29,13 +29,9 @@
             <groupId>com.klsjnh</groupId>
             <artifactId>java17-data-mybatis-starter011</artifactId>
         </dependency>
-        <dependency>
+                <dependency>
             <groupId>com.klsjnh</groupId>
-            <artifactId>java17-storage-local011-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.klsjnh</groupId>
-            <artifactId>java17-storage-minio011-starter</artifactId>
+            <artifactId>center-storage011-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.klsjnh</groupId>
@@ -43,11 +39,11 @@
         </dependency>
         <dependency>
             <groupId>com.klsjnh</groupId>
-            <artifactId>java17-message-starter011</artifactId>
+            <artifactId>center-message011-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.klsjnh</groupId>
-            <artifactId>java17-ai-starter011</artifactId>
+            <artifactId>center-ai011-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.klsjnh</groupId>

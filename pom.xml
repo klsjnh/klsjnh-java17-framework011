@@ -18,11 +18,10 @@
         <module>java17-security-autoconfigure011</module>
         <module>java17-security-starter011</module>
         <module>java17-data-mybatis-starter011</module>
-        <module>java17-storage-local011-starter</module>
-        <module>java17-storage-minio011-starter</module>
+        <module>center-storage011-starter</module>
         <module>java17-scheduler-quartz-starter011</module>
-        <module>java17-message-starter011</module>
-        <module>java17-ai-starter011</module>
+        <module>center-message011-starter</module>
+        <module>center-ai011-starter</module>
         <module>java17-observability-starter011</module>
         <module>java17-test011</module>
         <module>java17-reference-app011</module>

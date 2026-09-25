@@ -10,7 +10,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>java17-message-starter011</artifactId>
+    <artifactId>center-message011-starter</artifactId>
     <packaging>jar</packaging>
 
     <!-- Built-in outbound message channels (inapp / webhook). Vendor channels

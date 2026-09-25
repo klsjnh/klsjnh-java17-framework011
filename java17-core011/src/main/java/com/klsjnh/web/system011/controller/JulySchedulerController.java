@@ -41,6 +41,7 @@ import com.klsjnh.web.util.Operator011Resolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,6 +57,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * julySchedulerConverter, orchestration in the use case.
  */
 
+@ConditionalOnClass(name = "com.klsjnh.infrastructure.system011.scheduler.SchedulerEngine")
 @Tag(name = "系统管理 - 定时任务")
 @RestController
 @RequestMapping("/klsjnh/system011/julyScheduler/v1")

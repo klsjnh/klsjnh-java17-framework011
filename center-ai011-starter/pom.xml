@@ -10,7 +10,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>java17-ai-starter011</artifactId>
+    <artifactId>center-ai011-starter</artifactId>
     <packaging>jar</packaging>
 
     <!-- AI capability adapters: generic OpenAI-compatible inference / TTS /
