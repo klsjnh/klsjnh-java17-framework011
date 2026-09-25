@@ -20,7 +20,7 @@
 
 | 目录 | 内容 |
 |------|------|
-| [infrastructure011/](infrastructure011/) | **架构类需求承载地**：011 选型 · 013 结构 · 015 配置 · **[018.iam-center IAM 中心](infrastructure011/018.iam-center/011.topic-design.md)**（组织/用户/菜单/角色/目录/opt-in；动态权限详篇 [016](infrastructure011/018.iam-center/016.topic-dynamic-permission.md)；包与 URL = `…iam` / `/klsjnh/iam/**`，**非** system011）· **[011.storage-center 存储中心](infrastructure011/011.storage-center/011.topic-design.md)**（对象元数据 [016 规约·非平台能力](infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)）· 013.message · 015.ai · 017.datasource · 031.persistence · **[033 机密加密](infrastructure011/033.topic-platform-security.md)**（SecretCipher；权限互引 018，不双写）· **[020 部署机制](infrastructure011/020.topic-deploy-docker.md)**（落地件 → [deploy/](deploy/)） |
+| [infrastructure011/](infrastructure011/) | **架构类需求承载地**：011 选型 · 013 结构 · 015 配置 · **[018.iam-center IAM 中心](infrastructure011/018.iam-center/011.topic-design.md)**（组织/用户/菜单/角色/目录/opt-in；动态权限详篇 [016](infrastructure011/018.iam-center/016.topic-dynamic-permission.md)；包与 URL = `…iam` / `/klsjnh/iam/**`，**非** system011）· **[011.storage-center 存储中心](infrastructure011/011.storage-center/011.topic-design.md)**（对象元数据 [016 规约·非平台能力](infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)）· 013.message · 015.ai · 017.datasource · 031.persistence · **[033 机密加密](infrastructure011/033.topic-platform-security.md)**（SecretCipher；权限互引 018，不双写）· **[020 部署机制](infrastructure011/020.topic-deploy-docker.md)**（落地件 → [deploy/](deploy/)）· **中心 starter 体系文档（2026-09-25）**：[025.center-ai011-starter](infrastructure011/025.center-ai011-starter/011.topic-design.md) · [026.center-message011-starter](infrastructure011/026.center-message011-starter/011.topic-design.md) · [027.center-storage011-starter](infrastructure011/027.center-storage011-starter/011.topic-design.md)（各 011/013/015/016 四篇）· **[029 金标准验证协议](infrastructure011/029.topic-golden-verification.md)** |
 | [sql/](sql/) | DDL 唯一真源（见 [sql/README](sql/README.md)）：公共列模板 + `july_*.sql`；中心级 **`july_center_<slug>.sql`**（[iam](sql/july_center_iam.sql) / [ai](sql/july_center_ai.sql) / [message](sql/july_center_message.sql) / [storage](sql/july_center_storage.sql) / [datasource](sql/july_center_datasource.sql)） |
 | [deploy/](deploy/) | 容器化落地件（自根目录迁入）；操作见 [README](deploy/README.md) |
 | requirement011/ | 普通需求：011 菜单 · 013 组织 · 015 用户 · 016 角色（IAM 业务侧，架构见 018）· 022 调度 · 023 配置 · 025 导出 · 026 数据源 · 027 字典 · 028/030 AI · 032 导入（均已编码）。无独立 `requirement011/029` |
@@ -51,11 +51,11 @@
 | 021 | 在用 | infrastructure011 消息中心（现 `013.message-center/`，021 底册已拆；平台架构能力 · 多渠道可插拔 · P1 已实现） |
 | 022 | 在用 | requirement011/013 july-scheduler（定时任务） |
 | 023 | 在用 | requirement011/013 july-config（配置管理） |
-| 025 | 在用 | requirement011 平台导出（export） |
-| 026 | 在用 | requirement011/013 数据源管理（datasource 域 / july_datasource） |
-| 027 | 在用 | requirement011 数据字典（system011 / july_dictionary） |
+| 025 | 在用 | requirement011 平台导出（export）；infrastructure011/025.center-ai011-starter（AI 中心 starter 体系文档，跨目录不同号位） |
+| 026 | 在用 | requirement011/013 数据源管理（datasource 域 / july_datasource）；infrastructure011/026.center-message011-starter（消息中心 starter 体系文档） |
+| 027 | 在用 | requirement011 数据字典（system011 / july_dictionary）；infrastructure011/027.center-storage011-starter（存储中心 starter 体系文档） |
 | 028 | 在用 | requirement011/013 AI 模型接入（aicenter / july_ai_model_provider） |
-| 029 | 在用 | requirement013 存储中心管理面（`029.topic-storage-migration.md`）；架构底册 `infrastructure011/011.storage-center/`（含 [016 对象元数据规约](infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)；**无** `requirement011/029`） |
+| 029 | 在用 | requirement013 存储中心管理面（`029.topic-storage-migration.md`）；架构底册 `infrastructure011/011.storage-center/`（含 [016 对象元数据规约](infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)；**无** `requirement011/029`）；infrastructure011/**029.topic-golden-verification.md**（金标准验证协议） |
 | 030 | 在用 | requirement011/013 AI 模型调用（推理 / 文生图 / 图生图 / TTS / 语音识别 / 提示词，aicenter） |
 | 031 | 在用 | requirement013 数据源中心（读写分页 / 类型契约 / 同步 S1，datasource）；infrastructure011/031 持久化中心（形态 1–8；[017](infrastructure011/031.persistence-center/017.topic-sort-support-simplify.md)/[018](infrastructure011/031.persistence-center/018.topic-master-sub-api.md) 已验收落地；[019](infrastructure011/031.persistence-center/019.topic-persistence-followups.md) 可选） |
 | 032 | 在用 | requirement011/013 平台导入（xlsx；与 025 导出对称；字典打样） |
@@ -67,5 +67,6 @@
 
 > ✅ 2026-09-14 已办：① 表中 `016` 原有两行已合并为一行（原重复行信息并入）；③ 顶层常驻文档已按新版协议改名 —— `016.api-contract`→`013.api-contract`、`013.project-info`→`015.project-info`、`015.coding-standards`→`016.coding-standards`（编号不释放、不复用）。
 > ✅ 2026-09-15 已办：② `019.backend-api-review.md` 已落盘（后端接口质量评审：Swagger 可信度 / 鉴权口径 / 已知缺口 / 新端点自检清单）并登记台账。
+> ✅ 2026-09-25 已办：AI / 消息 / 存储中心整体剥离为 `center-<名>011-starter`（object 端口契约与备份软依赖留 core）；新增 starter 体系文档 025/026/027（各四篇）与 [029 金标准验证协议]；台账登记（跨目录不同号位口径不变）。
 > ✅ 2026-09-24 已办：根目录 `deploy/` → **`docs/deploy/`**；文档收敛对齐 IAM 包/URL、中心 SQL `july_center_<slug>`、存储 016 规约边界；`system011` 不再写成菜单/组织归属。
 > 📌 **号位口径（用户裁定 2026-09-14）：跨目录不算同号位。** 顶层文档号与专题目录号**各自成位**，故 `017.tech-debt-redlines.md` 与 `infrastructure011/017.datasource-center/` **不构成冲突**，无需避让；`011.agreements.md` 与 `infrastructure011/011.storage-center/` 同理。判重只在**同一目录、同一序列**内进行。

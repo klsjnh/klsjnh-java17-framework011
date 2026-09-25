@@ -2,7 +2,7 @@
 
 Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方业务系统依赖引用。全新项目、无历史技术债；对外契约（响应信封 / 状态码 / 路由风格 / 公共表结构）保持稳定。
 
-> AI 协作入口（门牌，先读）：[Agent.md](Agent.md) · 协议全集：[docs/011.agreements.md](docs/011.agreements.md) · 架构选型：[docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md) · 目录结构：[docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md) · 部署：[docs/infrastructure011/020.topic-deploy-docker.md](docs/infrastructure011/020.topic-deploy-docker.md) · 落地件：[docs/deploy/](docs/deploy/)
+> AI 协作入口（门牌，先读）：[Agent.md](Agent.md) · 协议全集：[docs/011.agreements.md](docs/011.agreements.md) · 架构选型：[docs/infrastructure011/011.topic-infrastructure.md](docs/infrastructure011/011.topic-infrastructure.md) · 目录结构：[docs/infrastructure011/013.topic-project-structure.md](docs/infrastructure011/013.topic-project-structure.md) · 部署：[docs/infrastructure011/020.topic-deploy-docker.md](docs/infrastructure011/020.topic-deploy-docker.md) · 落地件：[docs/deploy/](docs/deploy/) · **中心 starter 体系文档**：[025 AI](docs/infrastructure011/025.center-ai011-starter/011.topic-design.md) · [026 消息](docs/infrastructure011/026.center-message011-starter/011.topic-design.md) · [027 存储](docs/infrastructure011/027.center-storage011-starter/011.topic-design.md) · **消费方手册**：[docs/020.business-project-quickstart.md](docs/020.business-project-quickstart.md) · **金标准回归**：[docs/infrastructure011/029](docs/infrastructure011/029.topic-golden-verification.md)
 
 ## 技术栈
 
@@ -19,6 +19,7 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | AOP | spring-boot-starter-aop（controller IUD 审计） |
 | JSON | Jackson（导出） |
 | API 文档 | knife4j 4.5.0 (OpenAPI3) |
+| 可观测性 | spring-boot-starter-actuator + micrometer-registry-prometheus（health / 指标 / traceId MDC） |
 | 工具 | Lombok 1.18.36（domain 层禁用） |
 
 ## 架构总览
@@ -37,14 +38,14 @@ web ──► application ──► domain ◄── infrastructure
 |------|------|------|
 | java17-bom011 | BOM | 内部 13 模块 + 三方版本基线（消费方 `<scope>import</scope>` 引入） |
 | java17-security-api011 | 安全 API（纯 Java） | 鉴权端口（AuthTokenPort / AuthorizationPort / PasswordPort / RuntimeStatusPort）· Operator011 · FrameworkStatus011 |
-| java17-core011 | **胖核心** | common（信封 / 异常 / 分页 / 常量 / 工具）+ domain + application + web 全部特性层；持久化基座家族（BaseRepository / BaseTree* / BaseMasterSub* / BaseTreeSub*）+ 各特性 PO/Mapper/RepositoryImpl；25 个管理面 Controller · GlobalExceptionHandler · Swagger 6 组；krt.ci011 绑定 |
+| java17-core011 | **胖核心** | common（信封 / 异常 / 分页 / 常量 / 工具）+ domain + application + web 层（iam / system011 / datasource 管理面）；持久化基座家族（BaseRepository / BaseTree* / BaseMasterSub* / BaseTreeSub*）+ iam/system011/datasource/platform011 的 PO/Mapper/RepositoryImpl；12 个管理面 Controller · GlobalExceptionHandler · Swagger 组（URL 制）；krt.ci011 绑定；**三个中心的端口契约**（domain.storagecenter.object 等） |
 | java17-security-autoconfigure011 | 安全装配 | JWT 签发/校验 · bcrypt · 授权/运行态适配器 · GlobalAuthFilter（**归一化白名单** + /actuator/health）· AuditLogAspect（IUD 审计）· 审计记录器 · krt.jwt/status 绑定 |
 | java17-security-starter011 | 安全启动 | 聚合 security-autoconfigure + jjwt + spring-security-crypto |
 | java17-data-mybatis-starter011 | 数据启动 | Druid + JDBC 驱动（mysql/oracle/sqlserver runtime）· 动态数据源 kernel（池 / 路由 / 方言 SPI 4+4 / 探针 / 同步引擎依赖面）· **框架 Mapper 自动装配**（AutoConfiguration.imports，消费方只声明自己的 @MapperScan） |
-| center-storage011-starter | 存储 | local011 + minio011 适配器与工厂（provider 按 `krt.storage-center.default-type` 运行时选择；厂商走 SPI） |
+| center-storage011-starter | 存储 | **完整存储中心**：管理面（provider 实例 / 桶 / 对象 / 在线编辑）+ local011 + minio011 适配器（运行时按 `krt.storage-center.default-type` 选择；厂商走 SPI）；**object 端口契约留 core** |
 | java17-scheduler-quartz-starter011 | 调度 | Quartz 引擎（RAMJobStore）+ Handler 注册表 + 启动重注册 |
-| center-message011-starter | 消息 | 内置出站渠道 inapp / webhook（厂商渠道 SPI 扩展） |
-| center-ai011-starter | AI | OpenAI 兼容适配器（inference / tts / asr / image）+ agnes / sensenova · 媒体落盘 · krt.ai-center 绑定 |
+| center-message011-starter | 消息 | **完整消息中心**：出入两套（渠道 / 模板 / 消息）管理面 + 内置渠道 inapp / webhook（厂商渠道 SPI 扩展） |
+| center-ai011-starter | AI | **完整 AI 中心**：管理面（模型接入主子表、提示词业务域）+ 能力引擎（推理 / 图片 / 语音适配器 + agnes / sensenova）+ 媒体落盘 · krt.ai-center 绑定；依赖 center-storage |
 | java17-observability-starter011 | 可观测性 | actuator + Prometheus · traceId MDC 过滤器（白名单路径也有 traceId）· 健康指示器（动态数据源池 / 存储默认行 / Quartz 引擎） |
 | java17-test011 | 测试套件 | JUnit5 + Mockito + AssertJ 聚合 · BaseUseCaseTest011 基类（严格 stub 的用例单测基座） |
 | java17-reference-app011 | 参考应用 | 唯一 main + 配置 + demo11 样板 + 演示账号播种（demo 内容已移出框架） |
@@ -57,15 +58,32 @@ web ──► application ──► domain ◄── infrastructure
 
 横切能力中心 + IAM，架构底册在 `docs/infrastructure011/`，详细设计在 `docs/requirement013/`：
 
-| 中心 | 一句话 | 架构底册 |
+| 中心 | 一句话 | 架构底册 · **starter 体系文档**（设计 / 架构 / 使用 / 二开） |
 |------|--------|----------|
-| **存储中心** | 对象存储统一端口：local011 / minio011 / s3011 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | [011.storage-center](docs/infrastructure011/011.storage-center/011.topic-design.md) |
-| **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | [013.message-center](docs/infrastructure011/013.message-center/011.topic-design.md) |
-| **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | [015.ai-center](docs/infrastructure011/015.ai-center/011.topic-design.md) |
-| **数据源中心** | 多数据源管理 + **参数化只读分页查询** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [017.datasource-center](docs/infrastructure011/017.datasource-center/011.topic-design.md) |
-| **IAM 中心** | 组织 / 用户 / 菜单 / 角色 / 权限目录；包与 URL 均在 `…iam` / `/klsjnh/iam/**`（**非** system011；system011 仅配置/调度/字典） | [018.iam-center](docs/infrastructure011/018.iam-center/011.topic-design.md) |
+| **存储中心** | 对象存储统一端口：local011 / minio011 / s3011 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | [011.storage-center](docs/infrastructure011/011.storage-center/011.topic-design.md) · [027 starter](docs/infrastructure011/027.center-storage011-starter/011.topic-design.md) |
+| **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | [013.message-center](docs/infrastructure011/013.message-center/011.topic-design.md) · [026 starter](docs/infrastructure011/026.center-message011-starter/011.topic-design.md) |
+| **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | [015.ai-center](docs/infrastructure011/015.ai-center/011.topic-design.md) · [025 starter](docs/infrastructure011/025.center-ai011-starter/011.topic-design.md) |
+| **数据源中心** | 多数据源管理 + **参数化只读分页查询** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [017.datasource-center](docs/infrastructure011/017.datasource-center/011.topic-design.md) · —（随 core / data-starter） |
+| **IAM 中心** | 组织 / 用户 / 菜单 / 角色 / 权限目录；包与 URL 均在 `…iam` / `/klsjnh/iam/**`（**非** system011；system011 仅配置/调度/字典） | [018.iam-center](docs/infrastructure011/018.iam-center/011.topic-design.md) · —（随 core / security-starter） |
 
 > 共同口径：**能力 / 厂商用开放字符串 + 注册表**，扩展不改底座（见 [docs/011.agreements.md](docs/011.agreements.md)）。
+
+## 业务项目接入（消费方）
+
+四个 starter 起步（BOM 管版本，宿主**零框架扫描**）：
+
+```xml
+<dependency>
+  <groupId>com.klsjnh</groupId><artifactId>java17-bom011</artifactId>
+  <version>1.0.0</version><type>pom</type><scope>import</scope>
+</dependency>
+<dependency><groupId>com.klsjnh</groupId><artifactId>java17-security-starter011</artifactId></dependency>
+<dependency><groupId>com.klsjnh</groupId><artifactId>java17-data-mybatis-starter011</artifactId></dependency>
+<!-- 中心能力按需：center-storage011-starter / center-message011-starter /
+     center-ai011-starter / java17-scheduler-quartz-starter011 / java17-observability-starter011 -->
+```
+
+不引的 starter 整个中心不存在（端点 404、代码不在 classpath）；缺安全链拒绝启动。完整四步 + 必选/可选表 + demo 照抄入口：**[docs/020.business-project-quickstart.md](docs/020.business-project-quickstart.md)**；活示例：框架仓库外兄弟工程 **`java17-demo011-app011`**（E2E 已验证，见 020 §3.5）。
 
 ## 快速开始
 
@@ -76,6 +94,8 @@ mvn -o clean package -DskipTests          # 离线构建，产出 reference-app0
 ./script011.sh gate                       # 规范检查（正则 + AST）+ 离线编译
 ./script011.sh dev013                     # 杀进程 + 重新编译 + 启动（11160）
 ```
+
+> **结构性改动后**（模块边界 / 装配 / 契约）：按 [029 金标准协议](docs/infrastructure011/029.topic-golden-verification.md) 跑 G1–G8 全量回归（gate / 打包含测试 / 启动冒烟 / demo CRUD / 调度真实触发 / 权限矩阵 / 摘件负向）。
 
 > 说明：`application.yml` 配置端口 11160 与默认 development profile；数据源与 dev 用 krt 配置落在入库的 `application-development.yml`，本机差异走忽略的 `application-local.yml`。
 
@@ -121,6 +141,8 @@ bash docs/deploy/deploy.sh                # 默认 mount → 备 runtime + 打�
 | ✅ | datasource：数据源管理（026，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页 + **分页方言开放 SPI**，内置 mysql/postgresql/oracle/sqlserver） |
 | ✅ | aicenter：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 三大能力（030，**推理（SSE 流式）/ 图片 / 语音（TTS+ASR）**，能力 SPI + 通用 OpenAI 兼容适配器 + 产物落盘（调用必传实例+桶，无默认），id/code 解析、model 直传）· **提示词管理（主子表 + `render` 公共件）** |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（029，**主子表** `july_storage_provider` + `_bucket` + 桶/对象 + readText/saveText + 预签名 + **provider 注册表**） |
+| ✅ | 装配单轨（宿主零框架扫描 + starter imports 自注册 + 缺安全链熔断）· 中心 starter 命名 `center-<名>011-starter` · 金标准协议 029 |
+| ✅ | **中心整体剥离**（0925b）：AI / 消息 / 存储的 domain+application+infrastructure+web 全部迁入 `center-ai011-starter` / `center-message011-starter` / `center-storage011-starter`；core 仅保留端口契约（storagecenter.object）与备份软依赖；金标准协议 [029](docs/infrastructure011/029.topic-golden-verification.md) |
 | ✅ | messagecenter：消息中心（021，**出入两套**：出站 `MessageChannelPort` + 入站 `MessageInboundPort`/监听 + 6 表 + send/接收回调/去重/分发 + 内置出站 inapp/webhook，2026-09-19） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 切面 + 平台事件（EXPORT / IMPORT / BACKUP 在 use case 写，独立事务）；`objectCode` 统一 `AuditObjectCodes011` |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插）；批量删除**全有或全无**（原子） |

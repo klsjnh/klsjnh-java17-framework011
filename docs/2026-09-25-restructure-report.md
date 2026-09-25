@@ -26,14 +26,14 @@ web ──► application ──► domain ◄── infrastructure     ← 包�
 |---|------|------|------|
 | 1 | java17-bom011 | BOM | 内部 13 模块 + 三方版本基线；**独立无 parent**（root import 子 BOM 会成 POM 环） |
 | 2 | java17-security-api011 | 安全 API | 鉴权 4 端口 + Operator011 + FrameworkStatus011；纯 Java 零框架 |
-| 3 | java17-core011 | **胖核心** | common + domain + application + web 全特性层；持久化基座家族 + 各特性 PO/Mapper/RepositoryImpl；25 个管理面 Controller；`CoreAutoConfiguration011` 自注册 |
+| 3 | java17-core011 | **胖核心** | common + domain + application + web（iam / system011 / datasource 管理面）；持久化基座家族 + 12 个管理面 Controller；`CoreAutoConfiguration011` 自注册；三中心端口契约留 core |
 | 4 | java17-security-autoconfigure011 | 安全装配 | JWT/bcrypt/授权与运行态适配器 + GlobalAuthFilter + AuditLogAspect + 审计记录器 + `KrtSecurityConfig011` |
 | 5 | java17-security-starter011 | 安全启动 | 聚合 + jjwt + spring-security-crypto |
 | 6 | java17-data-mybatis-starter011 | 数据启动 | Druid + 驱动(runtime) + 动态数据源 kernel（池/路由/方言 SPI 4+4/探针）+ **框架 Mapper 自动装配** |
-| 7 | center-storage011-starter | 存储 | local011 + minio011 适配器与工厂；provider 按 `krt.storage-center.default-type` 运行时选择（与 message/ai 的"能力一个 starter"口径一致） |
+| 7 | center-storage011-starter | 存储 | **完整存储中心**（管理面 + local011/minio011；object 端口契约留 core，backup 软依赖 403 守卫） |
 | 9 | java17-scheduler-quartz-starter011 | 调度 | Quartz 引擎 + Handler 注册表 + 启动重注册；**真可选** |
-| 10 | center-message011-starter | 消息 | 内置渠道 inapp/webhook；真可选 |
-| 11 | center-ai011-starter | AI | OpenAI 兼容 4 适配器 + agnes/sensenova + 媒体落盘 + `KrtAiConfig011`；**真可选** |
+| 10 | center-message011-starter | 消息 | **完整消息中心**（出入两套 + 管理面 + 内置渠道 inapp/webhook）；真可选（缺席整体 404） |
+| 11 | center-ai011-starter | AI | **完整 AI 中心**（管理面 + 能力引擎 + 媒体落盘，依赖 center-storage）；真可选（缺席整体 404） |
 | 12 | java17-observability-starter011 | 可观测性 | 新建：actuator + Prometheus + traceId MDC 过滤器 + 3 健康指示器（Quartz 指示器条件化） |
 | 13 | java17-test011 | 测试套件 | JUnit5/Mockito/AssertJ 聚合 + `BaseUseCaseTest011` 基类 |
 | 14 | java17-reference-app011 | 参考应用 | 唯一 main + 配置 + demo11 样板 + 演示播种（demo 内容已移出框架） |
@@ -60,6 +60,7 @@ web ──► application ──► domain ◄── infrastructure     ← 包�
 | D9 | 顺带修复（审核 P0-2） | GlobalAuthFilter 白名单改 **URI 归一化匹配**（堵 `/v3/api-docs/../` 绕过）+ 放行 `/actuator/health` + traceId 复用 MDC 既有值 |
 | D10 | 未夹带其余 P0 | 见 §八 遗留清单；重构期间保持行为等价优先 |
 | D11 | **中心类 starter 命名**：`center-<名>011-starter`（无 java17 前缀） | center-ai011 / center-message011 / center-storage011——消费方直接面对的能力线与框架内部模块（java17-*）在命名上分层 |
+| D12 | **中心整体剥离**：AI / 消息 / 存储的管理面自 core 全部迁入各自 starter；object 端口契约与备份（ObjectProvider 软依赖，缺席 403 提示）留 core | 消费方语义彻底化：不引 = 中心从未存在；金标准协议 029 固化回归阶梯 |
 
 ## 五、对消费方的变化
 
