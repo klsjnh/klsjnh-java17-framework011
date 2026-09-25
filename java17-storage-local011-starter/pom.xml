@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.klsjnh</groupId>
+        <artifactId>java17-framework011</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>java17-storage-local011-starter</artifactId>
+    <packaging>jar</packaging>
+
+    <!-- Local-filesystem object storage provider (local011): adapter + provider
+         factory. No SDK dependency. -->
+    <dependencies>
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>java17-core011</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

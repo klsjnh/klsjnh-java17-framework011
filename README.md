@@ -23,31 +23,35 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 
 ## 架构总览
 
+**包结构**保持六层洋葱不变（门禁按包名锚定，全部规则不受模块重构影响）：
+
 ```
 web ──► application ──► domain ◄── infrastructure
               │                        │
               └────────► common ◄──────┘   （common 被各层引用，不反向依赖）
 ```
 
-| 层 | 职责 | 依赖 |
-|----|------|------|
-| common | 跨层契约：枚举、响应信封、共享 VO | 无 |
-| domain | 聚合、值对象、仓储接口、Port | common 共享内核（纯 Java 枚举），禁框架 |
-| application | 用例编排、事务边界 | domain + common |
-| infrastructure | PO、Mapper、RepositoryImpl、技术适配 | domain + common |
-| web | Controller、统一信封、全局异常、鉴权过滤器、IUD 审计切面 | application + common |
-| app | 唯一 main、装配、profile 配置、启动播种 | 全部 |
+**Maven 模块**已重构为 BOM + 胖核心 + 瘦 starter 体系：特性代码（domain / application / 各特性持久化 / 管理面 Controller）全部在核心，starter 只装技术适配，消费方按需组装；依赖方向严格单向（starter → core → security-api）。
 
-## 模块
+| 模块 | 角色 | 内容 |
+|------|------|------|
+| java17-bom011 | BOM | 内部 13 模块 + 三方版本基线（消费方 `<scope>import</scope>` 引入） |
+| java17-security-api011 | 安全 API（纯 Java） | 鉴权端口（AuthTokenPort / AuthorizationPort / PasswordPort / RuntimeStatusPort）· Operator011 · FrameworkStatus011 |
+| java17-core011 | **胖核心** | common（信封 / 异常 / 分页 / 常量 / 工具）+ domain + application + web 全部特性层；持久化基座家族（BaseRepository / BaseTree* / BaseMasterSub* / BaseTreeSub*）+ 各特性 PO/Mapper/RepositoryImpl；25 个管理面 Controller · GlobalExceptionHandler · Swagger 6 组；krt.ci011 绑定 |
+| java17-security-autoconfigure011 | 安全装配 | JWT 签发/校验 · bcrypt · 授权/运行态适配器 · GlobalAuthFilter（**归一化白名单** + /actuator/health）· AuditLogAspect（IUD 审计）· 审计记录器 · krt.jwt/status 绑定 |
+| java17-security-starter011 | 安全启动 | 聚合 security-autoconfigure + jjwt + spring-security-crypto |
+| java17-data-mybatis-starter011 | 数据启动 | Druid + JDBC 驱动（mysql/oracle/sqlserver runtime）· 动态数据源 kernel（池 / 路由 / 方言 SPI 4+4 / 探针 / 同步引擎依赖面）· **框架 Mapper 自动装配**（AutoConfiguration.imports，消费方只声明自己的 @MapperScan） |
+| java17-storage-local011-starter | 存储-本地 | local011 适配器 + provider 工厂（零 SDK） |
+| java17-storage-minio011-starter | 存储-MinIO | minio011 适配器 + provider 工厂 + MinIO SDK |
+| java17-scheduler-quartz-starter011 | 调度 | Quartz 引擎（RAMJobStore）+ Handler 注册表 + 启动重注册 |
+| java17-message-starter011 | 消息 | 内置出站渠道 inapp / webhook（厂商渠道 SPI 扩展） |
+| java17-ai-starter011 | AI | OpenAI 兼容适配器（inference / tts / asr / image）+ agnes / sensenova · 媒体落盘 · krt.ai-center 绑定 |
+| java17-observability-starter011 | 可观测性 | actuator + Prometheus · traceId MDC 过滤器（白名单路径也有 traceId）· 健康指示器（动态数据源池 / 存储默认行 / Quartz 引擎） |
+| java17-test011 | 测试套件 | JUnit5 + Mockito + AssertJ 聚合 · BaseUseCaseTest011 基类（严格 stub 的用例单测基座） |
+| java17-reference-app011 | 参考应用 | 唯一 main + 配置 + demo11 样板 + 演示账号播种（demo 内容已移出框架） |
 
-| 模块 | 层 | 内容 |
-|------|-----|------|
-| java17-common011 | common | 枚举（FrameworkStatus011 / HttpCodeEnum011 / Status011 / AuditType011 / ExportFormat011）· 开放字符串常量（DatabaseTypes011 / StorageProviderCodes011 / MessageProviderTypes011 / AuditObjectCodes011）· Response011 + IdVo011 · BusinessException · 分页对 / 批量删除对 · Operator011 · 工具（DateUtil011 / StringUtil011 / MarkdownUtil011 / HttpUtil011） |
-| java17-domain011 | domain | shared（EntityId / AuditInfo）· **iam**（organization / user / menu / role / auth / perm）· datasource（kernel Port + 方言 SPI `SqlDialectPort011` + management）· storagecenter（object：ObjectStoragePort / ObjectStorageProviderFactory SPI；storage：JulyStorageProvider / JulyStorageProviderBucket）· messagecenter（channel SPI `MessageChannelPort` / template / message）· **system011**（仅 config / scheduler / dictionary）· aicenter（modelprovider：AiModelProvider + Api + Probe；inference / image / audio：能力 SPI；capability：AiCapabilityPort / AiMedia；media：AiMediaStorePort）· platform011（export / importdata / backup Port） |
-| java17-application011 | application | system011（config / scheduler / dictionary）· iam（organization / user / menu / role / perm）· aicenter（模型接入 + 推理 / 图片 / 语音 + 产物落盘 Port）· storagecenter（实例 / 桶 / 对象 + 在线编辑）· **messagecenter（send / 渠道 / 模板 / 记录）** · platform011（export / importdata / backup） |
-| java17-infrastructure011 | infrastructure | 基座家族（`BaseRepository` / `BaseTreeRepository` / `BaseMasterSubRepository` / `BaseTreeSubRepository`）+ `SortSupport` + AuditMetaObjectHandler · system011 / datasource / aicenter / storagecenter / messagecenter 持久化 · 动态数据源路由 + 方言注册表 + 探针 · provider 注册表（local011/minio011/s3011）+ Resolver + 播种 · 通用 OpenAI 兼容适配器（inference/image/tts/asr）· 内置渠道（inapp / webhook）· IAM 适配器（bcrypt / JWT / 审计记录器） |
-| java17-web011 | web | 各域 Controller · GlobalExceptionHandler · GlobalAuthFilter（JWT）· AuditLogAspect（IUD 审计）· Swagger 6 组（system011 / iam / storagecenter / datasource / aicenter / messagecenter） |
-| java17-app011 | app | 唯一 main + 配置 + 参考样板（demo11 纵切面 / Demo011Scheduler）+ 启动播种（ci011 / storage） |
+> **装配单轨**：宿主主类**不扫描任何框架包**——core 与 starter 通过 `META-INF/spring/...AutoConfiguration.imports` 自注册（core 定向扫描自己的 application/web/infrastructure 三层包），框架 Mapper 由 data-starter 自动装配；`AuthChainPresenceCheck011` 熔断兜底：web 应用若缺安全链（未引 security-starter）**直接拒绝启动**。业务项目主类只扫自己的包。
+> 原 KrtConfig011 已解散为三个绑定类：`KrtSecurityConfig011`（krt.status/jwt/web）· `KrtDatasourceConfig011`（krt.ci011，core）· `KrtAiConfig011`（krt.ai-center，ai-starter）。
 
 ## 平台能力中心
 
@@ -68,7 +72,7 @@ web ──► application ──► domain ◄── infrastructure
 前置：JDK 17 · Maven 3.9+ · Node 18+（门禁脚本用）
 
 ```bash
-mvn -o clean package -DskipTests          # 离线构建，产出 app011 可执行 jar
+mvn -o clean package -DskipTests          # 离线构建，产出 reference-app011 可执行 jar
 ./script011.sh gate                       # 规范检查（正则 + AST）+ 离线编译
 ./script011.sh dev013                     # 杀进程 + 重新编译 + 启动（11160）
 ```

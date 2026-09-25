@@ -76,7 +76,7 @@ export async function createDocChecker() {
       const bases = [];
 
       const sources = [];
-      await walk(join(projectRoot, 'java17-web011', 'src', 'main', 'java'), (n) => n.endsWith('.java'), sources);
+      await walk(join(projectRoot, 'java17-core011', 'src', 'main', 'java'), (n) => n.endsWith('.java'), sources);
 
       for (const file of sources) {
         const source = await readFile(file, 'utf8');

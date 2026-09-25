@@ -158,7 +158,7 @@ do_push() {
 # runtime (app011 start / stop)
 # ============================================================
 
-APP_JAR="$PROJECT_ROOT/java17-app011/target/java17-app011-1.0.0.jar"
+APP_JAR="$PROJECT_ROOT/java17-reference-app011/target/java17-reference-app011-1.0.0.jar"
 APP_LOG="$PROJECT_ROOT/logs/app011.log"
 PID_FILE="$PROJECT_ROOT/.app011.pid"
 APP_PORT=11160
