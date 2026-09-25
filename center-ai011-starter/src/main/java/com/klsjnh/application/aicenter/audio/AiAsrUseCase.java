@@ -5,12 +5,13 @@ package com.klsjnh.application.aicenter.audio;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.20
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.20  ai asr use case class
+ *      2026.09.26  explicit permission checks (aiAudio)
  *
  */
 
@@ -21,9 +22,11 @@ import com.klsjnh.application.aicenter.AiProviderResolver;
 import com.klsjnh.domain.aicenter.audio.AiAsrPort;
 import com.klsjnh.domain.aicenter.audio.AiAsrRequest;
 import com.klsjnh.domain.aicenter.audio.AiAsrResult;
+import com.klsjnh.domain.aicenter.audio.AiAudioPermissionCodes011;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 
 import org.springframework.stereotype.Service;
 
@@ -47,14 +50,22 @@ public class AiAsrUseCase {
     private final AiCapabilityRegistry registry;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
-     * @param resolver provider resolver
-     * @param registry capability registry
+     * @param resolver           provider resolver
+     * @param registry           capability registry
+     * @param authorizationPort  authorization port
      */
-    public AiAsrUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry) {
+    public AiAsrUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry,
+            AuthorizationPort authorizationPort) {
         this.resolver = resolver;
         this.registry = registry;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -67,7 +78,10 @@ public class AiAsrUseCase {
      * @param language language hint, nullable
      * @return recognition result, never null
      */
-    public AiAsrResult recognize(AiInvokeTarget target, byte[] audio, String audioUrl, String format, String language) {
+    public AiAsrResult recognize(String operatorId, AiInvokeTarget target, byte[] audio, String audioUrl, String format,
+            String language) {
+        authorizationPort.assertHas(operatorId, AiAudioPermissionCodes011.RECOGNIZE);
+
         if (target == null) {
             throw BusinessException.badRequest("target is required");
         }

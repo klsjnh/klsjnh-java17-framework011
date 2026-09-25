@@ -15,16 +15,12 @@ package com.klsjnh.domain.storagecenter.object;
  *
  */
 
-import com.klsjnh.domain.storagecenter.object.BucketInfo;
-import com.klsjnh.domain.storagecenter.object.ObjectStat;
-import com.klsjnh.domain.storagecenter.object.StorageProbe;
-
 import java.util.List;
 
 /**
  * Object storage port: one small surface served by per-vendor adapters
  * (local011 / minio011 first; cos011 / tos011 / oss011 / s3011 phased).
- * The active adapter is selected by {@code krt.storage-center.default-type}.
+ * Runtime resolution is table-driven via {@link StorageResolverPort}.
  * <p>
  * Semantic contract: {@link #get} returns null ONLY for a missing object —
  * any other failure (network, credentials) throws; {@link #delete} and

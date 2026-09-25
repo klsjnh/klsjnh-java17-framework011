@@ -13,9 +13,9 @@
     <artifactId>java17-core011</artifactId>
     <packaging>jar</packaging>
 
-    <!-- Fat core: common + domain + application + web (feature persistence and
-         management plane included). Tech adapters (JWT, MinIO, Quartz, storage
-         providers, channels, AI vendors) live in the starters. -->
+    <!-- Slim core: common + shared ports + user IAM + platform export/import/
+         backup + persistence base. Optional centers (access/platform/storage/
+         message/ai/datasource) and julyScheduler live in their starters. -->
     <dependencies>
         <dependency>
             <groupId>com.klsjnh</groupId>

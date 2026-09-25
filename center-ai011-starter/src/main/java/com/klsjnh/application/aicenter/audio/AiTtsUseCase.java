@@ -5,7 +5,7 @@ package com.klsjnh.application.aicenter.audio;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
@@ -13,6 +13,7 @@ package com.klsjnh.application.aicenter.audio;
  *      2026.09.19  ai tts use case class
  *      2026.09.20  local-storage gate + media persistence
  *      2026.09.24  call-time storage locator; drop local gate / defaults
+ *      2026.09.26  explicit permission checks (aiAudio)
  *
  */
 
@@ -21,6 +22,7 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.domain.aicenter.audio.AiAudioPermissionCodes011;
 import com.klsjnh.domain.aicenter.audio.AiTtsPort;
 import com.klsjnh.domain.aicenter.audio.AiTtsRequest;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
@@ -30,6 +32,7 @@ import com.klsjnh.domain.aicenter.media.AiMediaRef;
 import com.klsjnh.domain.aicenter.media.AiMediaStorePort;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 
 import org.springframework.stereotype.Service;
 
@@ -59,16 +62,24 @@ public class AiTtsUseCase {
     private final AiMediaStorePort mediaStore;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
-     * @param resolver   provider resolver
-     * @param registry   capability registry
-     * @param mediaStore media store
+     * @param resolver           provider resolver
+     * @param registry           capability registry
+     * @param mediaStore         media store
+     * @param authorizationPort  authorization port
      */
-    public AiTtsUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore) {
+    public AiTtsUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore,
+            AuthorizationPort authorizationPort) {
         this.resolver = resolver;
         this.registry = registry;
         this.mediaStore = mediaStore;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -85,8 +96,11 @@ public class AiTtsUseCase {
      * @param location    storage instance + bucket locator (required)
      * @return persisted media reference, never null
      */
-    public AiMediaRef synthesize(AiInvokeTarget target, String input, String voice, String instruction, Double speed,
-            Double volume, String format, Integer sampleRate, AiMediaLocation location) {
+    public AiMediaRef synthesize(String operatorId, AiInvokeTarget target, String input, String voice,
+            String instruction, Double speed, Double volume, String format, Integer sampleRate,
+            AiMediaLocation location) {
+        authorizationPort.assertHas(operatorId, AiAudioPermissionCodes011.SYNTHESIZE);
+
         if (target == null) {
             throw BusinessException.badRequest("target is required");
         }

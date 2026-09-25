@@ -5,12 +5,13 @@ package com.klsjnh.web.aicenter.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  ai model provider controller class
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
@@ -24,7 +25,6 @@ import com.klsjnh.common.vo.IdVo011;
 
 import com.klsjnh.application.aicenter.modelprovider.AiModelProviderApiCommand;
 import com.klsjnh.application.aicenter.modelprovider.AiModelProviderUseCase;
-import com.klsjnh.application.platform011.export.ExportUseCase;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderQuerySpec;
@@ -85,22 +85,15 @@ public class AiModelProviderController {
     private final AiModelProviderConverter aiModelProviderConverter;
 
     /**
-     * Export use case.
-     */
-    private final ExportUseCase exportUseCase;
-
-    /**
      * Create the controller.
      *
-     * @param aiModelProviderUseCase       ai model provider use case
-     * @param aiModelProviderConverter     response aiModelProviderConverter
-     * @param exportUseCase export use case
+     * @param aiModelProviderUseCase   ai model provider use case
+     * @param aiModelProviderConverter response aiModelProviderConverter
      */
-    public AiModelProviderController(AiModelProviderUseCase aiModelProviderUseCase, AiModelProviderConverter aiModelProviderConverter,
-            ExportUseCase exportUseCase) {
+    public AiModelProviderController(AiModelProviderUseCase aiModelProviderUseCase,
+            AiModelProviderConverter aiModelProviderConverter) {
         this.aiModelProviderUseCase = aiModelProviderUseCase;
         this.aiModelProviderConverter = aiModelProviderConverter;
-        this.exportUseCase = exportUseCase;
     }
 
     /**
@@ -112,10 +105,12 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/insert")
     @Operation(summary = "新增提供商（providerCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody AiModelProviderInsertVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody AiModelProviderInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, aiModelProviderUseCase.insert(vo.getProviderCode(), vo.getSortOrder(),
+
+        return Response011.successId(funcName, aiModelProviderUseCase.insert(operator.id(), vo.getProviderCode(), vo.getSortOrder(),
                 vo.getProviderName(), vo.getBaseUrl(), vo.getModels(), vo.getRemark()));
     }
 
@@ -128,10 +123,12 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/update")
     @Operation(summary = "修改提供商（providerCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody AiModelProviderUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody AiModelProviderUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, aiModelProviderUseCase.update(vo.getId(), vo.getProviderName(), vo.getSortOrder(),
+
+        return Response011.successId(funcName, aiModelProviderUseCase.update(operator.id(), vo.getId(), vo.getProviderName(), vo.getSortOrder(),
                 vo.getBaseUrl(), vo.getModels(), vo.getStatus(), vo.getRemark()));
     }
 
@@ -144,10 +141,12 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除提供商（仍有密钥则拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, aiModelProviderUseCase.logicDelete(idVo.getId()));
+
+        return Response011.successId(funcName, aiModelProviderUseCase.logicDelete(operator.id(), idVo.getId()));
     }
 
     /**
@@ -158,10 +157,12 @@ public class AiModelProviderController {
      */
     @GetMapping("/getById")
     @Operation(summary = "主键查询（id 走 query）")
-    public Response011<AiModelProviderVo011> getById(@RequestParam("id") String id) {
+    public Response011<AiModelProviderVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, aiModelProviderConverter.toVo(aiModelProviderUseCase.getById(id)));
+
+        return Response011.success(funcName, aiModelProviderConverter.toVo(aiModelProviderUseCase.getById(operator.id(), id)));
     }
 
     /**
@@ -173,11 +174,13 @@ public class AiModelProviderController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称/URL 模糊 + 状态过滤）")
     public Response011<PageResult011<AiModelProviderVo011>> selectListByPage(
-            @RequestBody AiModelProviderQueryVo011 vo) {
+            @RequestBody AiModelProviderQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<AiModelProvider> page = aiModelProviderUseCase.selectListByPage(pageQuery,
+        PageResult011<AiModelProvider> page = aiModelProviderUseCase.selectListByPage(operator.id(), pageQuery,
                 new AiModelProviderQuerySpec(vo.getKeyword(), vo.getStatus()));
 
         return Response011.success(funcName, page.withRows(aiModelProviderConverter.toVoList(page.rows())));
@@ -192,10 +195,12 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/insertApi")
     @Operation(summary = "新增密钥（同提供商内 apiCode 查重）")
-    public Response011<IdVo011> insertApi(@RequestBody AiModelProviderApiInsertVo011 vo) {
+    public Response011<IdVo011> insertApi(@RequestBody AiModelProviderApiInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert api";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, aiModelProviderUseCase.insertApi(vo.getProviderCode(), vo.getSortOrder(),
+
+        return Response011.successId(funcName, aiModelProviderUseCase.insertApi(operator.id(), vo.getProviderCode(), vo.getSortOrder(),
                 vo.getApiCode(), vo.getApiName(), vo.getApiKey(), vo.getRemark()));
     }
 
@@ -208,10 +213,12 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/updateApi")
     @Operation(summary = "修改密钥（apiCode 不可变；apiKey 留空保持原值）")
-    public Response011<IdVo011> updateApi(@RequestBody AiModelProviderApiUpdateVo011 vo) {
+    public Response011<IdVo011> updateApi(@RequestBody AiModelProviderApiUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update api";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, aiModelProviderUseCase.updateApi(vo.getId(), vo.getApiName(), vo.getSortOrder(),
+
+        return Response011.successId(funcName, aiModelProviderUseCase.updateApi(operator.id(), vo.getId(), vo.getApiName(), vo.getSortOrder(),
                 vo.getApiKey(), vo.getStatus(), vo.getRemark()));
     }
 
@@ -224,10 +231,12 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/logicDeleteApi")
     @Operation(summary = "逻辑删除密钥（单个）")
-    public Response011<IdVo011> logicDeleteApi(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDeleteApi(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete api";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, aiModelProviderUseCase.logicDeleteApi(idVo.getId()));
+
+        return Response011.successId(funcName, aiModelProviderUseCase.logicDeleteApi(operator.id(), idVo.getId()));
     }
 
     /**
@@ -239,10 +248,12 @@ public class AiModelProviderController {
     @PostMapping("/selectApiListByProvider")
     @Operation(summary = "按提供商取密钥列表（有序，出参不含密钥）")
     public Response011<List<AiModelProviderApiVo011>> selectApiListByProvider(
-            @RequestBody AiModelProviderApiQueryVo011 vo) {
+            @RequestBody AiModelProviderApiQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select api list by provider";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        List<AiModelProviderApi> apis = aiModelProviderUseCase.selectApiListByProvider(vo.getProviderCode(), vo.getStatus());
+
+        List<AiModelProviderApi> apis = aiModelProviderUseCase.selectApiListByProvider(operator.id(), vo.getProviderCode(), vo.getStatus());
 
         return Response011.success(funcName, aiModelProviderConverter.toApiVoList(apis));
     }
@@ -255,10 +266,12 @@ public class AiModelProviderController {
      */
     @PostMapping("/testConnection")
     @Operation(summary = "测试连接（提供商级，用默认密钥 GET baseUrl/models）")
-    public Response011<AiModelProviderTestResultVo011> testConnection(@RequestBody AiModelProviderTestVo011 vo) {
+    public Response011<AiModelProviderTestResultVo011> testConnection(@RequestBody AiModelProviderTestVo011 vo, HttpServletRequest request) {
         String funcName = "test connection";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, aiModelProviderConverter.toTestResultVo(aiModelProviderUseCase.testConnection(vo.getProviderCode())));
+
+        return Response011.success(funcName, aiModelProviderConverter.toTestResultVo(aiModelProviderUseCase.testConnection(operator.id(), vo.getProviderCode())));
     }
 
     /**
@@ -269,11 +282,13 @@ public class AiModelProviderController {
      */
     @PostMapping("/testConnectionApi")
     @Operation(summary = "测试连接（密钥级，指定 apiKey 记录）")
-    public Response011<AiModelProviderTestResultVo011> testConnectionApi(@RequestBody IdVo011 idVo) {
+    public Response011<AiModelProviderTestResultVo011> testConnectionApi(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "test connection api";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         return Response011.success(funcName,
-                aiModelProviderConverter.toTestResultVo(aiModelProviderUseCase.testConnectionApi(idVo.getId())));
+                aiModelProviderConverter.toTestResultVo(aiModelProviderUseCase.testConnectionApi(operator.id(), idVo.getId())));
     }
 
     /**
@@ -284,8 +299,10 @@ public class AiModelProviderController {
      */
     @PostMapping("/saveWhole")
     @Operation(summary = "整存提供商 + 密钥（主+子，一个事务；子表替换）")
-    public Response011<IdVo011> saveWhole(@RequestBody AiModelProviderSaveWholeVo011 vo) {
+    public Response011<IdVo011> saveWhole(@RequestBody AiModelProviderSaveWholeVo011 vo, HttpServletRequest request) {
         String funcName = "save whole";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         List<AiModelProviderApiCommand> apis = new ArrayList<>();
 
@@ -294,7 +311,7 @@ public class AiModelProviderController {
                     row.getSortOrder(), row.getRemark()));
         }
 
-        return Response011.successId(funcName, aiModelProviderUseCase.saveWhole(vo.getId(), vo.getProviderCode(),
+        return Response011.successId(funcName, aiModelProviderUseCase.saveWhole(operator.id(), vo.getId(), vo.getProviderCode(),
                 vo.getSortOrder(), vo.getProviderName(), vo.getBaseUrl(), vo.getModels(), vo.getStatus(),
                 vo.getRemark(), apis));
     }
@@ -307,13 +324,16 @@ public class AiModelProviderController {
      */
     @GetMapping("/getWithChildren")
     @Operation(summary = "主+子联查（提供商 + 密钥列表）")
-    public Response011<Map<String, Object>> getWithChildren(@RequestParam("id") String id) {
+    public Response011<Map<String, Object>> getWithChildren(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get with children";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        AiModelProvider provider = aiModelProviderUseCase.getById(id);
+
+        AiModelProvider provider = aiModelProviderUseCase.getById(operator.id(), id);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("master", aiModelProviderConverter.toVo(provider));
-        result.put("apis", aiModelProviderConverter.toApiVoList(aiModelProviderUseCase.getApiList(provider.providerCode())));
+        result.put("apis", aiModelProviderConverter.toApiVoList(
+                aiModelProviderUseCase.selectApiListByProvider(operator.id(), provider.providerCode(), null)));
 
         return Response011.success(funcName, result);
     }
@@ -332,6 +352,6 @@ public class AiModelProviderController {
 
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, exportUseCase.export(AuditObjectCodes011.JULY_AI_MODEL_PROVIDER, operator));
+        return Response011.success(funcName, aiModelProviderUseCase.export(operator));
     }
 }

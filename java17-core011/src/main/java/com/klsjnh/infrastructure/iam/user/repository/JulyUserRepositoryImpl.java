@@ -27,7 +27,6 @@ import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
 import com.klsjnh.infrastructure.persistence.repository.BaseMasterSubRepository;
 import com.klsjnh.infrastructure.persistence.repository.BaseRepository;
 import com.klsjnh.infrastructure.iam.user.mapper.JulyUserMapper;
-import com.klsjnh.infrastructure.iam.role.repository.JulyUserRoleRepositoryImpl;
 
 import org.springframework.stereotype.Repository;
 
@@ -39,11 +38,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Repository implementation for the JulyUser aggregate: master-sub with the
- * user_role child registered for cascade (BaseMasterSubRepository).
+ * Repository implementation for the JulyUser aggregate.
  * <p>
- * user_audit is structurally a child but append-only, so it is deliberately
- * NOT registered in {@link #getChildServices()}.
+ * user_role cascade lives in the access center (junction aggregate). user_audit
+ * is append-only and is deliberately NOT registered in
+ * {@link #getChildServices()}.
  * </p>
  */
 
@@ -53,31 +52,24 @@ public class JulyUserRepositoryImpl
         implements JulyUserRepository {
 
     /**
-     * User role junction repository (cascade child).
-     */
-    private final JulyUserRoleRepositoryImpl userRoleRepository;
-
-    /**
      * Create the repository.
      *
      * @param mapper       mybatis-plus mapper
      * @param commonMapper native sql mapper
-     * @param userRoleRepository user role junction repository
      */
-    public JulyUserRepositoryImpl(JulyUserMapper mapper, CommonMapper commonMapper,
-            JulyUserRoleRepositoryImpl userRoleRepository) {
+    public JulyUserRepositoryImpl(JulyUserMapper mapper, CommonMapper commonMapper) {
         super(mapper, commonMapper);
-        this.userRoleRepository = userRoleRepository;
     }
 
     /**
-     * Child repositories owned by this master.
+     * Child repositories owned by this master (none in core; role junction is
+     * owned by the access center).
      *
      * @return child repositories
      */
     @Override
     protected List<BaseRepository<?, ?>> getChildServices() {
-        return List.of(userRoleRepository);
+        return List.of();
     }
 
     /**

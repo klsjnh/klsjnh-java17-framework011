@@ -5,7 +5,7 @@ package com.klsjnh.application.aicenter.inference;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.17
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
@@ -13,6 +13,7 @@ package com.klsjnh.application.aicenter.inference;
  *      2026.09.17  ai invoke use case class
  *      2026.09.20  inference use case + streaming
  *      2026.09.20  resolve by provider code/id + key code/id (AiInvokeTarget)
+ *      2026.09.26  explicit permission checks (aiInference)
  *
  */
 
@@ -25,10 +26,12 @@ import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
 import com.klsjnh.domain.aicenter.inference.AiInferenceChunk;
 import com.klsjnh.domain.aicenter.inference.AiInferenceCommand;
+import com.klsjnh.domain.aicenter.inference.AiInferencePermissionCodes011;
 import com.klsjnh.domain.aicenter.inference.AiInferencePort;
 import com.klsjnh.domain.aicenter.inference.AiInferenceResult;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.iam.user.UserAuditPort;
 
 import org.springframework.stereotype.Service;
@@ -64,16 +67,24 @@ public class AiInferenceUseCase {
     private final UserAuditPort userAuditPort;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
-     * @param resolver      provider resolver
-     * @param registry      capability registry
-     * @param userAuditPort user audit port
+     * @param resolver           provider resolver
+     * @param registry           capability registry
+     * @param userAuditPort      user audit port
+     * @param authorizationPort  authorization port
      */
-    public AiInferenceUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, UserAuditPort userAuditPort) {
+    public AiInferenceUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, UserAuditPort userAuditPort,
+            AuthorizationPort authorizationPort) {
         this.resolver = resolver;
         this.registry = registry;
         this.userAuditPort = userAuditPort;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -85,8 +96,10 @@ public class AiInferenceUseCase {
      * @param maxTokens   max output tokens, nullable
      * @return inference outcome (key masked, usage included)
      */
-    public AiInferenceOutcome chat(AiInvokeTarget target, List<AiChatMessage> messages, Double temperature,
-            Integer maxTokens) {
+    public AiInferenceOutcome chat(String operatorId, AiInvokeTarget target, List<AiChatMessage> messages,
+            Double temperature, Integer maxTokens) {
+        authorizationPort.assertHas(operatorId, AiInferencePermissionCodes011.CHAT);
+
         AiModelProvider provider = resolver.resolveProvider(target.providerCode(), target.providerId());
         AiModelProviderApi api = resolver.resolveApi(provider, target.keyCode(), target.keyId());
         String model = resolver.requireModel(provider, target.model());
@@ -109,8 +122,10 @@ public class AiInferenceUseCase {
      * @param maxTokens   max output tokens, nullable
      * @return fragment stream, never null
      */
-    public Stream<AiInferenceChunk> stream(AiInvokeTarget target, List<AiChatMessage> messages, Double temperature,
-            Integer maxTokens) {
+    public Stream<AiInferenceChunk> stream(String operatorId, AiInvokeTarget target, List<AiChatMessage> messages,
+            Double temperature, Integer maxTokens) {
+        authorizationPort.assertHas(operatorId, AiInferencePermissionCodes011.CHAT);
+
         AiModelProvider provider = resolver.resolveProvider(target.providerCode(), target.providerId());
         AiModelProviderApi api = resolver.resolveApi(provider, target.keyCode(), target.keyId());
         String model = resolver.requireModel(provider, target.model());

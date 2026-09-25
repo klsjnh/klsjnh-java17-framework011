@@ -5,18 +5,20 @@ package com.klsjnh.web.storagecenter.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  storage object controller class
  *      2026.09.17  module renamed to julyObject, actions prefixed
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
 import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 
@@ -33,6 +35,7 @@ import com.klsjnh.web.storagecenter.vo.object.StorageObjectQueryVo011;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectRefVo011;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectRenameVo011;
 import com.klsjnh.web.storagecenter.vo.object.StorageObjectSaveTextVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.InputStream;
@@ -85,10 +89,12 @@ public class JulyObjectController {
      */
     @PostMapping("/selectObjectList")
     @Operation(summary = "对象列表（前缀过滤）")
-    public Response011<List<String>> selectObjectList(@RequestBody StorageObjectQueryVo011 vo) {
+    public Response011<List<String>> selectObjectList(@RequestBody StorageObjectQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select object list";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.selectList(vo.getStorageCode(), vo.getBucketName(),
+
+        return Response011.success(funcName, storageObjectUseCase.selectList(operator.id(), vo.getStorageCode(), vo.getBucketName(),
                 vo.getPrefix()));
     }
 
@@ -100,10 +106,12 @@ public class JulyObjectController {
      */
     @PostMapping("/selectObjectListByPage")
     @Operation(summary = "对象分页（每行带 key/size/lastModified/contentType）")
-    public Response011<PageResult011<ObjectStat>> selectObjectListByPage(@RequestBody StorageObjectQueryVo011 vo) {
+    public Response011<PageResult011<ObjectStat>> selectObjectListByPage(@RequestBody StorageObjectQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select object list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.selectListByPage(vo.getStorageCode(), vo.getBucketName(),
+
+        return Response011.success(funcName, storageObjectUseCase.selectListByPage(operator.id(), vo.getStorageCode(), vo.getBucketName(),
                 vo.getPrefix(), vo.getPageIndex(), vo.getPageSize()));
     }
 
@@ -119,10 +127,12 @@ public class JulyObjectController {
     @Operation(summary = "对象元数据（size/lastModified/contentType，走 query）")
     public Response011<ObjectStat> statObject(@RequestParam(value = "storageCode", required = false) String storageCode,
             @RequestParam(value = "bucketName", required = false) String bucketName,
-            @RequestParam("objectName") String objectName) {
+            @RequestParam("objectName") String objectName, HttpServletRequest request) {
         String funcName = "stat object";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.stat(storageCode, bucketName, objectName));
+
+        return Response011.success(funcName, storageObjectUseCase.stat(operator.id(), storageCode, bucketName, objectName));
     }
 
     /**
@@ -141,10 +151,12 @@ public class JulyObjectController {
     public Response011<String> uploadObject(@RequestParam(value = "storageCode", required = false) String storageCode,
             @RequestParam(value = "bucketName", required = false) String bucketName,
             @RequestParam(value = "objectName", required = false) String objectName,
-            @RequestParam("file") MultipartFile file) throws Exception {
+            @RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
         String funcName = "upload object";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        String key = storageObjectUseCase.upload(storageCode, bucketName, objectName, file.getBytes(), file.getContentType());
+
+        String key = storageObjectUseCase.upload(operator.id(), storageCode, bucketName, objectName, file.getBytes(), file.getContentType());
 
         return Response011.success(funcName, key);
     }
@@ -215,10 +227,12 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/copyObject")
     @Operation(summary = "复制对象（同/跨桶）")
-    public Response011<String> copyObject(@RequestBody StorageObjectCopyVo011 vo) {
+    public Response011<String> copyObject(@RequestBody StorageObjectCopyVo011 vo, HttpServletRequest request) {
         String funcName = "copy object";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.copy(vo.getStorageCode(), vo.getBucketName(),
+
+        return Response011.success(funcName, storageObjectUseCase.copy(operator.id(), vo.getStorageCode(), vo.getBucketName(),
                 vo.getObjectName(), vo.getTargetBucket(), vo.getTargetName()));
     }
 
@@ -231,10 +245,12 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/renameObject")
     @Operation(summary = "重命名对象（同桶 move）")
-    public Response011<String> renameObject(@RequestBody StorageObjectRenameVo011 vo) {
+    public Response011<String> renameObject(@RequestBody StorageObjectRenameVo011 vo, HttpServletRequest request) {
         String funcName = "rename object";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.rename(vo.getStorageCode(), vo.getBucketName(),
+
+        return Response011.success(funcName, storageObjectUseCase.rename(operator.id(), vo.getStorageCode(), vo.getBucketName(),
                 vo.getObjectName(), vo.getTargetName()));
     }
 
@@ -246,11 +262,13 @@ public class JulyObjectController {
      */
     @PostMapping("/selectObjectPage")
     @Operation(summary = "对象原生分页（delimiter 目录 + marker 续传）")
-    public Response011<ObjectListing> selectObjectPage(@RequestBody StorageObjectPageVo011 vo) {
+    public Response011<ObjectListing> selectObjectPage(@RequestBody StorageObjectPageVo011 vo, HttpServletRequest request) {
         String funcName = "select object page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         int limit = vo.getLimit() == null ? 100 : vo.getLimit();
-        ObjectListing page = storageObjectUseCase.selectObjectPage(vo.getStorageCode(), vo.getBucketName(),
+        ObjectListing page = storageObjectUseCase.selectObjectPage(operator.id(), vo.getStorageCode(), vo.getBucketName(),
                 vo.getPrefix(), vo.getDelimiter(), limit, vo.getMarker());
 
         return Response011.success(funcName, page);
@@ -265,10 +283,12 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/removeObject")
     @Operation(summary = "删除对象")
-    public Response011<String> removeObject(@RequestBody StorageObjectRefVo011 vo) {
+    public Response011<String> removeObject(@RequestBody StorageObjectRefVo011 vo, HttpServletRequest request) {
         String funcName = "remove object";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        storageObjectUseCase.remove(vo.getStorageCode(), vo.getBucketName(), vo.getObjectName());
+
+        storageObjectUseCase.remove(operator.id(), vo.getStorageCode(), vo.getBucketName(), vo.getObjectName());
 
         return Response011.success(funcName, vo.getObjectName());
     }
@@ -282,10 +302,12 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/batchRemoveObject")
     @Operation(summary = "批量删除对象")
-    public Response011<String> batchRemoveObject(@RequestBody StorageObjectBatchRemoveVo011 vo) {
+    public Response011<String> batchRemoveObject(@RequestBody StorageObjectBatchRemoveVo011 vo, HttpServletRequest request) {
         String funcName = "batch remove object";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        storageObjectUseCase.batchRemove(vo.getStorageCode(), vo.getBucketName(), vo.getObjectNames());
+
+        storageObjectUseCase.batchRemove(operator.id(), vo.getStorageCode(), vo.getBucketName(), vo.getObjectNames());
 
         return Response011.success(funcName, "batch remove success");
     }
@@ -303,10 +325,12 @@ public class JulyObjectController {
     public Response011<StorageTextContent> readObjectText(
             @RequestParam(value = "storageCode", required = false) String storageCode,
             @RequestParam(value = "bucketName", required = false) String bucketName,
-            @RequestParam("objectName") String objectName) {
+            @RequestParam("objectName") String objectName, HttpServletRequest request) {
         String funcName = "read object text";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.readText(storageCode, bucketName, objectName));
+
+        return Response011.success(funcName, storageObjectUseCase.readText(operator.id(), storageCode, bucketName, objectName));
     }
 
     /**
@@ -318,10 +342,12 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/saveObjectText")
     @Operation(summary = "在线编辑·保存（≤1MB）")
-    public Response011<String> saveObjectText(@RequestBody StorageObjectSaveTextVo011 vo) {
+    public Response011<String> saveObjectText(@RequestBody StorageObjectSaveTextVo011 vo, HttpServletRequest request) {
         String funcName = "save object text";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, storageObjectUseCase.saveText(vo.getStorageCode(), vo.getBucketName(),
+
+        return Response011.success(funcName, storageObjectUseCase.saveText(operator.id(), vo.getStorageCode(), vo.getBucketName(),
                 vo.getObjectName(), vo.getContent()));
     }
 
@@ -338,8 +364,10 @@ public class JulyObjectController {
     public Response011<String> presignObjectUrl(
             @RequestParam(value = "storageCode", required = false) String storageCode,
             @RequestParam(value = "bucketName", required = false) String bucketName,
-            @RequestParam("objectName") String objectName) {
+            @RequestParam("objectName") String objectName, HttpServletRequest request) {
         String funcName = "presign object url";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         return Response011.success(funcName, storageObjectUseCase.presignedUrl(storageCode, bucketName, objectName));
     }

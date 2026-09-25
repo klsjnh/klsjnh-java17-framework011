@@ -5,12 +5,13 @@ package com.klsjnh.infrastructure.config;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.25
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.25  security-side krt config (split from KrtConfig011)
+ *      2026.09.26  krt.web.auth-whitelist-paths / prefixes (JWT bypass)
  *
  */
 
@@ -73,19 +74,26 @@ public class KrtSecurityConfig011 {
 
     /**
      * Startup guard: reject unsafe config combinations at boot.
+     * <p>
+     * The production Spring profile must bind {@code krt.status=production}
+     * (debug / development with production profile fail fast). Production
+     * status also requires a non-blank JWT secret.
+     * </p>
      */
     @PostConstruct
     public void validate() {
-        if (status.isDebug() && hasProductionProfile()) {
-            throw new IllegalStateException("krt.status=debug is not allowed with the production profile");
+        if (hasProductionProfile() && status != FrameworkStatus011.PRODUCTION) {
+            throw new IllegalStateException(
+                    "production profile requires krt.status=production (got " + status.getCode() + ")");
         }
 
         if (status == FrameworkStatus011.PRODUCTION && jwtSecretBlank()) {
             throw new IllegalStateException("krt.jwt.secret is required in production");
         }
 
-        log.info("krt.status = {} (passwordless login {})", status,
-                status.allowsPasswordlessLogin() ? "enabled" : "disabled");
+        log.info("krt.status = {} (passwordless login {}, permission PEP {})", status,
+                status.allowsPasswordlessLogin() ? "enabled" : "disabled",
+                status.isPermissionWhitelistMode() ? "whitelist" : "assertHas-noop");
     }
 
     /**
@@ -132,6 +140,23 @@ public class KrtSecurityConfig011 {
          * </p>
          */
         private List<String> trustedProxies = new ArrayList<>();
+
+        /**
+         * Extra exact request paths that never require a JWT. Merged with the
+         * built-in login whitelist in {@code GlobalAuthFilter}. Empty by
+         * default (fail closed). Typical vendor inbound callback:
+         * {@code /klsjnh/messagecenter/julyInboundMessage/v1/receive}.
+         * Channel-side signature verification belongs in the inbound port /
+         * channel config, not in a parallel auth stack.
+         */
+        private List<String> authWhitelistPaths = new ArrayList<>();
+
+        /**
+         * Extra request path prefixes that never require a JWT. Merged with
+         * the built-in docs / open / health prefixes in
+         * {@code GlobalAuthFilter}. Empty by default (fail closed).
+         */
+        private List<String> authWhitelistPrefixes = new ArrayList<>();
     }
 
     /**

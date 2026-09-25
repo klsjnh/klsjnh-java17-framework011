@@ -25,6 +25,13 @@ import java.util.Locale;
  * token. A missing value resolves to {@code PRODUCTION} — a missing config must
  * never open the gate.
  * </p>
+ * <p>
+ * Also selects the permission PEP posture: {@code PRODUCTION} enables real
+ * {@code assertHas}/{@code has} checks and the write whitelist gate;
+ * {@code DEBUG} / {@code DEVELOPMENT} make those checks no-op (call sites stay
+ * hung for production; local integration is not blocked). See IAM
+ * dynamic-permission docs.
+ * </p>
  */
 
 public enum FrameworkStatus011 {
@@ -100,5 +107,25 @@ public enum FrameworkStatus011 {
      */
     public boolean allowsPasswordlessLogin() {
         return this != PRODUCTION;
+    }
+
+    /**
+     * Whether this status is production.
+     *
+     * @return true for {@code PRODUCTION}
+     */
+    public boolean isProduction() {
+        return this == PRODUCTION;
+    }
+
+    /**
+     * Whether permission enforcement is whitelist (deny-by-default for
+     * unchecked mutating requests on protected paths). Bound to production
+     * status only; debug / development make {@code assertHas} a no-op.
+     *
+     * @return true for {@code PRODUCTION}
+     */
+    public boolean isPermissionWhitelistMode() {
+        return this == PRODUCTION;
     }
 }

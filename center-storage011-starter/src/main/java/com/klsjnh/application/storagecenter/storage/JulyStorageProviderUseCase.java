@@ -5,12 +5,13 @@ package com.klsjnh.application.storagecenter.storage;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  july storage provider use case class
+ *      2026.09.26  explicit permission checks (julyStorageProvider)
  *
  */
 
@@ -26,8 +27,10 @@ import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProvider;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucket;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucketRepository;
+import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderPermissionCodes011;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderQuerySpec;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.storagecenter.object.ObjectStorageFactoryPort;
 import com.klsjnh.domain.storagecenter.object.StorageConnectionConfig;
 import com.klsjnh.domain.storagecenter.object.StorageProbe;
@@ -70,21 +73,16 @@ public class JulyStorageProviderUseCase {
      */
     private final StorageResolverPort resolver;
 
-    /**
-     * Create the use case.
-     *
-     * @param repository       storage provider repository
-     * @param bucketRepository storage bucket repository
-     * @param factory          adapter factory
-     * @param resolver         storage resolver
-     */
+    private final AuthorizationPort authorizationPort;
+
     public JulyStorageProviderUseCase(JulyStorageProviderRepository repository,
             JulyStorageProviderBucketRepository bucketRepository, ObjectStorageFactoryPort factory,
-            StorageResolverPort resolver) {
+            StorageResolverPort resolver, AuthorizationPort authorizationPort) {
         this.repository = repository;
         this.bucketRepository = bucketRepository;
         this.factory = factory;
         this.resolver = resolver;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -105,9 +103,10 @@ public class JulyStorageProviderUseCase {
      * @return new storage id
      */
     @Transactional
-    public String insert(String storageCode, Integer sortOrder, String storageName, String provider, String basePath,
-            String endpoint, String accessKey, String secretKey, boolean secure, String defaultBucket,
+    public String insert(String operatorId, String storageCode, Integer sortOrder, String storageName, String provider,
+            String basePath, String endpoint, String accessKey, String secretKey, boolean secure, String defaultBucket,
             Integer presignExpirySeconds, String remark) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.INSERT);
         if (repository.findByCode(storageCode) != null) {
             throw BusinessException.badRequest("storage code already exists: " + storageCode);
         }
@@ -139,9 +138,10 @@ public class JulyStorageProviderUseCase {
      * @return storage id
      */
     @Transactional
-    public String update(String id, String storageName, String provider, String basePath, String endpoint,
-            String accessKey, String secretKey, boolean secure, String defaultBucket, Integer presignExpirySeconds,
-            String remark, String status) {
+    public String update(String operatorId, String id, String storageName, String provider, String basePath,
+            String endpoint, String accessKey, String secretKey, boolean secure, String defaultBucket,
+            Integer presignExpirySeconds, String remark, String status) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.UPDATE);
         JulyStorageProvider storage = require(id);
         requireStatus(status);
 
@@ -166,7 +166,9 @@ public class JulyStorageProviderUseCase {
      * @return deleted storage id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.LOGIC_DELETE);
+
         JulyStorageProvider storage = require(id);
 
         if (!repository.logicDeleteById(id)) {
@@ -187,7 +189,8 @@ public class JulyStorageProviderUseCase {
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.LOGIC_DELETE);
         List<String> normalized = normalize(ids);
 
         if (normalized.isEmpty()) {
@@ -218,17 +221,21 @@ public class JulyStorageProviderUseCase {
      * @param id storage id
      * @return aggregate
      */
-    public JulyStorageProvider getById(String id) {
+    public JulyStorageProvider getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.SELECT);
         return require(id);
     }
 
     /**
      * Find a storage instance by code.
      *
+     * @param operatorId  operator user id
      * @param storageCode storage code
      * @return aggregate
      */
-    public JulyStorageProvider getByCode(String storageCode) {
+    public JulyStorageProvider getByCode(String operatorId, String storageCode) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.SELECT);
+
         JulyStorageProvider storage = repository.findByCode(storageCode);
 
         if (storage == null) {
@@ -245,8 +252,9 @@ public class JulyStorageProviderUseCase {
      * @param spec      query condition, null means no filter
      * @return page result
      */
-    public PageResult011<JulyStorageProvider> selectListByPage(PageQuery011 pageQuery,
+    public PageResult011<JulyStorageProvider> selectListByPage(String operatorId, PageQuery011 pageQuery,
             JulyStorageProviderQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.SELECT);
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         JulyStorageProviderQuerySpec condition = spec == null ? new JulyStorageProviderQuerySpec(null, null, null) : spec;
         List<JulyStorageProvider> rows = repository.findPage(query.offset(), query.pageSize(), condition);
@@ -262,7 +270,8 @@ public class JulyStorageProviderUseCase {
      * @param id storage id
      * @return bucket rows
      */
-    public List<JulyStorageProviderBucket> buckets(String id) {
+    public List<JulyStorageProviderBucket> buckets(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.SELECT);
         require(id);
 
         return bucketRepository.findByPkMt(id);
@@ -274,7 +283,9 @@ public class JulyStorageProviderUseCase {
      * @param id storage id
      * @return probe result, never null
      */
-    public StorageProbe testSaved(String id) {
+    public StorageProbe testSaved(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.TEST_CONNECTION);
+
         JulyStorageProvider storage = require(id);
         JulyStorageProviderBucket defaultBucket = bucketRepository.findDefault(storage.id().value());
         String defaultBucketName = defaultBucket == null ? null : defaultBucket.bucketName();
@@ -295,8 +306,10 @@ public class JulyStorageProviderUseCase {
      * @param presignExpirySeconds presigned URL expiry seconds
      * @return probe result, never null
      */
-    public StorageProbe testDraft(String provider, String basePath, String endpoint, String accessKey,
+    public StorageProbe testDraft(String operatorId, String provider, String basePath, String endpoint, String accessKey,
             String secretKey, boolean secure, String defaultBucket, Integer presignExpirySeconds) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderPermissionCodes011.TEST_CONNECTION);
+
         StorageConnectionConfig config = new StorageConnectionConfig(provider, basePath, endpoint, accessKey,
                 secretKey, secure, defaultBucket, presignExpirySeconds == null ? 3600 : presignExpirySeconds);
 

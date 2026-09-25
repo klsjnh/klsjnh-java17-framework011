@@ -24,10 +24,10 @@ docs/
 ├── infrastructure011/         # Architecture topics (架构类需求承载地: design / architecture / usage)
 ├── requirement011/            # Raw requirements (普通需求 — business perspective)
 ├── requirement013/            # Detailed design (两源合流 · 对接代码)
-├── sql/                       # DDL single source (july_*.sql / july_center_<slug>.sql)
+├── sql/                       # DDL single source (july_*.sql / july_center_<center>011.sql)
 ├── {YYYY-MM-DD}.md            # Daily work log & task list
 ├── {YYYY-MM-DD}-chat.md       # Daily raw conversation log
-└── archive011/                # Historical archives (flat storage)
+└── archive011/                # Historical archives (旧中心底册 storage/message/ai + 工作日志；勿当现行入口)
 ```
 
 > **注意**：本目录树中**根级文件**按**编号升序**排（回答「有哪些」），**目录**按其职能分组列于其后；下方**阅读顺序表**按「从纪律到技术，再到业务」排 —— **两处顺序不同是有意的，不是笔误**。

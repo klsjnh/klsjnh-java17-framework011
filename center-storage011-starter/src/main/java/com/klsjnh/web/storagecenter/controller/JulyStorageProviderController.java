@@ -5,18 +5,20 @@ package com.klsjnh.web.storagecenter.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  july storage provider controller class
  *      2026.09.17  merged bucket actions into the julyStorage module
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
 import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -26,23 +28,24 @@ import com.klsjnh.common.vo.IdsVo011;
 
 import com.klsjnh.application.storagecenter.storage.JulyStorageProviderUseCase;
 import com.klsjnh.application.storagecenter.storage.StorageBucketUseCase;
+import com.klsjnh.domain.storagecenter.object.StorageProbe;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProvider;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucket;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderQuerySpec;
-import com.klsjnh.domain.storagecenter.object.StorageProbe;
 
 import com.klsjnh.web.storagecenter.converter.JulyStorageProviderConverter;
 
 import com.klsjnh.web.global.audit.AuditLog;
-import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderConnectVo011;
-import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderQueryVo011;
-import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderSaveVo011;
-import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderVo011;
 import com.klsjnh.web.storagecenter.vo.bucket.StorageBucketInsertVo011;
 import com.klsjnh.web.storagecenter.vo.bucket.StorageBucketQueryVo011;
 import com.klsjnh.web.storagecenter.vo.bucket.StorageBucketRemoveVo011;
 import com.klsjnh.web.storagecenter.vo.bucket.StorageBucketVo011;
+import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderConnectVo011;
+import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderQueryVo011;
+import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderSaveVo011;
+import com.klsjnh.web.storagecenter.vo.storage.JulyStorageProviderVo011;
 import com.klsjnh.web.storagecenter.vo.storage.StorageProbeVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,6 +56,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -105,10 +110,12 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/insert")
     @Operation(summary = "新增存储实例（storageCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyStorageProviderSaveVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyStorageProviderUseCase.insert(vo.getStorageCode(), vo.getSortOrder(),
+
+        return Response011.successId(funcName, julyStorageProviderUseCase.insert(operator.id(), vo.getStorageCode(), vo.getSortOrder(),
                 vo.getStorageName(), vo.getProvider(), vo.getBasePath(), vo.getEndpoint(), vo.getAccessKey(),
                 vo.getSecretKey(), Boolean.TRUE.equals(vo.getSecure()), vo.getDefaultBucket(),
                 vo.getPresignExpirySeconds(), vo.getRemark()));
@@ -123,10 +130,12 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/update")
     @Operation(summary = "修改存储实例（storageCode 不可变；secretKey 留空保持）")
-    public Response011<IdVo011> update(@RequestBody JulyStorageProviderSaveVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
         String funcName = "update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyStorageProviderUseCase.update(vo.getId(), vo.getStorageName(), vo.getProvider(),
+
+        return Response011.successId(funcName, julyStorageProviderUseCase.update(operator.id(), vo.getId(), vo.getStorageName(), vo.getProvider(),
                 vo.getBasePath(), vo.getEndpoint(), vo.getAccessKey(), vo.getSecretKey(),
                 Boolean.TRUE.equals(vo.getSecure()), vo.getDefaultBucket(), vo.getPresignExpirySeconds(),
                 vo.getRemark(), vo.getStatus()));
@@ -141,10 +150,12 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除存储实例（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyStorageProviderUseCase.logicDelete(idVo.getId()));
+
+        return Response011.successId(funcName, julyStorageProviderUseCase.logicDelete(operator.id(), idVo.getId()));
     }
 
     /**
@@ -156,10 +167,12 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除存储实例（批量，逐条回报）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "logic delete batch";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyStorageProviderUseCase.logicDeleteBatch(idsVo.getIds()));
+
+        return Response011.success(funcName, julyStorageProviderUseCase.logicDeleteBatch(operator.id(), idsVo.getIds()));
     }
 
     /**
@@ -170,10 +183,12 @@ public class JulyStorageProviderController {
      */
     @GetMapping("/getById")
     @Operation(summary = "主键查询（id 走 query；出参不含 Secret Key）")
-    public Response011<JulyStorageProviderVo011> getById(@RequestParam("id") String id) {
+    public Response011<JulyStorageProviderVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getById(id)));
+
+        return Response011.success(funcName, julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getById(operator.id(), id)));
     }
 
     /**
@@ -184,10 +199,12 @@ public class JulyStorageProviderController {
      */
     @GetMapping("/getByCode")
     @Operation(summary = "按 storageCode 点查（code 走 query）")
-    public Response011<JulyStorageProviderVo011> getByCode(@RequestParam("code") String code) {
+    public Response011<JulyStorageProviderVo011> getByCode(@RequestParam("code") String code, HttpServletRequest request) {
         String funcName = "get by code";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getByCode(code)));
+
+        return Response011.success(funcName, julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getByCode(operator.id(), code)));
     }
 
     /**
@@ -199,11 +216,13 @@ public class JulyStorageProviderController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（关键字 + 类型 + 状态过滤）")
     public Response011<PageResult011<JulyStorageProviderVo011>> selectListByPage(
-            @RequestBody JulyStorageProviderQueryVo011 vo) {
+            @RequestBody JulyStorageProviderQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyStorageProvider> page = julyStorageProviderUseCase.selectListByPage(pageQuery,
+        PageResult011<JulyStorageProvider> page = julyStorageProviderUseCase.selectListByPage(operator.id(), pageQuery,
                 new JulyStorageProviderQuerySpec(vo.getKeyword(), vo.getProvider(), vo.getStatus()));
 
         return Response011.success(funcName, page.withRows(julyStorageProviderConverter.toVoList(page.rows())));
@@ -221,12 +240,14 @@ public class JulyStorageProviderController {
      */
     @GetMapping("/getWithChildren")
     @Operation(summary = "主+子联查（存储实例 + 桶列表）；桶为 Incremental，无整存")
-    public Response011<java.util.Map<String, Object>> getWithChildren(@RequestParam("id") String id) {
+    public Response011<java.util.Map<String, Object>> getWithChildren(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get with children";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
-        result.put("master", julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getById(id)));
-        result.put("buckets", julyStorageProviderConverter.toBucketVoList(julyStorageProviderUseCase.buckets(id)));
+        result.put("master", julyStorageProviderConverter.toVo(julyStorageProviderUseCase.getById(operator.id(), id)));
+        result.put("buckets", julyStorageProviderConverter.toBucketVoList(julyStorageProviderUseCase.buckets(operator.id(), id)));
 
         return Response011.success(funcName, result);
     }
@@ -239,12 +260,14 @@ public class JulyStorageProviderController {
      */
     @PostMapping("/testConnection")
     @Operation(summary = "测试连接（传 id 测已保存；否则测草稿；带 bucketCount + basePath/endpoint）")
-    public Response011<StorageProbeVo011> testConnection(@RequestBody JulyStorageProviderConnectVo011 vo) {
+    public Response011<StorageProbeVo011> testConnection(@RequestBody JulyStorageProviderConnectVo011 vo, HttpServletRequest request) {
         String funcName = "test connection";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         StorageProbe probe = vo.getId() != null && !vo.getId().isBlank()
-                ? julyStorageProviderUseCase.testSaved(vo.getId())
-                : julyStorageProviderUseCase.testDraft(vo.getProvider(), vo.getBasePath(), vo.getEndpoint(), vo.getAccessKey(),
+                ? julyStorageProviderUseCase.testSaved(operator.id(), vo.getId())
+                : julyStorageProviderUseCase.testDraft(operator.id(), vo.getProvider(), vo.getBasePath(), vo.getEndpoint(), vo.getAccessKey(),
                         vo.getSecretKey(), Boolean.TRUE.equals(vo.getSecure()), vo.getDefaultBucket(),
                         vo.getPresignExpirySeconds());
 
@@ -259,10 +282,12 @@ public class JulyStorageProviderController {
      */
     @PostMapping("/selectBucketList")
     @Operation(summary = "桶列表（每行 bucketCode/bucketName/isDefault/sortOrder/status）")
-    public Response011<List<StorageBucketVo011>> selectBucketList(@RequestBody StorageBucketQueryVo011 vo) {
+    public Response011<List<StorageBucketVo011>> selectBucketList(@RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select bucket list";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyStorageProviderConverter.toBucketVoList(bucketUseCase.selectList(vo.getStorageCode())));
+
+        return Response011.success(funcName, julyStorageProviderConverter.toBucketVoList(bucketUseCase.selectList(operator.id(), vo.getStorageCode())));
     }
 
     /**
@@ -274,10 +299,12 @@ public class JulyStorageProviderController {
     @PostMapping("/selectBucketListByPage")
     @Operation(summary = "桶分页（每行 bucketCode/bucketName/isDefault/sortOrder/status）")
     public Response011<PageResult011<StorageBucketVo011>> selectBucketListByPage(
-            @RequestBody StorageBucketQueryVo011 vo) {
+            @RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select bucket list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        PageResult011<JulyStorageProviderBucket> page = bucketUseCase.selectListByPage(vo.getStorageCode(),
+
+        PageResult011<JulyStorageProviderBucket> page = bucketUseCase.selectListByPage(operator.id(), vo.getStorageCode(),
                 vo.getPageIndex(), vo.getPageSize(), vo.getKeyword());
 
         return Response011.success(funcName, page.withRows(julyStorageProviderConverter.toBucketVoList(page.rows())));
@@ -294,10 +321,12 @@ public class JulyStorageProviderController {
     @Operation(summary = "查桶（bucketCode 走 query；不存在 404）")
     public Response011<StorageBucketVo011> getBucket(
             @RequestParam(value = "storageCode", required = false) String storageCode,
-            @RequestParam("bucketCode") String bucketCode) {
+            @RequestParam("bucketCode") String bucketCode, HttpServletRequest request) {
         String funcName = "get bucket";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyStorageProviderConverter.toBucketVo(bucketUseCase.getBucket(storageCode, bucketCode)));
+
+        return Response011.success(funcName, julyStorageProviderConverter.toBucketVo(bucketUseCase.getBucket(operator.id(), storageCode, bucketCode)));
     }
 
     /**
@@ -309,10 +338,12 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER_BUCKET)
     @PostMapping("/insertBucket")
     @Operation(summary = "新建桶（bucketCode 同实例内查重；已存在为幂等）")
-    public Response011<String> insertBucket(@RequestBody StorageBucketInsertVo011 vo) {
+    public Response011<String> insertBucket(@RequestBody StorageBucketInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert bucket";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        bucketUseCase.insert(vo.getStorageCode(), vo.getBucketCode(), vo.getBucketName(),
+
+        bucketUseCase.insert(operator.id(), vo.getStorageCode(), vo.getBucketCode(), vo.getBucketName(),
                 Boolean.TRUE.equals(vo.getIsDefault()), vo.getRegion());
 
         return Response011.success(funcName, vo.getBucketCode());
@@ -327,10 +358,12 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER_BUCKET)
     @PostMapping("/removeBucket")
     @Operation(summary = "删除空桶（非空大声失败）")
-    public Response011<String> removeBucket(@RequestBody StorageBucketRemoveVo011 vo) {
+    public Response011<String> removeBucket(@RequestBody StorageBucketRemoveVo011 vo, HttpServletRequest request) {
         String funcName = "remove bucket";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        bucketUseCase.remove(vo.getStorageCode(), vo.getBucketCode());
+
+        bucketUseCase.remove(operator.id(), vo.getStorageCode(), vo.getBucketCode());
 
         return Response011.success(funcName, vo.getBucketCode());
     }
@@ -343,10 +376,12 @@ public class JulyStorageProviderController {
      */
     @PostMapping("/testBucketConnection")
     @Operation(summary = "测试桶连接（带 bucketCount + basePath/endpoint）")
-    public Response011<StorageProbeVo011> testBucketConnection(@RequestBody StorageBucketQueryVo011 vo) {
+    public Response011<StorageProbeVo011> testBucketConnection(@RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
         String funcName = "test bucket connection";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, toProbeVo(bucketUseCase.testConnection(vo.getStorageCode())));
+
+        return Response011.success(funcName, toProbeVo(bucketUseCase.testConnection(operator.id(), vo.getStorageCode())));
     }
 
     /**

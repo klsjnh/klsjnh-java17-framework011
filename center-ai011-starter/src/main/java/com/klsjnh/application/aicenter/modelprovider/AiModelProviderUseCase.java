@@ -5,26 +5,33 @@ package com.klsjnh.application.aicenter.modelprovider;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  ai model provider use case class
+ *      2026.09.26  explicit permission checks (julyAiModelProvider)
  *
  */
 
+import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 
+import com.klsjnh.application.platform011.export.ExportUseCase;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProbePort;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApiRepository;
+import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderPermissionCodes011;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderQuerySpec;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
+import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -58,17 +65,32 @@ public class AiModelProviderUseCase {
     private final AiModelProbePort probePort;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
+     * Platform export use case.
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
      * Create the use case.
      *
-     * @param providerRepository provider repository
-     * @param apiRepository      api key repository
-     * @param probePort          connectivity probe
+     * @param providerRepository  provider repository
+     * @param apiRepository       api key repository
+     * @param probePort           connectivity probe
+     * @param authorizationPort   authorization port
+     * @param exportUseCase       export use case
      */
     public AiModelProviderUseCase(AiModelProviderRepository providerRepository,
-            AiModelProviderApiRepository apiRepository, AiModelProbePort probePort) {
+            AiModelProviderApiRepository apiRepository, AiModelProbePort probePort,
+            AuthorizationPort authorizationPort, ExportUseCase exportUseCase) {
         this.providerRepository = providerRepository;
         this.apiRepository = apiRepository;
         this.probePort = probePort;
+        this.authorizationPort = authorizationPort;
+        this.exportUseCase = exportUseCase;
     }
 
     /**
@@ -83,8 +105,10 @@ public class AiModelProviderUseCase {
      * @return new provider id
      */
     @Transactional
-    public String insert(String providerCode, Integer sortOrder, String providerName, String baseUrl, String models,
-            String remark) {
+    public String insert(String operatorId, String providerCode, Integer sortOrder, String providerName, String baseUrl,
+            String models, String remark) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.INSERT);
+
         if (providerRepository.findByCode(providerCode) != null) {
             throw BusinessException.badRequest("provider code already exists: " + providerCode);
         }
@@ -108,8 +132,10 @@ public class AiModelProviderUseCase {
      * @return provider id
      */
     @Transactional
-    public String update(String id, String providerName, Integer sortOrder, String baseUrl, String models, String status,
-            String remark) {
+    public String update(String operatorId, String id, String providerName, Integer sortOrder, String baseUrl,
+            String models, String status, String remark) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.UPDATE);
+
         AiModelProvider provider = requireProvider(id);
         requireStatus(status);
         applyProviderUpdate(provider, providerName, sortOrder, baseUrl, models, status, remark);
@@ -125,7 +151,9 @@ public class AiModelProviderUseCase {
      * @return deleted provider id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.LOGIC_DELETE);
+
         AiModelProvider provider = requireProvider(id);
 
         if (apiRepository.countByMaster(provider.id().value()) > 0) {
@@ -145,7 +173,9 @@ public class AiModelProviderUseCase {
      * @param id provider id
      * @return aggregate
      */
-    public AiModelProvider getById(String id) {
+    public AiModelProvider getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.SELECT);
+
         return requireProvider(id);
     }
 
@@ -156,7 +186,10 @@ public class AiModelProviderUseCase {
      * @param spec      query condition, null means no filter
      * @return page result
      */
-    public PageResult011<AiModelProvider> selectListByPage(PageQuery011 pageQuery, AiModelProviderQuerySpec spec) {
+    public PageResult011<AiModelProvider> selectListByPage(String operatorId, PageQuery011 pageQuery,
+            AiModelProviderQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.SELECT);
+
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         AiModelProviderQuerySpec condition = spec == null ? new AiModelProviderQuerySpec(null, null) : spec;
         List<AiModelProvider> rows = providerRepository.findPage(query.offset(), query.pageSize(), condition);
@@ -177,8 +210,10 @@ public class AiModelProviderUseCase {
      * @return new api key id
      */
     @Transactional
-    public String insertApi(String providerCode, Integer sortOrder, String apiCode, String apiName, String apiKey,
-            String remark) {
+    public String insertApi(String operatorId, String providerCode, Integer sortOrder, String apiCode, String apiName,
+            String apiKey, String remark) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.INSERT);
+
         AiModelProvider provider = providerRepository.findByCode(providerCode);
 
         if (provider == null) {
@@ -209,7 +244,10 @@ public class AiModelProviderUseCase {
      * @return api key id
      */
     @Transactional
-    public String updateApi(String id, String apiName, Integer sortOrder, String apiKey, String status, String remark) {
+    public String updateApi(String operatorId, String id, String apiName, Integer sortOrder, String apiKey,
+            String status, String remark) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.UPDATE);
+
         AiModelProviderApi api = requireApi(id);
         requireStatus(status);
         applyApiUpdate(api, apiName, sortOrder, apiKey, status, remark);
@@ -225,7 +263,9 @@ public class AiModelProviderUseCase {
      * @return deleted api key id
      */
     @Transactional
-    public String logicDeleteApi(String id) {
+    public String logicDeleteApi(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.LOGIC_DELETE);
+
         if (!apiRepository.logicDeleteById(id)) {
             throw BusinessException.recordNotFound(id);
         }
@@ -240,7 +280,9 @@ public class AiModelProviderUseCase {
      * @param status       optional status filter, null for all
      * @return ordered entities, never null
      */
-    public List<AiModelProviderApi> selectApiListByProvider(String providerCode, String status) {
+    public List<AiModelProviderApi> selectApiListByProvider(String operatorId, String providerCode, String status) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.SELECT);
+
         AiModelProvider provider = requireProviderByCode(providerCode);
 
         return apiRepository.findAllByMaster(provider.id().value(), status);
@@ -303,11 +345,17 @@ public class AiModelProviderUseCase {
      * @return provider id
      */
     @Transactional
-    public String saveWhole(String id, String providerCode, Integer sortOrder, String providerName, String baseUrl,
-            String models, String status, String remark, List<AiModelProviderApiCommand> apis) {
+    public String saveWhole(String operatorId, String id, String providerCode, Integer sortOrder, String providerName,
+            String baseUrl, String models, String status, String remark, List<AiModelProviderApiCommand> apis) {
+        if (id == null || id.isBlank()) {
+            authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.INSERT);
+        } else {
+            authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.UPDATE);
+        }
+
         String providerId = id == null || id.isBlank()
-                ? insert(providerCode, sortOrder, providerName, baseUrl, models, remark)
-                : update(id, providerName, sortOrder, baseUrl, models, status, remark);
+                ? insert(operatorId, providerCode, sortOrder, providerName, baseUrl, models, remark)
+                : update(operatorId, id, providerName, sortOrder, baseUrl, models, status, remark);
 
         for (AiModelProviderApi api : apiRepository.findByMaster(providerId)) {
             apiRepository.logicDeleteById(api.id().value());
@@ -320,8 +368,8 @@ public class AiModelProviderUseCase {
         int order = 1;
 
         for (AiModelProviderApiCommand api : apis) {
-            insertApi(providerCode, api.sortOrder() == null ? order : api.sortOrder(), api.apiCode(), api.apiName(),
-                    api.apiKey(), api.remark());
+            insertApi(operatorId, providerCode, api.sortOrder() == null ? order : api.sortOrder(), api.apiCode(),
+                    api.apiName(), api.apiKey(), api.remark());
             order++;
         }
 
@@ -334,7 +382,9 @@ public class AiModelProviderUseCase {
      * @param providerCode provider code
      * @return probe result, never null
      */
-    public AiModelProbePort.ProbeResult testConnection(String providerCode) {
+    public AiModelProbePort.ProbeResult testConnection(String operatorId, String providerCode) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.TEST_CONNECTION);
+
         AiModelProvider provider = requireProviderByCode(providerCode);
         List<AiModelProviderApi> apis = apiRepository.findByMaster(provider.id().value());
 
@@ -351,11 +401,37 @@ public class AiModelProviderUseCase {
      * @param id api key id
      * @return probe result, never null
      */
-    public AiModelProbePort.ProbeResult testConnectionApi(String id) {
+    public AiModelProbePort.ProbeResult testConnectionApi(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.TEST_CONNECTION);
+
         AiModelProviderApi api = requireApi(id);
         AiModelProvider provider = requireProvider(api.pkMt());
 
         return probePort.probe(provider.baseUrl(), api.apiKey());
+    }
+
+    /**
+     * Export all provider rows (permission-gated; api keys are never exported).
+     *
+     * @param operator authenticated operator
+     * @return export result
+     */
+    public ExportResult export(Operator011 operator) {
+        requireOperator(operator);
+        authorizationPort.assertHas(operator.id(), AiModelProviderPermissionCodes011.EXPORT);
+
+        return exportUseCase.export(AuditObjectCodes011.JULY_AI_MODEL_PROVIDER, operator);
+    }
+
+    /**
+     * Require an authenticated operator.
+     *
+     * @param operator operator
+     */
+    private void requireOperator(Operator011 operator) {
+        if (operator == null || !operator.authenticated()) {
+            throw BusinessException.unauthorized("not authenticated");
+        }
     }
 
     /**

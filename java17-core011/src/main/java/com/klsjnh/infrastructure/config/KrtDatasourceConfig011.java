@@ -27,9 +27,9 @@ import java.util.List;
 
 /**
  * Datasource-side framework config bound to the {@code krt.*} keys: the
- * dynamic datasource connection list. Lives in core so both the datasource
- * seed runner (core) and the dynamic datasource kernel (data starter) can
- * consume it through the core dependency.
+ * dynamic datasource connection list. Lives in core so the dynamic datasource
+ * kernel ({@code java17-data-mybatis011-starter}) and the optional datasource
+ * center seed runner can both consume it through the core dependency.
  */
 
 @Slf4j

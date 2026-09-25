@@ -5,12 +5,13 @@ package com.klsjnh.application.storagecenter.storage;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  storage bucket use case class
+ *      2026.09.26  explicit permission checks (julyStorageProviderBucket)
  *
  */
 
@@ -23,8 +24,10 @@ import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProvider;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucket;
+import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucketPermissionCodes011;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucketRepository;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.storagecenter.object.ObjectStoragePort;
 import com.klsjnh.domain.storagecenter.object.StorageProbe;
 import com.klsjnh.domain.storagecenter.object.StorageResolverPort;
@@ -62,18 +65,15 @@ public class StorageBucketUseCase {
      */
     private final StorageResolverPort resolver;
 
-    /**
-     * Create the use case.
-     *
-     * @param providerRepository storage provider repository
-     * @param bucketRepository   storage bucket repository
-     * @param resolver           storage resolver
-     */
+    private final AuthorizationPort authorizationPort;
+
     public StorageBucketUseCase(JulyStorageProviderRepository providerRepository,
-            JulyStorageProviderBucketRepository bucketRepository, StorageResolverPort resolver) {
+            JulyStorageProviderBucketRepository bucketRepository, StorageResolverPort resolver,
+            AuthorizationPort authorizationPort) {
         this.providerRepository = providerRepository;
         this.bucketRepository = bucketRepository;
         this.resolver = resolver;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -82,7 +82,8 @@ public class StorageBucketUseCase {
      * @param storageCode storage code, blank for the default instance
      * @return ordered bucket entities, never null
      */
-    public List<JulyStorageProviderBucket> selectList(String storageCode) {
+    public List<JulyStorageProviderBucket> selectList(String operatorId, String storageCode) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderBucketPermissionCodes011.SELECT);
         return bucketRepository.findByPkMt(requireMasterId(storageCode));
     }
 
@@ -95,8 +96,10 @@ public class StorageBucketUseCase {
      * @param keyword     name keyword, nullable
      * @return page result of bucket entities
      */
-    public PageResult011<JulyStorageProviderBucket> selectListByPage(String storageCode, Integer pageIndex,
-            Integer pageSize, String keyword) {
+    public PageResult011<JulyStorageProviderBucket> selectListByPage(String operatorId, String storageCode,
+            Integer pageIndex, Integer pageSize, String keyword) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderBucketPermissionCodes011.SELECT);
+
         PageQuery011 query = new PageQuery011(pageIndex, pageSize);
         String name = StringUtil011.blankToNull(keyword);
         List<JulyStorageProviderBucket> all = bucketRepository.findByPkMt(requireMasterId(storageCode));
@@ -117,7 +120,9 @@ public class StorageBucketUseCase {
      * @param bucketCode  bucket code
      * @return bucket entity
      */
-    public JulyStorageProviderBucket getBucket(String storageCode, String bucketCode) {
+    public JulyStorageProviderBucket getBucket(String operatorId, String storageCode, String bucketCode) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderBucketPermissionCodes011.SELECT);
+
         JulyStorageProviderBucket bucket = findBucketByCode(requireMasterId(storageCode), bucketCode);
 
         if (bucket == null) {
@@ -137,7 +142,10 @@ public class StorageBucketUseCase {
      * @param region      region, ignored by local / MinIO
      */
     @Transactional
-    public void insert(String storageCode, String bucketCode, String bucketName, boolean isDefault, String region) {
+    public void insert(String operatorId, String storageCode, String bucketCode, String bucketName, boolean isDefault,
+            String region) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderBucketPermissionCodes011.INSERT);
+
         String masterId = requireMasterId(storageCode);
         JulyStorageProviderBucket bucket = newBucket(masterId, bucketCode, bucketName, isDefault);
 
@@ -166,7 +174,9 @@ public class StorageBucketUseCase {
      * @param bucketCode  bucket code
      */
     @Transactional
-    public void remove(String storageCode, String bucketCode) {
+    public void remove(String operatorId, String storageCode, String bucketCode) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderBucketPermissionCodes011.LOGIC_DELETE);
+
         JulyStorageProviderBucket bucket = findBucketByCode(requireMasterId(storageCode), bucketCode);
 
         if (bucket == null) {
@@ -190,7 +200,8 @@ public class StorageBucketUseCase {
      * @param storageCode storage code
      * @return probe result, never null
      */
-    public StorageProbe testConnection(String storageCode) {
+    public StorageProbe testConnection(String operatorId, String storageCode) {
+        authorizationPort.assertHas(operatorId, JulyStorageProviderBucketPermissionCodes011.TEST_CONNECTION);
         return adapter(storageCode).testConnection();
     }
 

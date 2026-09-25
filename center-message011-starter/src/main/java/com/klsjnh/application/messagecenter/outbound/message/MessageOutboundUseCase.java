@@ -5,12 +5,13 @@ package com.klsjnh.application.messagecenter.outbound.message;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  message center use case class
+ *      2026.09.26  explicit permission checks (julyMessageOutbound)
  *
  */
 
@@ -26,11 +27,13 @@ import com.klsjnh.domain.messagecenter.outbound.channel.JulyOutboundChannelRepos
 import com.klsjnh.domain.messagecenter.outbound.channel.MessageChannelPort;
 import com.klsjnh.domain.messagecenter.outbound.channel.MessageCommand;
 import com.klsjnh.domain.messagecenter.outbound.channel.MessageResult;
+import com.klsjnh.domain.messagecenter.outbound.message.JulyMessageOutboundPermissionCodes011;
 import com.klsjnh.domain.messagecenter.outbound.message.JulyOutboundMessage;
 import com.klsjnh.domain.messagecenter.outbound.message.JulyOutboundMessageQuerySpec;
 import com.klsjnh.domain.messagecenter.outbound.message.JulyOutboundMessageRepository;
 import com.klsjnh.domain.messagecenter.outbound.template.JulyOutboundTemplate;
 import com.klsjnh.domain.messagecenter.outbound.template.JulyOutboundTemplateRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -73,26 +76,18 @@ public class MessageOutboundUseCase {
      */
     private final MessageChannelRegistry channelRegistry;
 
-    /**
-     * JSON mapper for the channel config.
-     */
+    private final AuthorizationPort authorizationPort;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Create the use case.
-     *
-     * @param channelRepository  channel repository
-     * @param templateRepository template repository
-     * @param messageRepository  send record repository
-     * @param channelRegistry    channel port registry
-     */
     public MessageOutboundUseCase(JulyOutboundChannelRepository channelRepository,
             JulyOutboundTemplateRepository templateRepository, JulyOutboundMessageRepository messageRepository,
-            MessageChannelRegistry channelRegistry) {
+            MessageChannelRegistry channelRegistry, AuthorizationPort authorizationPort) {
         this.channelRepository = channelRepository;
         this.templateRepository = templateRepository;
         this.messageRepository = messageRepository;
         this.channelRegistry = channelRegistry;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -102,7 +97,9 @@ public class MessageOutboundUseCase {
      * @return send result, never null
      */
     @Transactional
-    public MessageSendResult send(MessageSendCommand command) {
+    public MessageSendResult send(String operatorId, MessageSendCommand command) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundPermissionCodes011.SEND);
+
         if (command == null || StringUtil011.isBlank(command.channelCode())) {
             throw BusinessException.badRequest("channel code is required");
         }
@@ -140,7 +137,9 @@ public class MessageOutboundUseCase {
      * @param spec      query condition, null means no filter
      * @return page result
      */
-    public PageResult011<JulyOutboundMessage> selectListByPage(PageQuery011 pageQuery, JulyOutboundMessageQuerySpec spec) {
+    public PageResult011<JulyOutboundMessage> selectListByPage(String operatorId, PageQuery011 pageQuery,
+            JulyOutboundMessageQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundPermissionCodes011.SELECT);
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         JulyOutboundMessageQuerySpec condition = spec == null ? new JulyOutboundMessageQuerySpec(null, null, null) : spec;
         List<JulyOutboundMessage> rows = messageRepository.findPage(query.offset(), query.pageSize(), condition);
@@ -156,7 +155,9 @@ public class MessageOutboundUseCase {
      * @return send result, never null
      */
     @Transactional
-    public MessageSendResult resend(String id) {
+    public MessageSendResult resend(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundPermissionCodes011.RESEND);
+
         JulyOutboundMessage message = messageRepository.findById(id);
 
         if (message == null) {
@@ -188,7 +189,9 @@ public class MessageOutboundUseCase {
      * @return deleted record id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundPermissionCodes011.LOGIC_DELETE);
+
         if (messageRepository.findById(id) == null) {
             throw BusinessException.recordNotFound(id);
         }
@@ -207,7 +210,8 @@ public class MessageOutboundUseCase {
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundPermissionCodes011.LOGIC_DELETE);
         List<String> normalized = ids == null ? List.of()
                 : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
 

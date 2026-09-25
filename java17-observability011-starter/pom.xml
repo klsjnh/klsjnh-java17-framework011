@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.klsjnh</groupId>
+        <artifactId>java17-framework011</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>java17-observability011-starter</artifactId>
+    <packaging>jar</packaging>
+
+    <!-- Observability baseline: actuator + Prometheus registry, traceId MDC
+         filter and framework health indicators (dynamic datasource pools,
+         storage providers, Quartz engine). -->
+    <dependencies>
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>java17-core011</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>java17-data-mybatis011-starter</artifactId>
+        </dependency>
+        <!-- optional: storage health indicator is conditional on the repository class -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>center-storage011-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- optional: Quartz health indicator is conditional on the engine class -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>java17-scheduler-quartz011-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

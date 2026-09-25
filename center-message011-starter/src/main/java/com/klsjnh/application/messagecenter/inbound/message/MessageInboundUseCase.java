@@ -5,12 +5,14 @@ package com.klsjnh.application.messagecenter.inbound.message;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  message inbound use case class
+ *      2026.09.26  explicit permission checks (julyMessageInbound)
+ *      2026.09.26  require supporting listener; allow anonymous operatorId
  *
  */
 
@@ -27,9 +29,11 @@ import com.klsjnh.domain.messagecenter.inbound.channel.InboundReply;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannel;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannelRepository;
 import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundPort;
+import com.klsjnh.domain.messagecenter.inbound.message.JulyMessageInboundPermissionCodes011;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessage;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessageQuerySpec;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessageRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -45,8 +49,9 @@ import java.util.Map;
 
 /**
  * MessageInbound use cases: the unified receive path (resolve channel, parse
- * through the inbound registry, dedupe, persist and dispatch to listeners), the
- * received record page query and the record logic delete.
+ * through the inbound registry, dedupe, require at least one supporting
+ * listener, persist and dispatch), the received record page query and the
+ * record logic delete.
  */
 
 @Service
@@ -67,34 +72,43 @@ public class MessageInboundUseCase {
      */
     private final MessageInboundRegistry registry;
 
-    /**
-     * JSON mapper for the channel config.
-     */
+    private final AuthorizationPort authorizationPort;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Create the use case.
-     *
-     * @param channelRepository inbound channel repository
-     * @param messageRepository received record repository
-     * @param registry          inbound port and listener registry
-     */
     public MessageInboundUseCase(JulyInboundChannelRepository channelRepository,
-            JulyInboundMessageRepository messageRepository, MessageInboundRegistry registry) {
+            JulyInboundMessageRepository messageRepository, MessageInboundRegistry registry,
+            AuthorizationPort authorizationPort) {
         this.channelRepository = channelRepository;
         this.messageRepository = messageRepository;
         this.registry = registry;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
      * Receive and handle one inbound message.
+     * <p>
+     * {@code operatorId} may be null for anonymous vendor HTTP callbacks (after
+     * JWT path whitelist) or in-process long-connection plugins; channel-side
+     * signature verification belongs in {@link MessageInboundPort#parse}. A
+     * non-blank operator still goes through {@code assertHas(RECEIVE)}.
+     * </p>
+     * <p>
+     * At least one {@link InboundMessageListener} must {@code supports} the
+     * channel instance code; Port-only persistence is not a completed receive.
+     * </p>
      *
+     * @param operatorId  operator id, nullable when anonymous
      * @param channelCode channel code
      * @param rawBody     raw request body, nullable
      * @return receive result, never null
      */
     @Transactional
-    public MessageInboundResult receive(String channelCode, String rawBody) {
+    public MessageInboundResult receive(String operatorId, String channelCode, String rawBody) {
+        if (!StringUtil011.isBlank(operatorId)) {
+            authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.RECEIVE);
+        }
+
         if (StringUtil011.isBlank(channelCode)) {
             throw BusinessException.badRequest("channel code is required");
         }
@@ -124,10 +138,18 @@ public class MessageInboundUseCase {
             }
         }
 
+        List<InboundMessageListener> listeners = registry.listenersFor(channel.channelCode());
+
+        if (listeners.isEmpty()) {
+            throw BusinessException.badRequest(
+                    "no inbound listener supports channel: " + channel.channelCode()
+                            + " (Port alone is not enough; register an InboundMessageListener)");
+        }
+
         JulyInboundMessage message = newMessage(channel, event);
         messageRepository.insert(message);
 
-        InboundReply reply = handle(channel.channelCode(), event, message);
+        InboundReply reply = handle(listeners, event, message);
 
         messageRepository.update(message);
 
@@ -143,8 +165,9 @@ public class MessageInboundUseCase {
      * @param spec      query condition, null means no filter
      * @return page result
      */
-    public PageResult011<JulyInboundMessage> selectListByPage(PageQuery011 pageQuery,
+    public PageResult011<JulyInboundMessage> selectListByPage(String operatorId, PageQuery011 pageQuery,
             JulyInboundMessageQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.SELECT);
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         JulyInboundMessageQuerySpec condition = spec == null ? new JulyInboundMessageQuerySpec(null, null, null) : spec;
         List<JulyInboundMessage> rows = messageRepository.findPage(query.offset(), query.pageSize(), condition);
@@ -160,7 +183,9 @@ public class MessageInboundUseCase {
      * @return deleted record id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.LOGIC_DELETE);
+
         if (messageRepository.findById(id) == null) {
             throw BusinessException.recordNotFound(id);
         }
@@ -179,7 +204,8 @@ public class MessageInboundUseCase {
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.LOGIC_DELETE);
         List<String> normalized = ids == null ? List.of()
                 : ids.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
 
@@ -198,18 +224,20 @@ public class MessageInboundUseCase {
     }
 
     /**
-     * Dispatch to the supporting listeners; the first non-null reply wins. A
-     * listener exception marks the record failed and the loop keeps going.
+     * Dispatch to the supporting listeners (already filtered); the first
+     * non-null reply wins. A listener exception marks the record failed and the
+     * loop keeps going so overall failure stays observable on the record.
      *
-     * @param channelCode channel code
-     * @param event       inbound event
-     * @param message     persisted record
+     * @param listeners supporting listeners, never empty at call site
+     * @param event     inbound event
+     * @param message   persisted record
      * @return first reply, or null when no listener replied
      */
-    private InboundReply handle(String channelCode, InboundMessage event, JulyInboundMessage message) {
+    private InboundReply handle(List<InboundMessageListener> listeners, InboundMessage event,
+            JulyInboundMessage message) {
         InboundReply reply = null;
 
-        for (InboundMessageListener listener : registry.listenersFor(channelCode)) {
+        for (InboundMessageListener listener : listeners) {
             try {
                 InboundReply candidate = listener.onMessage(event);
 

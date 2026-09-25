@@ -5,12 +5,13 @@ package com.klsjnh.application.iam.user;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july user use case class
+ *      2026.09.26  explicit permission checks (julyUser auth)
  *
  */
 
@@ -18,31 +19,36 @@ import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
 import com.klsjnh.domain.iam.auth.AuthTokenPort;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
+import com.klsjnh.domain.iam.auth.UserRoleCodesPort;
 import com.klsjnh.domain.iam.user.JulyUser;
+import com.klsjnh.domain.iam.user.JulyUserPermissionCodes011;
 import com.klsjnh.domain.iam.user.JulyUserRepository;
-import com.klsjnh.domain.iam.role.JulyRoleRepository;
-import com.klsjnh.domain.iam.role.JulyUserRoleRepository;
 import com.klsjnh.domain.iam.auth.PasswordPort;
 import com.klsjnh.domain.iam.auth.RuntimeStatusPort;
 import com.klsjnh.domain.iam.user.UserAuditPort;
+import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
+import com.klsjnh.application.platform011.backup.BackupUseCase;
+import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * JulyUser use cases: user CRUD, role assignment (toggle), password reset and
- * the two login kinds (account+password / passwordless by account, gated by
- * krt.status).
+ * JulyUser use cases: user CRUD, password reset and the two login kinds
+ * (account+password / passwordless by account, gated by krt.status). Role
+ * assignment lives in the access center starter. Management actions assert
+ * permission codes via {@link AuthorizationPort}.
  */
 
 @Service
@@ -52,11 +58,6 @@ public class JulyUserUseCase {
      * JulyUser repository.
      */
     private final JulyUserRepository repository;
-
-    /**
-     * User role junction repository.
-     */
-    private final JulyUserRoleRepository userRoleRepository;
 
     /**
      * Password hashing port.
@@ -74,9 +75,9 @@ public class JulyUserUseCase {
     private final RuntimeStatusPort runtimeStatusPort;
 
     /**
-     * JulyRole repository.
+     * Optional role-code lookup (access center; empty list without it).
      */
-    private final JulyRoleRepository roleRepository;
+    private final UserRoleCodesPort userRoleCodesPort;
 
     /**
      * User audit port.
@@ -84,30 +85,51 @@ public class JulyUserUseCase {
     private final UserAuditPort userAuditPort;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
+     * Platform export use case.
+     */
+    private final ExportUseCase exportUseCase;
+
+    /**
+     * Platform backup use case.
+     */
+    private final BackupUseCase backupUseCase;
+
+    /**
      * Create the use case.
      *
      * @param repository         july user repository
-     * @param userRoleRepository user role junction repository
      * @param passwordPort       password hashing port
      * @param authTokenPort      auth token port
      * @param runtimeStatusPort  runtime status port
+     * @param userRoleCodesPort  role codes for login payload
      * @param userAuditPort      user audit port
+     * @param authorizationPort  authorization port
+     * @param exportUseCase      export use case
+     * @param backupUseCase      backup use case
      */
-    public JulyUserUseCase(JulyUserRepository repository, JulyUserRoleRepository userRoleRepository,
-            PasswordPort passwordPort, AuthTokenPort authTokenPort, RuntimeStatusPort runtimeStatusPort,
-            JulyRoleRepository roleRepository, UserAuditPort userAuditPort) {
+    public JulyUserUseCase(JulyUserRepository repository, PasswordPort passwordPort, AuthTokenPort authTokenPort,
+            RuntimeStatusPort runtimeStatusPort, UserRoleCodesPort userRoleCodesPort, UserAuditPort userAuditPort,
+            AuthorizationPort authorizationPort, ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
         this.repository = repository;
-        this.userRoleRepository = userRoleRepository;
         this.passwordPort = passwordPort;
         this.authTokenPort = authTokenPort;
         this.runtimeStatusPort = runtimeStatusPort;
-        this.roleRepository = roleRepository;
+        this.userRoleCodesPort = userRoleCodesPort;
         this.userAuditPort = userAuditPort;
+        this.authorizationPort = authorizationPort;
+        this.exportUseCase = exportUseCase;
+        this.backupUseCase = backupUseCase;
     }
 
     /**
      * Insert a new user (password is hashed with bcrypt).
      *
+     * @param operatorId  operator user id
      * @param userAccount login account, unique
      * @param userName    user name
      * @param password    raw password
@@ -116,8 +138,10 @@ public class JulyUserUseCase {
      * @return new user id
      */
     @Transactional
-    public String insert(String userAccount, String userName, String password, String mobile, String email,
-            String avatar, String pkOrg) {
+    public String insert(String operatorId, String userAccount, String userName, String password, String mobile,
+            String email, String avatar, String pkOrg) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.INSERT);
+
         if (password == null || password.isBlank()) {
             throw BusinessException.badRequest("insert: password is required");
         }
@@ -136,13 +160,16 @@ public class JulyUserUseCase {
     /**
      * Update the profile (account and password are not part of profile updates).
      *
-     * @param id       user id
-     * @param userName user name
-     * @param mobile   mobile number
-     * @param email    email
+     * @param operatorId operator user id
+     * @param id         user id
+     * @param userName   user name
+     * @param mobile     mobile number
+     * @param email      email
      */
     @Transactional
-    public void update(String id, String userName, String mobile, String email, String avatar, String pkOrg) {
+    public void update(String operatorId, String id, String userName, String mobile, String email, String avatar,
+            String pkOrg) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.UPDATE);
         JulyUser user = require(id);
         user.updateProfile(userName, mobile, email, avatar, pkOrg);
         repository.update(user);
@@ -151,11 +178,14 @@ public class JulyUserUseCase {
     /**
      * Logic delete a single user.
      *
-     * @param id user id
+     * @param operatorId operator user id
+     * @param id         user id
      * @return deleted user id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.LOGIC_DELETE);
+
         if (!repository.logicDeleteById(id)) {
             throw BusinessException.recordNotFound(id);
         }
@@ -171,11 +201,13 @@ public class JulyUserUseCase {
      * assignment is a separate aggregate and the relation is inactive as soon
      * as the user is deleted.</p>
      *
-     * @param ids user ids
+     * @param operatorId operator user id
+     * @param ids        user ids
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.LOGIC_DELETE);
         List<String> normalized = normalizeIds(ids);
 
         if (normalized.isEmpty()) {
@@ -206,23 +238,27 @@ public class JulyUserUseCase {
     /**
      * Find by primary key.
      *
-     * @param id user id
+     * @param operatorId operator user id
+     * @param id         user id
      * @return aggregate
      */
-    public JulyUser getById(String id) {
+    public JulyUser getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.SELECT);
         return require(id);
     }
 
     /**
      * Page query with optional keyword filters.
      *
+     * @param operatorId     operator user id
      * @param pageQuery      page query, null falls back to page 1 / size 10
      * @param accountKeyword login account keyword, nullable
      * @param nameKeyword    user name keyword, nullable
      * @return page result
      */
-    public PageResult011<JulyUser> selectListByPage(PageQuery011 pageQuery, String accountKeyword,
+    public PageResult011<JulyUser> selectListByPage(String operatorId, PageQuery011 pageQuery, String accountKeyword,
             String nameKeyword) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.SELECT);
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         List<JulyUser> rows = repository.findPage(query.offset(), query.pageSize(), accountKeyword, nameKeyword);
         long total = repository.count(accountKeyword, nameKeyword);
@@ -231,41 +267,15 @@ public class JulyUserUseCase {
     }
 
     /**
-     * Assign roles to a user (toggle semantics: granted roles are revived,
-     * revoked roles are stopped).
-     *
-     * @param id      user id
-     * @param pkRoles role ids to grant
-     */
-    @Transactional
-    public void assignRoles(String id, List<String> pkRoles) {
-        require(id);
-
-        List<String> desired = pkRoles == null ? List.of()
-                : pkRoles.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
-        List<String> current = userRoleRepository.findRoleIds(id);
-
-        for (String pkRole : desired) {
-            if (!current.contains(pkRole)) {
-                userRoleRepository.assign(id, pkRole);
-            }
-        }
-
-        for (String pkRole : current) {
-            if (!desired.contains(pkRole)) {
-                userRoleRepository.unassign(id, pkRole);
-            }
-        }
-    }
-
-    /**
      * Reset a user password (admin action; the raw password is hashed).
      *
+     * @param operatorId  operator user id
      * @param id          user id
      * @param rawPassword new raw password
      */
     @Transactional
-    public void resetPassword(String id, String rawPassword) {
+    public void resetPassword(String operatorId, String id, String rawPassword) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.RESET_PASSWORD);
         JulyUser user = require(id);
         user.resetPassword(passwordPort.encode(rawPassword));
         repository.update(user);
@@ -297,7 +307,8 @@ public class JulyUserUseCase {
         repository.touchLastLoginTime(user.id().value());
         userAuditPort.record(user.id().value(), user.userAccount(), AuditType011.LOGIN, AuditObjectCodes011.JULY_USER, "login success", ip);
 
-        return new LoginResult(token, user.userAccount(), user.userName(), currentRoleCodes(user.id().value()));
+        return new LoginResult(token, user.userAccount(), user.userName(),
+                userRoleCodesPort.findRoleCodes(user.id().value()));
     }
 
     /**
@@ -330,7 +341,8 @@ public class JulyUserUseCase {
         repository.touchLastLoginTime(user.id().value());
         userAuditPort.record(user.id().value(), user.userAccount(), AuditType011.LOGIN, AuditObjectCodes011.JULY_USER, "passwordless login", ip);
 
-        return new LoginResult(token, user.userAccount(), user.userName(), currentRoleCodes(user.id().value()));
+        return new LoginResult(token, user.userAccount(), user.userName(),
+                userRoleCodesPort.findRoleCodes(user.id().value()));
     }
 
     /**
@@ -344,6 +356,8 @@ public class JulyUserUseCase {
      */
     @Transactional
     public void changePassword(String operatorId, String oldPassword, String newPassword) {
+        authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.CHANGE_PASSWORD);
+
         if (operatorId == null || operatorId.isBlank()) {
             throw BusinessException.unauthorized("not authenticated");
         }
@@ -362,6 +376,31 @@ public class JulyUserUseCase {
         repository.update(user);
         userAuditPort.record(operatorId, user.userAccount(), AuditType011.CHANGE_PASSWORD, AuditObjectCodes011.JULY_USER, "password changed",
                 null);
+    }
+
+    /**
+     * Export all user rows (permission-gated; payload is export result only).
+     *
+     * @param operator authenticated operator
+     * @return export result
+     */
+    public ExportResult export(Operator011 operator) {
+        requireOperator(operator);
+        authorizationPort.assertHas(operator.id(), JulyUserPermissionCodes011.EXPORT);
+        return exportUseCase.export(AuditObjectCodes011.JULY_USER, operator);
+    }
+
+    /**
+     * Backup all user rows to object storage (permission-gated). Returns the
+     * storage object key only — never the user row payload.
+     *
+     * @param operator authenticated operator
+     * @return storage object key
+     */
+    public String backup(Operator011 operator) {
+        requireOperator(operator);
+        authorizationPort.assertHas(operator.id(), JulyUserPermissionCodes011.BACKUP);
+        return backupUseCase.backup(AuditObjectCodes011.JULY_USER, operator);
     }
 
     /**
@@ -392,13 +431,14 @@ public class JulyUserUseCase {
     }
 
     /**
-     * Role codes currently granted to a user.
+     * Require an authenticated operator.
      *
-     * @param userId user id
-     * @return role code list
+     * @param operator operator
      */
-    private List<String> currentRoleCodes(String userId) {
-        return roleRepository.findCodesByIds(userRoleRepository.findRoleIds(userId));
+    private void requireOperator(Operator011 operator) {
+        if (operator == null || !operator.authenticated()) {
+            throw BusinessException.unauthorized("not authenticated");
+        }
     }
 
     /**

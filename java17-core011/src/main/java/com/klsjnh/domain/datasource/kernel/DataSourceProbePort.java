@@ -1,7 +1,5 @@
 package com.klsjnh.domain.datasource.kernel;
 
-
-import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
 /*                DataSourceProbePort interface
  *
  *      @author     xiangrkrs@163.com

@@ -5,12 +5,13 @@ package com.klsjnh.application.messagecenter.outbound.template;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  july message template use case class
+ *      2026.09.26  explicit permission checks (julyMessageOutboundTemplate)
  *
  */
 
@@ -21,8 +22,10 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
 import com.klsjnh.domain.messagecenter.outbound.template.JulyOutboundTemplate;
+import com.klsjnh.domain.messagecenter.outbound.template.JulyMessageOutboundTemplatePermissionCodes011;
 import com.klsjnh.domain.messagecenter.outbound.template.JulyOutboundTemplateQuerySpec;
 import com.klsjnh.domain.messagecenter.outbound.template.JulyOutboundTemplateRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -43,13 +46,12 @@ public class JulyOutboundTemplateUseCase {
      */
     private final JulyOutboundTemplateRepository repository;
 
-    /**
-     * Create the use case.
-     *
-     * @param repository template repository
-     */
-    public JulyOutboundTemplateUseCase(JulyOutboundTemplateRepository repository) {
+    private final AuthorizationPort authorizationPort;
+
+    public JulyOutboundTemplateUseCase(JulyOutboundTemplateRepository repository,
+            AuthorizationPort authorizationPort) {
         this.repository = repository;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -65,8 +67,9 @@ public class JulyOutboundTemplateUseCase {
      * @return new template id
      */
     @Transactional
-    public String insert(String templateCode, Integer sortOrder, String templateName, String channelCode, String title,
-            String content, String remark) {
+    public String insert(String operatorId, String templateCode, Integer sortOrder, String templateName,
+            String channelCode, String title, String content, String remark) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundTemplatePermissionCodes011.INSERT);
         if (repository.findByCode(templateCode) != null) {
             throw BusinessException.badRequest("template code already exists: " + templateCode);
         }
@@ -92,8 +95,9 @@ public class JulyOutboundTemplateUseCase {
      * @return template id
      */
     @Transactional
-    public String update(String id, String templateName, String channelCode, String title, String content,
-            Integer sortOrder, String status, String remark) {
+    public String update(String operatorId, String id, String templateName, String channelCode, String title,
+            String content, Integer sortOrder, String status, String remark) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundTemplatePermissionCodes011.UPDATE);
         JulyOutboundTemplate template = require(id);
         requireStatus(status);
 
@@ -115,7 +119,8 @@ public class JulyOutboundTemplateUseCase {
      * @return deleted template id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundTemplatePermissionCodes011.LOGIC_DELETE);
         require(id);
 
         if (!repository.logicDeleteById(id)) {
@@ -132,7 +137,8 @@ public class JulyOutboundTemplateUseCase {
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundTemplatePermissionCodes011.LOGIC_DELETE);
         List<String> normalized = normalize(ids);
 
         if (normalized.isEmpty()) {
@@ -155,7 +161,8 @@ public class JulyOutboundTemplateUseCase {
      * @param id template id
      * @return aggregate
      */
-    public JulyOutboundTemplate getById(String id) {
+    public JulyOutboundTemplate getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundTemplatePermissionCodes011.SELECT);
         return require(id);
     }
 
@@ -166,8 +173,9 @@ public class JulyOutboundTemplateUseCase {
      * @param spec      query condition, null means no filter
      * @return page result
      */
-    public PageResult011<JulyOutboundTemplate> selectListByPage(PageQuery011 pageQuery,
+    public PageResult011<JulyOutboundTemplate> selectListByPage(String operatorId, PageQuery011 pageQuery,
             JulyOutboundTemplateQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundTemplatePermissionCodes011.SELECT);
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         JulyOutboundTemplateQuerySpec condition = spec == null ? new JulyOutboundTemplateQuerySpec(null, null, null) : spec;
         List<JulyOutboundTemplate> rows = repository.findPage(query.offset(), query.pageSize(), condition);

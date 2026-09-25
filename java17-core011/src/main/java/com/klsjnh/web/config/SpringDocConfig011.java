@@ -43,10 +43,10 @@ import java.util.List;
  * third-party business systems that embed the framework (their own group,
  * excluding the /klsjnh/** framework paths).
  * <p>
- * Groups: system011 / iam / storagecenter / datasource / aicenter
- * (the low-code group also covers {@code /klsjnh/open/**}) / app (optional,
- * yml driven). Document tags are prefixed with the group's 011 domain name.
- * Doc meta (title / version / description) is driven by {@code krt.springdoc}.
+ * Path-based groups (system011 / iam / storagecenter / datasource / aicenter /
+ * messagecenter / optional app) stay in core so center starters only add
+ * controllers — empty groups are harmless when a starter is absent. Doc meta
+ * is driven by {@code krt.springdoc}.
  * </p>
  */
 
@@ -84,7 +84,9 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * System management group (config / scheduler / dictionary only).
+     * System management group (config / dictionary join when the platform
+     * starter is on the classpath; scheduler joins when the quartz starter
+     * is present).
      *
      * @return grouped open api
      */

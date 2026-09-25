@@ -14,8 +14,6 @@ package com.klsjnh.domain.storagecenter.object;
  *
  */
 
-import com.klsjnh.domain.storagecenter.object.StorageConnectionConfig;
-
 import java.util.List;
 
 /**

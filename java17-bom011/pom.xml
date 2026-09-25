@@ -64,7 +64,12 @@
             </dependency>
             <dependency>
                 <groupId>com.klsjnh</groupId>
-                <artifactId>java17-data-mybatis-starter011</artifactId>
+                <artifactId>java17-data-mybatis011-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.klsjnh</groupId>
+                <artifactId>center-datasource011-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -74,7 +79,17 @@
             </dependency>
             <dependency>
                 <groupId>com.klsjnh</groupId>
-                <artifactId>java17-scheduler-quartz-starter011</artifactId>
+                <artifactId>center-access011-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.klsjnh</groupId>
+                <artifactId>center-platform011-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.klsjnh</groupId>
+                <artifactId>java17-scheduler-quartz011-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -89,20 +104,10 @@
             </dependency>
             <dependency>
                 <groupId>com.klsjnh</groupId>
-                <artifactId>java17-observability-starter011</artifactId>
+                <artifactId>java17-observability011-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.klsjnh</groupId>
-                <artifactId>java17-test011</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.klsjnh</groupId>
-                <artifactId>java17-reference-app011</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
+            
             <!-- persistence -->
             <dependency>
                 <groupId>com.baomidou</groupId>

@@ -16,9 +16,11 @@ package com.klsjnh.domain.messagecenter.inbound.channel;
 
 /**
  * SPI: a consumer listener for inbound messages. Implementations declare the
- * channels they support and are collected by the inbound registry. A listener
- * may return a synchronous {@link InboundReply} (the first non-null reply wins)
- * or null when no reply is required.
+ * channels they support and are collected by the inbound registry. A receive
+ * fails when no registered listener {@code supports} the channel instance code
+ * (Port-only persistence is not enough). A listener may return a synchronous
+ * {@link InboundReply} (the first non-null reply wins) or null when no reply is
+ * required.
  */
 
 public interface InboundMessageListener {

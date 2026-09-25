@@ -1,8 +1,5 @@
 package com.klsjnh.domain.storagecenter.object;
 
-
-import com.klsjnh.domain.storagecenter.object.StorageConnectionConfig;
-
 /*                ObjectStorageFactoryPort interface
  *
  *      @author     xiangrkrs@163.com

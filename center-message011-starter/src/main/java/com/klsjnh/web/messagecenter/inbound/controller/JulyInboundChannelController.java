@@ -5,17 +5,19 @@ package com.klsjnh.web.messagecenter.inbound.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  july message channel controller class
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
 import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -34,6 +36,7 @@ import com.klsjnh.web.messagecenter.inbound.vo.channel.JulyInboundChannelInsertV
 import com.klsjnh.web.messagecenter.inbound.vo.channel.JulyInboundChannelQueryVo011;
 import com.klsjnh.web.messagecenter.inbound.vo.channel.JulyInboundChannelUpdateVo011;
 import com.klsjnh.web.messagecenter.inbound.vo.channel.JulyInboundChannelVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,6 +47,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * JulyInboundChannel HTTP adapter: channel configuration CRUD.
@@ -85,10 +90,12 @@ public class JulyInboundChannelController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_CHANNEL)
     @PostMapping("/insert")
     @Operation(summary = "新增渠道（channelCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyInboundChannelInsertVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyInboundChannelInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyInboundChannelUseCase.insert(vo.getChannelCode(), vo.getSortOrder(),
+
+        return Response011.successId(funcName, julyInboundChannelUseCase.insert(operator.id(), vo.getChannelCode(), vo.getSortOrder(),
                 vo.getChannelName(), vo.getProviderType(), vo.getConfig(), vo.getRemark()));
     }
 
@@ -101,10 +108,12 @@ public class JulyInboundChannelController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_CHANNEL)
     @PostMapping("/update")
     @Operation(summary = "修改渠道（channelCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyInboundChannelUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulyInboundChannelUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyInboundChannelUseCase.update(vo.getId(), vo.getChannelName(),
+
+        return Response011.successId(funcName, julyInboundChannelUseCase.update(operator.id(), vo.getId(), vo.getChannelName(),
                 vo.getProviderType(), vo.getConfig(), vo.getSortOrder(), vo.getStatus(), vo.getRemark()));
     }
 
@@ -117,10 +126,12 @@ public class JulyInboundChannelController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_CHANNEL)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除渠道（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyInboundChannelUseCase.logicDelete(idVo.getId()));
+
+        return Response011.successId(funcName, julyInboundChannelUseCase.logicDelete(operator.id(), idVo.getId()));
     }
 
     /**
@@ -132,10 +143,12 @@ public class JulyInboundChannelController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_CHANNEL)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除渠道（批量，全有或全无）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "batch logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyInboundChannelUseCase.logicDeleteBatch(idsVo.getIds()));
+
+        return Response011.success(funcName, julyInboundChannelUseCase.logicDeleteBatch(operator.id(), idsVo.getIds()));
     }
 
     /**
@@ -146,10 +159,12 @@ public class JulyInboundChannelController {
      */
     @GetMapping("/getById")
     @Operation(summary = "主键查询（id 走 query）")
-    public Response011<JulyInboundChannelVo011> getById(@RequestParam("id") String id) {
+    public Response011<JulyInboundChannelVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyInboundChannelConverter.toVo(julyInboundChannelUseCase.getById(id)));
+
+        return Response011.success(funcName, julyInboundChannelConverter.toVo(julyInboundChannelUseCase.getById(operator.id(), id)));
     }
 
     /**
@@ -161,11 +176,13 @@ public class JulyInboundChannelController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称/提供商模糊 + 状态过滤）")
     public Response011<PageResult011<JulyInboundChannelVo011>> selectListByPage(
-            @RequestBody JulyInboundChannelQueryVo011 vo) {
+            @RequestBody JulyInboundChannelQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyInboundChannel> page = julyInboundChannelUseCase.selectListByPage(pageQuery,
+        PageResult011<JulyInboundChannel> page = julyInboundChannelUseCase.selectListByPage(operator.id(), pageQuery,
                 new JulyInboundChannelQuerySpec(vo.getKeyword(), vo.getStatus()));
 
         return Response011.success(funcName, page.withRows(julyInboundChannelConverter.toVoList(page.rows())));

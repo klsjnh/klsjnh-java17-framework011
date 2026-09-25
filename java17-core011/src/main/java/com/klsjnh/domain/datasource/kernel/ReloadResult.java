@@ -1,7 +1,5 @@
 package com.klsjnh.domain.datasource.kernel;
 
-
-import com.klsjnh.domain.datasource.kernel.DynamicDataSourceRegistryPort;
 /*                ReloadResult record
  *
  *      @author     xiangrkrs@163.com

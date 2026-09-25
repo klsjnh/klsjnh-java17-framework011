@@ -5,16 +5,18 @@ package com.klsjnh.web.aicenter.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.21
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.21  ai domain controller
  *      2026.09.21  merged master-sub module: master / whole / child saves + render
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -40,6 +42,7 @@ import com.klsjnh.web.aicenter.vo.aidomainprompt.JulyAiDomainPromptRenderVo011;
 import com.klsjnh.web.aicenter.vo.aidomainprompt.JulyAiDomainPromptSaveVo011;
 import com.klsjnh.web.aicenter.vo.aidomainprompt.JulyAiDomainPromptUpdateVo011;
 import com.klsjnh.web.aicenter.vo.aidomainprompt.JulyAiDomainPromptVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,6 +53,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,10 +97,12 @@ public class AiDomainController {
      */
     @PostMapping("/insert")
     @Operation(summary = "新增业务域（主表；domainCode 不可变）")
-    public Response011<IdVo011> insert(@RequestBody JulyAiDomainInsertVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyAiDomainInsertVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, useCase.insert(vo.getDomainCode(), vo.getDomainName(),
+
+        return Response011.successId(funcName, useCase.insert(operator.id(), vo.getDomainCode(), vo.getDomainName(),
                 vo.getParentId(), vo.getSortOrder(), vo.getRemark()));
     }
 
@@ -107,10 +114,12 @@ public class AiDomainController {
      */
     @PostMapping("/update")
     @Operation(summary = "修改业务域（主表；domainCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyAiDomainUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulyAiDomainUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, useCase.update(vo.getId(), vo.getDomainName(), vo.getParentId(),
+
+        return Response011.successId(funcName, useCase.update(operator.id(), vo.getId(), vo.getDomainName(), vo.getParentId(),
                 vo.getSortOrder(), vo.getRemark(), vo.getStatus()));
     }
 
@@ -122,10 +131,12 @@ public class AiDomainController {
      */
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除业务域（有子域或提示词拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "ai domain logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, useCase.logicDelete(idVo.getId()));
+
+        return Response011.successId(funcName, useCase.logicDelete(operator.id(), idVo.getId()));
     }
 
     /**
@@ -136,10 +147,12 @@ public class AiDomainController {
      */
     @GetMapping("/getById")
     @Operation(summary = "按主键点查业务域")
-    public Response011<JulyAiDomainVo011> getById(@RequestParam("id") String id) {
+    public Response011<JulyAiDomainVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "ai domain get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, toVo(useCase.getById(id)));
+
+        return Response011.success(funcName, toVo(useCase.getById(operator.id(), id)));
     }
 
     /**
@@ -150,10 +163,12 @@ public class AiDomainController {
      */
     @GetMapping("/getByCode")
     @Operation(summary = "按域编码点查")
-    public Response011<JulyAiDomainVo011> getByCode(@RequestParam("domainCode") String domainCode) {
+    public Response011<JulyAiDomainVo011> getByCode(@RequestParam("domainCode") String domainCode, HttpServletRequest request) {
         String funcName = "ai domain get by code";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, toVo(useCase.getByCode(domainCode)));
+
+        return Response011.success(funcName, toVo(useCase.getByCode(operator.id(), domainCode)));
     }
 
     /**
@@ -164,12 +179,14 @@ public class AiDomainController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "业务域分页（keyword/parentId/status）")
-    public Response011<PageResult011<JulyAiDomainVo011>> selectListByPage(@RequestBody JulyAiDomainQueryVo011 vo) {
+    public Response011<PageResult011<JulyAiDomainVo011>> selectListByPage(@RequestBody JulyAiDomainQueryVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PageQuery011 query = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
         JulyAiDomainQuerySpec spec = new JulyAiDomainQuerySpec(vo.getKeyword(), vo.getParentId(), vo.getStatus());
-        PageResult011<JulyAiDomain> page = useCase.selectListByPage(query, spec);
+        PageResult011<JulyAiDomain> page = useCase.selectListByPage(operator.id(), query, spec);
 
         List<JulyAiDomainVo011> rows = page.rows().stream().map(this::toVo).toList();
 
@@ -183,12 +200,13 @@ public class AiDomainController {
      */
     @GetMapping("/selectTree")
     @Operation(summary = "业务域树（启用，按排序）")
-    public Response011<List<JulyAiDomainVo011>> selectTree() {
+    public Response011<List<JulyAiDomainVo011>> selectTree(HttpServletRequest request) {
         String funcName = "ai domain select tree";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
         List<JulyAiDomainVo011> rows = new ArrayList<>();
 
-        for (JulyAiDomain domain : useCase.selectTree()) {
+        for (JulyAiDomain domain : useCase.selectTree(operator.id())) {
             rows.add(toVo(domain));
         }
 
@@ -203,8 +221,10 @@ public class AiDomainController {
      */
     @PostMapping("/saveWhole")
     @Operation(summary = "整存业务域 + 提示词（主+子，一个事务；子表替换）")
-    public Response011<IdVo011> saveWhole(@RequestBody JulyAiDomainSaveWholeVo011 vo) {
+    public Response011<IdVo011> saveWhole(@RequestBody JulyAiDomainSaveWholeVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain save whole";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         List<PromptSaveCommand> prompts = new ArrayList<>();
 
@@ -214,7 +234,7 @@ public class AiDomainController {
                     row.getSortOrder(), row.getRemark(), row.getStatus()));
         }
 
-        return Response011.successId(funcName, useCase.saveWhole(vo.getId(), vo.getDomainCode(), vo.getDomainName(),
+        return Response011.successId(funcName, useCase.saveWhole(operator.id(), vo.getId(), vo.getDomainCode(), vo.getDomainName(),
                 vo.getParentId(), vo.getSortOrder(), vo.getRemark(), vo.getStatus(), prompts));
     }
 
@@ -226,10 +246,12 @@ public class AiDomainController {
      */
     @GetMapping("/getWithChildren")
     @Operation(summary = "主+子联查（业务域 + 提示词列表）")
-    public Response011<JulyAiDomainBundleVo011> getWithChildren(@RequestParam("id") String id) {
+    public Response011<JulyAiDomainBundleVo011> getWithChildren(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "ai domain get with children";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        JulyAiDomainBundle bundle = useCase.getWithChildren(id);
+
+        JulyAiDomainBundle bundle = useCase.getWithChildren(operator.id(), id);
         JulyAiDomainBundleVo011 vo = new JulyAiDomainBundleVo011();
         vo.setDomain(toVo(bundle.domain()));
 
@@ -248,14 +270,16 @@ public class AiDomainController {
      */
     @PostMapping("/insertDetail")
     @Operation(summary = "新增提示词（子表；归属业务域）")
-    public Response011<IdVo011> insertDetail(@RequestBody JulyAiDomainPromptInsertVo011 vo) {
+    public Response011<IdVo011> insertDetail(@RequestBody JulyAiDomainPromptInsertVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PromptSaveCommand command = new PromptSaveCommand(vo.getPromptCode(), vo.getPromptName(), vo.getScene(),
                 vo.getContentMode(), vo.getContent(), vo.getStorageCode(), vo.getBucket(), vo.getVariables(),
                 vo.getSortOrder(), vo.getRemark(), vo.getStatus());
 
-        return Response011.successId(funcName, useCase.insertDetail(vo.getPkMt(), command));
+        return Response011.successId(funcName, useCase.insertDetail(operator.id(), vo.getPkMt(), command));
     }
 
     /**
@@ -266,14 +290,16 @@ public class AiDomainController {
      */
     @PostMapping("/updateDetail")
     @Operation(summary = "修改提示词（子表；promptCode 不可变）")
-    public Response011<IdVo011> updateDetail(@RequestBody JulyAiDomainPromptUpdateVo011 vo) {
+    public Response011<IdVo011> updateDetail(@RequestBody JulyAiDomainPromptUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt update";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PromptSaveCommand command = new PromptSaveCommand(null, vo.getPromptName(), vo.getScene(),
                 vo.getContentMode(), vo.getContent(), vo.getStorageCode(), vo.getBucket(), vo.getVariables(),
                 vo.getSortOrder(), vo.getRemark(), vo.getStatus());
 
-        return Response011.successId(funcName, useCase.updateDetail(vo.getId(), command));
+        return Response011.successId(funcName, useCase.updateDetail(operator.id(), vo.getId(), command));
     }
 
     /**
@@ -284,10 +310,12 @@ public class AiDomainController {
      */
     @PostMapping("/logicDeleteDetail")
     @Operation(summary = "逻辑删除提示词（子表）")
-    public Response011<IdVo011> logicDeleteDetail(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDeleteDetail(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "ai domain prompt logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, useCase.logicDeleteDetail(idVo.getId()));
+
+        return Response011.successId(funcName, useCase.logicDeleteDetail(operator.id(), idVo.getId()));
     }
 
     /**
@@ -298,10 +326,12 @@ public class AiDomainController {
      */
     @GetMapping("/getDetailById")
     @Operation(summary = "按主键点查提示词")
-    public Response011<JulyAiDomainPromptVo011> getDetailById(@RequestParam("id") String id) {
+    public Response011<JulyAiDomainPromptVo011> getDetailById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "ai domain prompt get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, toVo(useCase.getDetailById(id)));
+
+        return Response011.success(funcName, toVo(useCase.getDetailById(operator.id(), id)));
     }
 
     /**
@@ -312,10 +342,12 @@ public class AiDomainController {
      */
     @GetMapping("/getDetailByCode")
     @Operation(summary = "按提示词编码点查")
-    public Response011<JulyAiDomainPromptVo011> getDetailByCode(@RequestParam("promptCode") String promptCode) {
+    public Response011<JulyAiDomainPromptVo011> getDetailByCode(@RequestParam("promptCode") String promptCode, HttpServletRequest request) {
         String funcName = "ai domain prompt get by code";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, toVo(useCase.getDetailByCode(promptCode)));
+
+        return Response011.success(funcName, toVo(useCase.getDetailByCode(operator.id(), promptCode)));
     }
 
     /**
@@ -327,13 +359,15 @@ public class AiDomainController {
     @PostMapping("/selectDetailListByPage")
     @Operation(summary = "提示词分页（keyword/pkMt/scene/status）")
     public Response011<PageResult011<JulyAiDomainPromptVo011>> selectDetailListByPage(
-            @RequestBody JulyAiDomainPromptQueryVo011 vo) {
+            @RequestBody JulyAiDomainPromptQueryVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PageQuery011 query = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
         JulyAiDomainPromptQuerySpec spec = new JulyAiDomainPromptQuerySpec(vo.getKeyword(), vo.getPkMt(), vo.getScene(),
                 vo.getStatus());
-        PageResult011<JulyAiDomainPrompt> page = useCase.selectDetailListByPage(query, spec);
+        PageResult011<JulyAiDomainPrompt> page = useCase.selectDetailListByPage(operator.id(), query, spec);
 
         List<JulyAiDomainPromptVo011> rows = page.rows().stream().map(this::toVo).toList();
 
@@ -348,10 +382,12 @@ public class AiDomainController {
      */
     @GetMapping("/getContent")
     @Operation(summary = "读取提示词正文（inline / 对象存储）")
-    public Response011<String> getContent(@RequestParam("id") String id) {
+    public Response011<String> getContent(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "ai domain prompt get content";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, useCase.getContent(id));
+
+        return Response011.success(funcName, useCase.getContent(operator.id(), id));
     }
 
     /**
@@ -362,10 +398,12 @@ public class AiDomainController {
      */
     @PostMapping("/render")
     @Operation(summary = "渲染提示词（${var} 替换；公共件给 AI 开发）")
-    public Response011<String> render(@RequestBody JulyAiDomainPromptRenderVo011 vo) {
+    public Response011<String> render(@RequestBody JulyAiDomainPromptRenderVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt render";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, useCase.render(vo.getPromptCode(), vo.getParams()));
+
+        return Response011.success(funcName, useCase.render(operator.id(), vo.getPromptCode(), vo.getParams()));
     }
 
     /**

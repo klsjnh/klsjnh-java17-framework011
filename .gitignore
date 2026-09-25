@@ -26,9 +26,13 @@ desktop.ini
 
 # ---- logs & temp ----
 *.log
+*.log.err
+*.err.log
 logs/
+target-logs/
 tmp/
 *.tmp
+.tmp-*/
 
 # ---- runtime pid / tool state ----
 *.pid

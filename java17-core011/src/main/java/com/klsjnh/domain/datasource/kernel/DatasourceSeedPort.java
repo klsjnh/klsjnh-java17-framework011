@@ -14,9 +14,6 @@ package com.klsjnh.domain.datasource.kernel;
  *
  */
 
-import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
-import com.klsjnh.domain.datasource.kernel.SeedResult011;
-
 import java.util.List;
 
 /**

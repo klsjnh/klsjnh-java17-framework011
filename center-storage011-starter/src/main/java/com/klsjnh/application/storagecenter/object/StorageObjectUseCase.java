@@ -5,12 +5,13 @@ package com.klsjnh.application.storagecenter.object;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  storage object use case class
+ *      2026.09.26  explicit permission checks (julyStorageObject)
  *
  */
 
@@ -19,10 +20,12 @@ import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 
 import com.klsjnh.domain.storagecenter.storage.EditableTextPolicy;
+import com.klsjnh.domain.storagecenter.object.JulyStorageObjectPermissionCodes011;
 import com.klsjnh.domain.storagecenter.object.ObjectListing;
 import com.klsjnh.domain.storagecenter.object.ObjectStat;
 import com.klsjnh.domain.storagecenter.object.ObjectStoragePort;
 import com.klsjnh.domain.storagecenter.object.StorageResolverPort;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 
 import org.springframework.stereotype.Service;
 
@@ -43,13 +46,11 @@ public class StorageObjectUseCase {
      */
     private final StorageResolverPort resolver;
 
-    /**
-     * Create the use case.
-     *
-     * @param resolver storage resolver
-     */
-    public StorageObjectUseCase(StorageResolverPort resolver) {
+    private final AuthorizationPort authorizationPort;
+
+    public StorageObjectUseCase(StorageResolverPort resolver, AuthorizationPort authorizationPort) {
         this.resolver = resolver;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -60,7 +61,8 @@ public class StorageObjectUseCase {
      * @param prefix      key prefix, nullable
      * @return object keys, never null
      */
-    public List<String> selectList(String storageCode, String bucketName, String prefix) {
+    public List<String> selectList(String operatorId, String storageCode, String bucketName, String prefix) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
         return adapter(storageCode).list(bucketName, prefix);
     }
 
@@ -75,8 +77,10 @@ public class StorageObjectUseCase {
      * @param pageSize    page size
      * @return page result of object metadata
      */
-    public PageResult011<ObjectStat> selectListByPage(String storageCode, String bucketName, String prefix,
-            Integer pageIndex, Integer pageSize) {
+    public PageResult011<ObjectStat> selectListByPage(String operatorId, String storageCode, String bucketName,
+            String prefix, Integer pageIndex, Integer pageSize) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
+
         PageQuery011 query = new PageQuery011(pageIndex, pageSize);
         List<ObjectStat> all = adapter(storageCode).listStat(bucketName, prefix);
 
@@ -94,7 +98,9 @@ public class StorageObjectUseCase {
      * @param objectName  object name
      * @return stat, never null
      */
-    public ObjectStat stat(String storageCode, String bucketName, String objectName) {
+    public ObjectStat stat(String operatorId, String storageCode, String bucketName, String objectName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
+
         ObjectStat stat = adapter(storageCode).stat(bucketName, objectName);
 
         if (stat == null) {
@@ -114,7 +120,10 @@ public class StorageObjectUseCase {
      * @param contentType mime type, nullable
      * @return the final stored key
      */
-    public String upload(String storageCode, String bucketName, String objectName, byte[] content, String contentType) {
+    public String upload(String operatorId, String storageCode, String bucketName, String objectName, byte[] content,
+            String contentType) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.UPLOAD);
+
         if (content == null) {
             throw BusinessException.badRequest("file content is required");
         }
@@ -149,7 +158,8 @@ public class StorageObjectUseCase {
      * @param bucketName  bucket name
      * @param objectName  object name
      */
-    public void remove(String storageCode, String bucketName, String objectName) {
+    public void remove(String operatorId, String storageCode, String bucketName, String objectName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.REMOVE);
         adapter(storageCode).delete(bucketName, objectName);
     }
 
@@ -160,7 +170,9 @@ public class StorageObjectUseCase {
      * @param bucketName  bucket name
      * @param objectNames object names
      */
-    public void batchRemove(String storageCode, String bucketName, List<String> objectNames) {
+    public void batchRemove(String operatorId, String storageCode, String bucketName, List<String> objectNames) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.REMOVE);
+
         ObjectStoragePort adapter = adapter(storageCode);
 
         for (String name : objectNames == null ? List.<String>of() : objectNames) {
@@ -188,7 +200,9 @@ public class StorageObjectUseCase {
      * @param objectName  object name
      * @return text content
      */
-    public StorageTextContent readText(String storageCode, String bucketName, String objectName) {
+    public StorageTextContent readText(String operatorId, String storageCode, String bucketName, String objectName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
+
         ObjectStoragePort adapter = adapter(storageCode);
         ObjectStat stat = adapter.stat(bucketName, objectName);
 
@@ -222,7 +236,9 @@ public class StorageObjectUseCase {
      * @param content     text content
      * @return the stored key
      */
-    public String saveText(String storageCode, String bucketName, String objectName, String content) {
+    public String saveText(String operatorId, String storageCode, String bucketName, String objectName, String content) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SAVE_TEXT);
+
         if (objectName == null || objectName.isBlank()) {
             throw BusinessException.badRequest("objectName is required");
         }
@@ -272,8 +288,10 @@ public class StorageObjectUseCase {
      * @param contentType mime type, nullable
      * @return the final stored key
      */
-    public String uploadStream(String storageCode, String bucketName, String objectName, InputStream content, long size,
-            String contentType) {
+    public String uploadStream(String operatorId, String storageCode, String bucketName, String objectName,
+            InputStream content, long size, String contentType) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.UPLOAD);
+
         if (content == null) {
             throw BusinessException.badRequest("file content is required");
         }
@@ -293,8 +311,9 @@ public class StorageObjectUseCase {
      * @param targetName   target object
      * @return the target key
      */
-    public String copy(String storageCode, String bucketName, String objectName, String targetBucket,
+    public String copy(String operatorId, String storageCode, String bucketName, String objectName, String targetBucket,
             String targetName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.COPY);
         return adapter(storageCode).copy(bucketName, objectName, targetBucket, targetName);
     }
 
@@ -307,7 +326,9 @@ public class StorageObjectUseCase {
      * @param targetName  target object
      * @return the target key
      */
-    public String rename(String storageCode, String bucketName, String objectName, String targetName) {
+    public String rename(String operatorId, String storageCode, String bucketName, String objectName,
+            String targetName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.RENAME);
         return adapter(storageCode).rename(bucketName, objectName, targetName);
     }
 
@@ -322,8 +343,9 @@ public class StorageObjectUseCase {
      * @param marker      continue-after key, nullable
      * @return one page of objects / prefixes
      */
-    public ObjectListing selectObjectPage(String storageCode, String bucketName, String prefix, String delimiter,
-            int limit, String marker) {
+    public ObjectListing selectObjectPage(String operatorId, String storageCode, String bucketName, String prefix,
+            String delimiter, int limit, String marker) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
         return adapter(storageCode).listPage(bucketName, prefix, delimiter, limit, marker);
     }
 

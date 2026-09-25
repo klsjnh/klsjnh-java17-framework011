@@ -5,17 +5,19 @@ package com.klsjnh.web.messagecenter.inbound.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  july message template controller class
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
 import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
@@ -34,6 +36,7 @@ import com.klsjnh.web.messagecenter.inbound.vo.template.JulyInboundTemplateInser
 import com.klsjnh.web.messagecenter.inbound.vo.template.JulyInboundTemplateQueryVo011;
 import com.klsjnh.web.messagecenter.inbound.vo.template.JulyInboundTemplateUpdateVo011;
 import com.klsjnh.web.messagecenter.inbound.vo.template.JulyInboundTemplateVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,6 +47,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * JulyInboundTemplate HTTP adapter: message template CRUD.
@@ -85,10 +90,12 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/insert")
     @Operation(summary = "新增模板（templateCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyInboundTemplateInsertVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyInboundTemplateInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyInboundTemplateUseCase.insert(vo.getTemplateCode(),
+
+        return Response011.successId(funcName, julyInboundTemplateUseCase.insert(operator.id(), vo.getTemplateCode(),
                 vo.getSortOrder(), vo.getTemplateName(), vo.getChannelCode(), vo.getTitle(), vo.getContent(),
                 vo.getRemark()));
     }
@@ -102,10 +109,12 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/update")
     @Operation(summary = "修改模板（templateCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyInboundTemplateUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulyInboundTemplateUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyInboundTemplateUseCase.update(vo.getId(), vo.getTemplateName(),
+
+        return Response011.successId(funcName, julyInboundTemplateUseCase.update(operator.id(), vo.getId(), vo.getTemplateName(),
                 vo.getChannelCode(), vo.getTitle(), vo.getContent(), vo.getSortOrder(), vo.getStatus(), vo.getRemark()));
     }
 
@@ -118,10 +127,12 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除模板（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyInboundTemplateUseCase.logicDelete(idVo.getId()));
+
+        return Response011.successId(funcName, julyInboundTemplateUseCase.logicDelete(operator.id(), idVo.getId()));
     }
 
     /**
@@ -133,10 +144,12 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除模板（批量，全有或全无）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "batch logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyInboundTemplateUseCase.logicDeleteBatch(idsVo.getIds()));
+
+        return Response011.success(funcName, julyInboundTemplateUseCase.logicDeleteBatch(operator.id(), idsVo.getIds()));
     }
 
     /**
@@ -147,10 +160,12 @@ public class JulyInboundTemplateController {
      */
     @GetMapping("/getById")
     @Operation(summary = "主键查询（id 走 query）")
-    public Response011<JulyInboundTemplateVo011> getById(@RequestParam("id") String id) {
+    public Response011<JulyInboundTemplateVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyInboundTemplateConverter.toVo(julyInboundTemplateUseCase.getById(id)));
+
+        return Response011.success(funcName, julyInboundTemplateConverter.toVo(julyInboundTemplateUseCase.getById(operator.id(), id)));
     }
 
     /**
@@ -162,11 +177,13 @@ public class JulyInboundTemplateController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称模糊 + 渠道/状态过滤）")
     public Response011<PageResult011<JulyInboundTemplateVo011>> selectListByPage(
-            @RequestBody JulyInboundTemplateQueryVo011 vo) {
+            @RequestBody JulyInboundTemplateQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
-        PageResult011<JulyInboundTemplate> page = julyInboundTemplateUseCase.selectListByPage(pageQuery,
+        PageResult011<JulyInboundTemplate> page = julyInboundTemplateUseCase.selectListByPage(operator.id(), pageQuery,
                 new JulyInboundTemplateQuerySpec(vo.getKeyword(), vo.getChannelCode(), vo.getStatus()));
 
         return Response011.success(funcName, page.withRows(julyInboundTemplateConverter.toVoList(page.rows())));

@@ -5,18 +5,18 @@ package com.klsjnh.web.iam.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july user controller class
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
 import com.klsjnh.common.constant.AuditObjectCodes011;
 import com.klsjnh.common.enums.AuditType011;
-import com.klsjnh.common.constant.FrameConst011;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
@@ -29,14 +29,11 @@ import com.klsjnh.domain.iam.user.JulyUser;
 import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.application.iam.user.JulyUserUseCase;
 import com.klsjnh.application.iam.user.LoginResult;
-import com.klsjnh.application.platform011.backup.BackupUseCase;
-import com.klsjnh.application.platform011.export.ExportUseCase;
 
 import com.klsjnh.web.iam.converter.JulyUserConverter;
 
 import com.klsjnh.web.global.WebPaths011;
 import com.klsjnh.web.global.audit.AuditLog;
-import com.klsjnh.web.iam.vo.julyuser.JulyUserAssignRolesVo011;
 import com.klsjnh.web.iam.vo.julyuser.JulyUserChangePasswordVo011;
 import com.klsjnh.web.iam.vo.julyuser.JulyUserInsertVo011;
 import com.klsjnh.web.iam.vo.julyuser.JulyUserLoginVo011;
@@ -62,7 +59,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * JulyUser HTTP adapter: user CRUD, role assignment, password reset and the
- * two login kinds (password / passwordless).
+ * two login kinds (password / passwordless). Permission checks live in the
+ * use case (operator resolved here).
  */
 
 @Tag(name = "IAM - 用户管理")
@@ -82,61 +80,51 @@ public class JulyUserController {
     private final JulyUserConverter julyUserConverter;
 
     /**
-     * Export use case (platform capability).
-     */
-    private final ExportUseCase exportUseCase;
-
-    /**
-     * Backup use case (platform capability).
-     */
-    private final BackupUseCase backupUseCase;
-
-    /**
      * Create the controller.
      *
-     * @param julyUserUseCase       july user use case
-     * @param julyUserConverter     response julyUserConverter
-     * @param exportUseCase export use case
-     * @param backupUseCase backup use case
+     * @param julyUserUseCase   july user use case
+     * @param julyUserConverter response julyUserConverter
      */
-    public JulyUserController(JulyUserUseCase julyUserUseCase, JulyUserConverter julyUserConverter,
-            ExportUseCase exportUseCase, BackupUseCase backupUseCase) {
+    public JulyUserController(JulyUserUseCase julyUserUseCase, JulyUserConverter julyUserConverter) {
         this.julyUserUseCase = julyUserUseCase;
         this.julyUserConverter = julyUserConverter;
-        this.exportUseCase = exportUseCase;
-        this.backupUseCase = backupUseCase;
     }
 
     /**
      * Insert a new user.
      *
-     * @param vo insert request
+     * @param vo      insert request
+     * @param request http request
      * @return envelope with the new user id
      */
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/insert")
     @Operation(summary = "新增用户")
-    public Response011<IdVo011> insert(@RequestBody JulyUserInsertVo011 vo) {
+    public Response011<IdVo011> insert(@RequestBody JulyUserInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
         return Response011.successId(funcName,
-                julyUserUseCase.insert(vo.getUserAccount(), vo.getUserName(), vo.getPassword(), vo.getMobile(),
-                        vo.getEmail(), vo.getAvatar(), vo.getPkOrg()));
+                julyUserUseCase.insert(operator.id(), vo.getUserAccount(), vo.getUserName(), vo.getPassword(),
+                        vo.getMobile(), vo.getEmail(), vo.getAvatar(), vo.getPkOrg()));
     }
 
     /**
      * Update the user profile.
      *
-     * @param vo update request
+     * @param vo      update request
+     * @param request http request
      * @return envelope with the user id
      */
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/update")
     @Operation(summary = "修改用户资料（不含账号与密码）")
-    public Response011<IdVo011> update(@RequestBody JulyUserUpdateVo011 vo) {
+    public Response011<IdVo011> update(@RequestBody JulyUserUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        julyUserUseCase.update(vo.getId(), vo.getUserName(), vo.getMobile(), vo.getEmail(), vo.getAvatar(), vo.getPkOrg());
+        julyUserUseCase.update(operator.id(), vo.getId(), vo.getUserName(), vo.getMobile(), vo.getEmail(),
+                vo.getAvatar(), vo.getPkOrg());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -144,95 +132,91 @@ public class JulyUserController {
     /**
      * Logic delete a single user.
      *
-     * @param idVo request with the user id
+     * @param idVo    request with the user id
+     * @param request http request
      * @return envelope with the deleted user id
      */
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.successId(funcName, julyUserUseCase.logicDelete(idVo.getId()));
+        return Response011.successId(funcName, julyUserUseCase.logicDelete(operator.id(), idVo.getId()));
     }
 
     /**
      * Logic delete users in batch.
      *
-     * @param idsVo request with the user id list
+     * @param idsVo   request with the user id list
+     * @param request http request
      * @return per-id success/failure summary
      */
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo,
+            HttpServletRequest request) {
         String funcName = "logic delete batch";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyUserUseCase.logicDeleteBatch(idsVo.getIds()));
+        return Response011.success(funcName, julyUserUseCase.logicDeleteBatch(operator.id(), idsVo.getIds()));
     }
 
     /**
      * Find a user by primary key (safe + idempotent, hence GET).
      *
-     * @param id user id, passed as a query parameter
+     * @param id      user id, passed as a query parameter
+     * @param request http request
      * @return user detail
      */
     @GetMapping("/getById")
     @Operation(summary = "主键查询（id 走 query）")
-    public Response011<JulyUserVo011> getById(@RequestParam("id") String id) {
+    public Response011<JulyUserVo011> getById(@RequestParam("id") String id, HttpServletRequest request) {
         String funcName = "get by id";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        return Response011.success(funcName, julyUserConverter.toVo(julyUserUseCase.getById(id)));
+        return Response011.success(funcName, julyUserConverter.toVo(julyUserUseCase.getById(operator.id(), id)));
     }
 
     /**
      * Page query with optional keyword filters.
      *
-     * @param query page query request
+     * @param query   page query request
+     * @param request http request
      * @return page result of users
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（账号/姓名模糊过滤）")
-    public Response011<PageResult011<JulyUserVo011>> selectListByPage(@RequestBody JulyUserQueryVo011 query) {
+    public Response011<PageResult011<JulyUserVo011>> selectListByPage(@RequestBody JulyUserQueryVo011 query,
+            HttpServletRequest request) {
         String funcName = "select list by page";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
         PageQuery011 pageQuery = new PageQuery011(query.getPageIndex(), query.getPageSize());
-        PageResult011<JulyUser> page = julyUserUseCase.selectListByPage(pageQuery, query.getUserAccount(),
-                query.getUserName());
+        PageResult011<JulyUser> page = julyUserUseCase.selectListByPage(operator.id(), pageQuery,
+                query.getUserAccount(), query.getUserName());
 
         return Response011.success(funcName, page.withRows(julyUserConverter.toVoList(page.rows())));
     }
 
     /**
-     * Assign roles to a user (toggle semantics, replace strategy).
-     *
-     * @param vo assign request
-     * @return envelope with the user id
-     */
-    @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
-    @PostMapping("/assignRoles")
-    @Operation(summary = "分配角色（整存替换）")
-    public Response011<IdVo011> assignRoles(@RequestBody JulyUserAssignRolesVo011 vo) {
-        String funcName = "assign roles";
-
-        julyUserUseCase.assignRoles(vo.getId(), vo.getPkRoles());
-
-        return Response011.successId(funcName, vo.getId());
-    }
-
-    /**
      * Reset a user password (admin action).
      *
-     * @param vo reset request
+     * @param vo      reset request
+     * @param request http request
      * @return envelope with the user id
      */
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/resetPassword")
     @Operation(summary = "重置密码（管理员动作）")
-    public Response011<IdVo011> resetPassword(@RequestBody JulyUserResetPasswordVo011 vo) {
+    public Response011<IdVo011> resetPassword(@RequestBody JulyUserResetPasswordVo011 vo,
+            HttpServletRequest request) {
         String funcName = "reset password";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        julyUserUseCase.resetPassword(vo.getId(), vo.getPassword());
+        julyUserUseCase.resetPassword(operator.id(), vo.getId(), vo.getPassword());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -285,11 +269,11 @@ public class JulyUserController {
     public Response011<IdVo011> changePassword(@RequestBody JulyUserChangePasswordVo011 vo,
             HttpServletRequest request) {
         String funcName = "change password";
+        Operator011 operator = Operator011Resolver.resolve(request);
 
-        String operatorId = (String) request.getAttribute(FrameConst011.OPERATOR_ID);
-        julyUserUseCase.changePassword(operatorId, vo.getOldPassword(), vo.getNewPassword());
+        julyUserUseCase.changePassword(operator.id(), vo.getOldPassword(), vo.getNewPassword());
 
-        return Response011.successId(funcName, operatorId);
+        return Response011.successId(funcName, operator.id());
     }
 
     /**
@@ -321,12 +305,9 @@ public class JulyUserController {
     @Operation(summary = "导出全部用户（分批取数，写 EXPORT 审计）")
     public Response011<ExportResult> export(HttpServletRequest request) {
         String funcName = "export";
-
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        ExportResult result = exportUseCase.export(AuditObjectCodes011.JULY_USER, operator);
-
-        return Response011.success(funcName, result);
+        return Response011.success(funcName, julyUserUseCase.export(operator));
     }
 
     /**
@@ -339,12 +320,9 @@ public class JulyUserController {
     @Operation(summary = "备份全部用户到存储中心（写 BACKUP 审计）")
     public Response011<String> backup011(HttpServletRequest request) {
         String funcName = "backup";
-
         Operator011 operator = Operator011Resolver.resolve(request);
 
-        String key = backupUseCase.backup(AuditObjectCodes011.JULY_USER, operator);
-
-        return Response011.success(funcName, key);
+        return Response011.success(funcName, julyUserUseCase.backup(operator));
     }
 
     /**

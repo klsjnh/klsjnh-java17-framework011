@@ -5,16 +5,18 @@ package com.klsjnh.web.aicenter.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.17
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.17  ai chat controller class
  *      2026.09.20  inference module + sse streaming
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.aicenter.inference.AiInferenceOutcome;
@@ -26,6 +28,7 @@ import com.klsjnh.domain.aicenter.inference.AiInferenceChunk;
 import com.klsjnh.web.aicenter.vo.aichat.AiChatMessageVo011;
 import com.klsjnh.web.aicenter.vo.aichat.AiChatRequestVo011;
 import com.klsjnh.web.aicenter.vo.aichat.AiChatResponseVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +39,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -80,13 +85,15 @@ public class AiInferenceController {
      */
     @PostMapping("/chat")
     @Operation(summary = "AI 推理（provider/api 支持 id 或 code；model 必传）")
-    public Response011<AiChatResponseVo011> chat(@RequestBody AiChatRequestVo011 vo) {
+    public Response011<AiChatResponseVo011> chat(@RequestBody AiChatRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai inference";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
                 vo.getModel(), null);
 
-        AiInferenceOutcome outcome = aiInferenceUseCase.chat(target, messages(vo), vo.getTemperature(),
+        AiInferenceOutcome outcome = aiInferenceUseCase.chat(operator.id(), target, messages(vo), vo.getTemperature(),
                 vo.getMaxTokens());
 
         return Response011.success(funcName, toVo(outcome));
@@ -100,11 +107,13 @@ public class AiInferenceController {
      */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "AI 推理流式（SSE；provider/api 支持 id 或 code；model 必传）")
-    public SseEmitter chatStream(@RequestBody AiChatRequestVo011 vo) {
+    public SseEmitter chatStream(@RequestBody AiChatRequestVo011 vo, HttpServletRequest request) {
+        Operator011 operator = Operator011Resolver.resolve(request);
+
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
                 vo.getModel(), null);
 
-        Stream<AiInferenceChunk> stream = aiInferenceUseCase.stream(target, messages(vo), vo.getTemperature(),
+        Stream<AiInferenceChunk> stream = aiInferenceUseCase.stream(operator.id(), target, messages(vo), vo.getTemperature(),
                 vo.getMaxTokens());
 
         SseEmitter emitter = new SseEmitter(0L);

@@ -18,8 +18,20 @@ import java.util.Set;
 
 /**
  * Authorization port (IAM): resolve whether an operator holds a permission
- * code. Callers (use cases) decide when to check; this port never intercepts
- * HTTP globally. Built-in roles bypass with a full grant.
+ * code. Use cases call {@link #assertHas} to declare and enforce a code.
+ * <p>
+ * Hang {@link #assertHas} on management write (and preferably read) entries
+ * everywhere. Enforcement depends on {@code krt.status}:
+ * </p>
+ * <ul>
+ * <li><b>debug / development</b> — {@code assertHas} / {@code has} are no-op
+ * (always allow); convenient for local integration while call sites stay
+ * hung.</li>
+ * <li><b>production</b> — real code check (missing → 403). The web whitelist
+ * gate also requires that a mutating protected request marked a check via
+ * {@link PermissionCheckContext011}; otherwise the filter answers 403.</li>
+ * </ul>
+ * <p>Built-in roles bypass with a full grant when checks are active.</p>
  */
 
 public interface AuthorizationPort {
@@ -45,7 +57,10 @@ public interface AuthorizationPort {
     boolean has(String operatorId, String permissionCode);
 
     /**
-     * Require the permission code or throw forbidden / unauthorized.
+     * Require the permission code or throw forbidden / unauthorized. Successful
+     * and failing calls both mark {@link PermissionCheckContext011} so the
+     * production whitelist gate sees that a check occurred (a missing code
+     * still yields 403 from this method).
      *
      * @param operatorId     user id
      * @param permissionCode permission code

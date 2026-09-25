@@ -5,12 +5,13 @@ package com.klsjnh.application.messagecenter.outbound.channel;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  july message channel use case class
+ *      2026.09.26  explicit permission checks (julyMessageOutboundChannel)
  *
  */
 
@@ -21,8 +22,10 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
 import com.klsjnh.domain.messagecenter.outbound.channel.JulyOutboundChannel;
+import com.klsjnh.domain.messagecenter.outbound.channel.JulyMessageOutboundChannelPermissionCodes011;
 import com.klsjnh.domain.messagecenter.outbound.channel.JulyOutboundChannelQuerySpec;
 import com.klsjnh.domain.messagecenter.outbound.channel.JulyOutboundChannelRepository;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
@@ -43,13 +46,12 @@ public class JulyOutboundChannelUseCase {
      */
     private final JulyOutboundChannelRepository repository;
 
-    /**
-     * Create the use case.
-     *
-     * @param repository channel repository
-     */
-    public JulyOutboundChannelUseCase(JulyOutboundChannelRepository repository) {
+    private final AuthorizationPort authorizationPort;
+
+    public JulyOutboundChannelUseCase(JulyOutboundChannelRepository repository,
+            AuthorizationPort authorizationPort) {
         this.repository = repository;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -64,8 +66,9 @@ public class JulyOutboundChannelUseCase {
      * @return new channel id
      */
     @Transactional
-    public String insert(String channelCode, Integer sortOrder, String channelName, String providerType, String config,
-            String remark) {
+    public String insert(String operatorId, String channelCode, Integer sortOrder, String channelName,
+            String providerType, String config, String remark) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.INSERT);
         if (repository.findByCode(channelCode) != null) {
             throw BusinessException.badRequest("channel code already exists: " + channelCode);
         }
@@ -89,8 +92,9 @@ public class JulyOutboundChannelUseCase {
      * @return channel id
      */
     @Transactional
-    public String update(String id, String channelName, String providerType, String config, Integer sortOrder,
-            String status, String remark) {
+    public String update(String operatorId, String id, String channelName, String providerType, String config,
+            Integer sortOrder, String status, String remark) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.UPDATE);
         JulyOutboundChannel channel = require(id);
         requireStatus(status);
 
@@ -112,7 +116,8 @@ public class JulyOutboundChannelUseCase {
      * @return deleted channel id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.LOGIC_DELETE);
         require(id);
 
         if (!repository.logicDeleteById(id)) {
@@ -129,7 +134,8 @@ public class JulyOutboundChannelUseCase {
      * @return batch delete summary
      */
     @Transactional
-    public BatchDeleteResultVo011 logicDeleteBatch(List<String> ids) {
+    public BatchDeleteResultVo011 logicDeleteBatch(String operatorId, List<String> ids) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.LOGIC_DELETE);
         List<String> normalized = normalize(ids);
 
         if (normalized.isEmpty()) {
@@ -152,7 +158,8 @@ public class JulyOutboundChannelUseCase {
      * @param id channel id
      * @return aggregate
      */
-    public JulyOutboundChannel getById(String id) {
+    public JulyOutboundChannel getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.SELECT);
         return require(id);
     }
 
@@ -163,7 +170,9 @@ public class JulyOutboundChannelUseCase {
      * @param spec      query condition, null means no filter
      * @return page result
      */
-    public PageResult011<JulyOutboundChannel> selectListByPage(PageQuery011 pageQuery, JulyOutboundChannelQuerySpec spec) {
+    public PageResult011<JulyOutboundChannel> selectListByPage(String operatorId, PageQuery011 pageQuery,
+            JulyOutboundChannelQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.SELECT);
         PageQuery011 query = pageQuery == null ? new PageQuery011(1, 10) : pageQuery;
         JulyOutboundChannelQuerySpec condition = spec == null ? new JulyOutboundChannelQuerySpec(null, null) : spec;
         List<JulyOutboundChannel> rows = repository.findPage(query.offset(), query.pageSize(), condition);

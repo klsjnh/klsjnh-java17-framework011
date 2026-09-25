@@ -4,8 +4,8 @@
 #
 # Usage:
 #   ./script011.sh              no arg = git commit (gate + version bump + commit + push)
-#   ./script011.sh gate         standards check only (node) + mvn offline compile
-#   ./script011.sh build011     mvn clean package install (full build + install to local repo)
+#   ./script011.sh gate         standards check (node) + mvn -o clean install (tests + .m2)
+#   ./script011.sh build011     mvn clean install (full build + tests + install to local repo)
 #   ./script011.sh dev011       kill process -> run the existing jar (no compile)
 #   ./script011.sh dev013       kill process -> clean rebuild (drops old jar) -> run jar
 #   ./script011.sh stop         stop
@@ -58,8 +58,8 @@ Usage: $0 [command]
 
 Commands:
   (default)  gate + version bump + commit + push
-  gate       push gate only: standards check (node) + mvn offline compile
-  build011   mvn clean package install (full build + install to local repo)
+  gate       standards check (node) + mvn -o clean install (tests + artifacts -> .m2)
+  build011   mvn clean install (full build + tests + install to local repo)
   dev011     kill process + run the existing jar (no compile)
   dev013     kill process + clean rebuild (drops old jar) + run jar
   stop|restart|status|log   runtime management
@@ -70,8 +70,8 @@ EOF
 # git: gate + version bump + commit + push
 # ============================================================
 
-# gate: standards check + offline compile (single gate implementation, shared
-# with the git pre-push hook — do NOT duplicate it elsewhere)
+# gate: standards check + mvn -o clean install (single gate implementation —
+# do NOT duplicate it elsewhere; NOT "compile only")
 do_gate() {
   echo "[$(NOW)] Standards check (node) ..."
   if [ ! -d "$PROJECT_ROOT/tools/node_modules/tree-sitter" ]; then
@@ -82,15 +82,18 @@ do_gate() {
   node "$PROJECT_ROOT/tools/check-klsjnh-standards.mjs" "$PROJECT_ROOT"
 
   echo ""
-  echo "[$(NOW)] Maven offline compile ..."
-  "$MVN_BIN" -o compile -q
+  echo "[$(NOW)] Maven offline clean install (tests included; artifacts -> .m2) ..."
+  "$MVN_BIN" -o clean install -q || {
+    echo "[$(NOW)] Gate FAILED (mvn clean install) ..." >&2
+    exit 1
+  }
   echo "[$(NOW)] Gate PASSED ..."
 }
 
 # build011: full build and install
 do_build011() {
-  echo "[$(NOW)] mvn clean package install ..."
-  "$MVN_BIN" clean package install "$@"
+  echo "[$(NOW)] mvn clean install ..."
+  "$MVN_BIN" clean install "$@"
 }
 
 # The gate is enforced by the single commit entry (this script, default
@@ -158,7 +161,7 @@ do_push() {
 # runtime (app011 start / stop)
 # ============================================================
 
-APP_JAR="$PROJECT_ROOT/java17-reference-app011/target/java17-reference-app011-1.0.0.jar"
+APP_JAR="$PROJECT_ROOT/java17-app011/target/java17-app011-1.0.0.jar"
 APP_LOG="$PROJECT_ROOT/logs/app011.log"
 PID_FILE="$PROJECT_ROOT/.app011.pid"
 APP_PORT=11160

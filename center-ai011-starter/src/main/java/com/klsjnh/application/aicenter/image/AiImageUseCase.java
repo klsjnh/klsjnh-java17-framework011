@@ -5,7 +5,7 @@ package com.klsjnh.application.aicenter.image;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
@@ -13,6 +13,7 @@ package com.klsjnh.application.aicenter.image;
  *      2026.09.19  ai image use case class
  *      2026.09.20  local-storage gate + media persistence
  *      2026.09.24  call-time storage locator; drop local gate / defaults
+ *      2026.09.26  explicit permission checks (aiImage)
  *
  */
 
@@ -23,6 +24,7 @@ import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.capability.AiMedia;
+import com.klsjnh.domain.aicenter.image.AiImagePermissionCodes011;
 import com.klsjnh.domain.aicenter.image.AiImagePort;
 import com.klsjnh.domain.aicenter.image.AiImageRequest;
 import com.klsjnh.domain.aicenter.media.AiMediaLocation;
@@ -30,6 +32,7 @@ import com.klsjnh.domain.aicenter.media.AiMediaRef;
 import com.klsjnh.domain.aicenter.media.AiMediaStorePort;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProvider;
 import com.klsjnh.domain.aicenter.modelprovider.AiModelProviderApi;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 
 import org.springframework.stereotype.Service;
 
@@ -60,16 +63,24 @@ public class AiImageUseCase {
     private final AiMediaStorePort mediaStore;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
-     * @param resolver   provider resolver
-     * @param registry   capability registry
-     * @param mediaStore media store
+     * @param resolver           provider resolver
+     * @param registry           capability registry
+     * @param mediaStore         media store
+     * @param authorizationPort  authorization port
      */
-    public AiImageUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore) {
+    public AiImageUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore,
+            AuthorizationPort authorizationPort) {
         this.resolver = resolver;
         this.registry = registry;
         this.mediaStore = mediaStore;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -87,9 +98,11 @@ public class AiImageUseCase {
      * @param location        storage instance + bucket locator (required)
      * @return persisted media reference, never null
      */
-    public AiMediaRef generate(AiInvokeTarget target, String prompt, String size, Integer steps, Long seed,
-            Double guidanceScale, String negativePrompt, String imageUrl, byte[] imageBytes,
+    public AiMediaRef generate(String operatorId, AiInvokeTarget target, String prompt, String size, Integer steps,
+            Long seed, Double guidanceScale, String negativePrompt, String imageUrl, byte[] imageBytes,
             AiMediaLocation location) {
+        authorizationPort.assertHas(operatorId, AiImagePermissionCodes011.GENERATE);
+
         if (target == null) {
             throw BusinessException.badRequest("target is required");
         }

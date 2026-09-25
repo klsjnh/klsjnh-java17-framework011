@@ -15,7 +15,7 @@ MODE="${1:-mount}"
 [ "$MODE" = "mount" ] || [ "$MODE" = "bake" ] || { echo "用法: $0 [mount|bake]"; exit 1; }
 
 PROJECT="klsjnh-java17-framework011"
-APP_JAR="java17-reference-app011/target/java17-reference-app011-1.0.0.jar"
+APP_JAR="java17-app011/target/java17-app011-1.0.0.jar"
 BASE_IMAGE="${BASE_IMAGE:-klsjnh/java17:v0.0.1}"
 DOCKER_ROOT="${DOCKER_ROOT:-/klsjnh/docker}"
 PROJECT_DIR="$DOCKER_ROOT/java011/$PROJECT"
@@ -41,9 +41,9 @@ VER="$(git log -1 --format=%s | grep -oP 'ver \K\d+\.\d+\.\d+' || true)"
 echo "=== 3. 运行时目录: $PROJECT_DIR ==="
 mkdir -p "$PROJECT_DIR/config" "$PROJECT_DIR/logs" "$PROJECT_DIR/data" "$PROJECT_DIR/storage011"
 cp "$APP_JAR" "$PROJECT_DIR/app.jar"
-cp java17-reference-app011/src/main/resources/application.yml "$PROJECT_DIR/config/application.yml"
-[ -f java17-reference-app011/src/main/resources/application-development.yml ] \
-    && cp java17-reference-app011/src/main/resources/application-development.yml "$PROJECT_DIR/config/application-development.yml"
+cp java17-app011/src/main/resources/application.yml "$PROJECT_DIR/config/application.yml"
+[ -f java17-app011/src/main/resources/application-development.yml ] \
+    && cp java17-app011/src/main/resources/application-development.yml "$PROJECT_DIR/config/application-development.yml"
 # 约定：容器内可挂载目录一律在 /klsjnh/volume 下——存储中心 base-path 统一指过去
 sed -i 's#base-path: \./storage011#base-path: /klsjnh/volume/storage011#' "$PROJECT_DIR/config/application.yml"
 chmod -R 777 "$PROJECT_DIR/logs" "$PROJECT_DIR/data" "$PROJECT_DIR/storage011"

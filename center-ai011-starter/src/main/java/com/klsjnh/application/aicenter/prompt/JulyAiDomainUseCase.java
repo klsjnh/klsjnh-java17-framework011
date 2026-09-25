@@ -5,7 +5,7 @@ package com.klsjnh.application.aicenter.prompt;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.21
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
@@ -13,6 +13,7 @@ package com.klsjnh.application.aicenter.prompt;
  *      2026.09.21  ai domain use case (tree crud)
  *      2026.09.21  merged with the prompt use case: one master-sub use case
  *                  (master save / whole save / child save + render)
+ *      2026.09.26  explicit permission checks (julyAiDomain)
  *
  */
 
@@ -24,12 +25,14 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomain;
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomainBundle;
+import com.klsjnh.domain.aicenter.prompt.JulyAiDomainPermissionCodes011;
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomainPrompt;
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomainPromptQuerySpec;
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomainPromptRepository;
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomainQuerySpec;
 import com.klsjnh.domain.aicenter.prompt.JulyAiDomainRepository;
 import com.klsjnh.domain.aicenter.prompt.PromptRenderPort;
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.storagecenter.object.ObjectStoragePort;
@@ -84,19 +87,26 @@ public class JulyAiDomainUseCase {
     private final StorageResolverPort storageResolver;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
-     * @param repository       domain repository
-     * @param promptRepository prompt repository
-     * @param promptRender     prompt render port
-     * @param storageResolver  storage resolver
+     * @param repository         domain repository
+     * @param promptRepository   prompt repository
+     * @param promptRender       prompt render port
+     * @param storageResolver    storage resolver
+     * @param authorizationPort  authorization port
      */
     public JulyAiDomainUseCase(JulyAiDomainRepository repository, JulyAiDomainPromptRepository promptRepository,
-            PromptRenderPort promptRender, StorageResolverPort storageResolver) {
+            PromptRenderPort promptRender, StorageResolverPort storageResolver, AuthorizationPort authorizationPort) {
         this.repository = repository;
         this.promptRepository = promptRepository;
         this.promptRender = promptRender;
         this.storageResolver = storageResolver;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -110,7 +120,10 @@ public class JulyAiDomainUseCase {
      * @return new domain id
      */
     @Transactional
-    public String insert(String domainCode, String domainName, String parentId, Integer sortOrder, String remark) {
+    public String insert(String operatorId, String domainCode, String domainName, String parentId, Integer sortOrder,
+            String remark) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.INSERT);
+
         if (repository.findByCode(domainCode) != null) {
             throw BusinessException.badRequest("domain code already exists: " + domainCode);
         }
@@ -137,8 +150,10 @@ public class JulyAiDomainUseCase {
      * @return domain id
      */
     @Transactional
-    public String update(String id, String domainName, String parentId, Integer sortOrder, String remark,
-            String status) {
+    public String update(String operatorId, String id, String domainName, String parentId, Integer sortOrder,
+            String remark, String status) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.UPDATE);
+
         JulyAiDomain domain = require(id);
         String targetParent = parentId == null ? "" : parentId;
 
@@ -159,17 +174,22 @@ public class JulyAiDomainUseCase {
      * @param id domain id
      * @return domain
      */
-    public JulyAiDomain getById(String id) {
+    public JulyAiDomain getById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         return require(id);
     }
 
     /**
      * Find by domain code.
      *
+     * @param operatorId operator user id
      * @param domainCode domain code
      * @return domain
      */
-    public JulyAiDomain getByCode(String domainCode) {
+    public JulyAiDomain getByCode(String operatorId, String domainCode) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         JulyAiDomain domain = repository.findByCode(domainCode);
 
         if (domain == null) {
@@ -186,7 +206,10 @@ public class JulyAiDomainUseCase {
      * @param spec  filter
      * @return page result
      */
-    public PageResult011<JulyAiDomain> selectListByPage(PageQuery011 query, JulyAiDomainQuerySpec spec) {
+    public PageResult011<JulyAiDomain> selectListByPage(String operatorId, PageQuery011 query,
+            JulyAiDomainQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         PageQuery011 pageQuery = query == null ? new PageQuery011(1, 10) : query;
         long total = repository.count(spec);
         List<JulyAiDomain> rows = repository.findPage(pageQuery.offset(), pageQuery.pageSize(), spec);
@@ -200,7 +223,9 @@ public class JulyAiDomainUseCase {
      *
      * @return root nodes with nested children
      */
-    public List<JulyAiDomain> selectTree() {
+    public List<JulyAiDomain> selectTree(String operatorId) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         return repository.findTree();
     }
 
@@ -211,7 +236,9 @@ public class JulyAiDomainUseCase {
      * @return deleted domain id
      */
     @Transactional
-    public String logicDelete(String id) {
+    public String logicDelete(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.LOGIC_DELETE);
+
         require(id);
 
         if (repository.hasChildren(id)) {
@@ -245,11 +272,17 @@ public class JulyAiDomainUseCase {
      * @return domain id
      */
     @Transactional
-    public String saveWhole(String id, String domainCode, String domainName, String parentId, Integer sortOrder,
-            String remark, String status, List<PromptSaveCommand> prompts) {
+    public String saveWhole(String operatorId, String id, String domainCode, String domainName, String parentId,
+            Integer sortOrder, String remark, String status, List<PromptSaveCommand> prompts) {
+        if (StringUtil011.isBlank(id)) {
+            authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.INSERT);
+        } else {
+            authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.UPDATE);
+        }
+
         String masterId = StringUtil011.isBlank(id)
-                ? insert(domainCode, domainName, parentId, sortOrder, remark)
-                : update(id, domainName, parentId, sortOrder, remark, status);
+                ? insert(operatorId, domainCode, domainName, parentId, sortOrder, remark)
+                : update(operatorId, id, domainName, parentId, sortOrder, remark, status);
 
         promptRepository.logicDeleteByMaster(masterId);
 
@@ -265,7 +298,7 @@ public class JulyAiDomainUseCase {
                             prompt.contentMode(), prompt.content(), prompt.storageCode(), prompt.bucket(),
                             prompt.variables(), order, prompt.remark(), prompt.status())
                     : prompt;
-            insertDetail(masterId, normalized);
+            insertDetail(operatorId, masterId, normalized);
             order++;
         }
 
@@ -278,7 +311,9 @@ public class JulyAiDomainUseCase {
      * @param id domain id
      * @return domain with its ordered prompts
      */
-    public JulyAiDomainBundle getWithChildren(String id) {
+    public JulyAiDomainBundle getWithChildren(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         return new JulyAiDomainBundle(require(id), promptRepository.findByMaster(id));
     }
 
@@ -290,7 +325,9 @@ public class JulyAiDomainUseCase {
      * @return new prompt id
      */
     @Transactional
-    public String insertDetail(String pkMt, PromptSaveCommand command) {
+    public String insertDetail(String operatorId, String pkMt, PromptSaveCommand command) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.INSERT);
+
         requireEnabledDomain(pkMt);
 
         JulyAiDomainPrompt row = JulyAiDomainPrompt.create(EntityId.generate(), pkMt, command.promptCode(),
@@ -314,7 +351,9 @@ public class JulyAiDomainUseCase {
      * @return the prompt id
      */
     @Transactional
-    public String updateDetail(String id, PromptSaveCommand command) {
+    public String updateDetail(String operatorId, String id, PromptSaveCommand command) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.UPDATE);
+
         JulyAiDomainPrompt row = requirePrompt(id);
 
         if (JulyAiDomainPrompt.MODE_STORAGE.equalsIgnoreCase(command.contentMode())) {
@@ -340,7 +379,9 @@ public class JulyAiDomainUseCase {
      * @return the deleted id
      */
     @Transactional
-    public String logicDeleteDetail(String id) {
+    public String logicDeleteDetail(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.LOGIC_DELETE);
+
         requirePrompt(id);
         promptRepository.logicDeleteById(id);
 
@@ -353,17 +394,22 @@ public class JulyAiDomainUseCase {
      * @param id prompt id
      * @return prompt
      */
-    public JulyAiDomainPrompt getDetailById(String id) {
+    public JulyAiDomainPrompt getDetailById(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         return requirePrompt(id);
     }
 
     /**
      * Find a prompt by code.
      *
+     * @param operatorId operator user id
      * @param promptCode prompt code, globally unique
      * @return prompt
      */
-    public JulyAiDomainPrompt getDetailByCode(String promptCode) {
+    public JulyAiDomainPrompt getDetailByCode(String operatorId, String promptCode) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         JulyAiDomainPrompt prompt = promptRepository.findByCode(promptCode);
 
         if (prompt == null) {
@@ -379,7 +425,9 @@ public class JulyAiDomainUseCase {
      * @param id prompt id
      * @return content text, nullable
      */
-    public String getContent(String id) {
+    public String getContent(String operatorId, String id) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         return readContent(requirePrompt(id));
     }
 
@@ -390,8 +438,10 @@ public class JulyAiDomainUseCase {
      * @param spec  filter
      * @return page result
      */
-    public PageResult011<JulyAiDomainPrompt> selectDetailListByPage(PageQuery011 query,
+    public PageResult011<JulyAiDomainPrompt> selectDetailListByPage(String operatorId, PageQuery011 query,
             JulyAiDomainPromptQuerySpec spec) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.SELECT);
+
         PageQuery011 pageQuery = query == null ? new PageQuery011(1, 10) : query;
         long total = promptRepository.count(spec);
         List<JulyAiDomainPrompt> rows = promptRepository.findPage(pageQuery.offset(), pageQuery.pageSize(), spec);
@@ -406,7 +456,9 @@ public class JulyAiDomainUseCase {
      * @param params     variable values, nullable
      * @return rendered text
      */
-    public String render(String promptCode, Map<String, String> params) {
+    public String render(String operatorId, String promptCode, Map<String, String> params) {
+        authorizationPort.assertHas(operatorId, JulyAiDomainPermissionCodes011.RENDER);
+
         return promptRender.render(promptCode, params);
     }
 

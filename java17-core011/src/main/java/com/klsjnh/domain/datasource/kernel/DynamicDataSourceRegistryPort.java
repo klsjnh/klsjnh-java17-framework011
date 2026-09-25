@@ -15,9 +15,6 @@ package com.klsjnh.domain.datasource.kernel;
  *
  */
 
-import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
-import com.klsjnh.domain.datasource.kernel.ReloadResult;
-
 import java.util.List;
 
 /**

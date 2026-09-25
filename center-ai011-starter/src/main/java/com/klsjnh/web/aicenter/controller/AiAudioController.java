@@ -5,16 +5,18 @@ package com.klsjnh.web.aicenter.controller;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  ai tts controller class
  *      2026.09.20  audio module: tts + asr
+ *      2026.09.26  pass operator into use case for permission checks
  *
  */
 
+import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.util.StringUtil011;
 
@@ -31,6 +33,7 @@ import com.klsjnh.web.aicenter.vo.aiaudio.AiAsrRequestVo011;
 import com.klsjnh.web.aicenter.vo.aiaudio.AiAsrResponseVo011;
 import com.klsjnh.web.aicenter.vo.aiaudio.AiTtsRequestVo011;
 import com.klsjnh.web.aicenter.vo.aiaudio.AiTtsResponseVo011;
+import com.klsjnh.web.util.Operator011Resolver;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +42,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Base64;
 
@@ -89,8 +94,10 @@ public class AiAudioController {
      */
     @PostMapping("/synthesize")
     @Operation(summary = "文字转语音（必传 storageCode|storageId + bucketCode|bucketId；缺参 400）")
-    public Response011<AiTtsResponseVo011> synthesize(@RequestBody AiTtsRequestVo011 vo) {
+    public Response011<AiTtsResponseVo011> synthesize(@RequestBody AiTtsRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai tts synthesize";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
                 vo.getModel(), vo.getReturnType());
@@ -98,7 +105,7 @@ public class AiAudioController {
         AiMediaLocation location = new AiMediaLocation(vo.getStorageCode(), vo.getStorageId(), vo.getBucketCode(),
                 vo.getBucketId());
 
-        AiMediaRef ref = aiTtsUseCase.synthesize(target, vo.getInput(), vo.getVoice(), vo.getInstruction(),
+        AiMediaRef ref = aiTtsUseCase.synthesize(operator.id(), target, vo.getInput(), vo.getVoice(), vo.getInstruction(),
                 vo.getSpeed(), vo.getVolume(), vo.getFormat(), vo.getSampleRate(), location);
 
         return Response011.success(funcName, aiMediaConverter.toTtsVo(ref));
@@ -112,8 +119,10 @@ public class AiAudioController {
      */
     @PostMapping("/recognize")
     @Operation(summary = "语音识别（provider/api 支持 id 或 code；音频传 base64 或 url）")
-    public Response011<AiAsrResponseVo011> recognize(@RequestBody AiAsrRequestVo011 vo) {
+    public Response011<AiAsrResponseVo011> recognize(@RequestBody AiAsrRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai asr recognize";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
 
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
                 vo.getModel(), null);
@@ -121,7 +130,7 @@ public class AiAudioController {
         byte[] audio = StringUtil011.isBlank(vo.getAudioBase64()) ? null
                 : Base64.getDecoder().decode(vo.getAudioBase64());
 
-        AiAsrResult result = aiAsrUseCase.recognize(target, audio, vo.getAudioUrl(), vo.getFormat(),
+        AiAsrResult result = aiAsrUseCase.recognize(operator.id(), target, audio, vo.getAudioUrl(), vo.getFormat(),
                 vo.getLanguage());
 
         AiAsrResponseVo011 response = new AiAsrResponseVo011();
