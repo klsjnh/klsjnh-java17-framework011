@@ -135,8 +135,13 @@ do_push() {
   echo "[$(NOW)] Preparing commit ..."
   vf="$PROJECT_ROOT/.vf"
   [ -f "$vf" ] || echo "0.0.0" > "$vf"
-  HAS_CHANGES=$(git status --porcelain | wc -l)
-  HAS_UNPUSHED=$(git log @{u}..HEAD --oneline 2>/dev/null | wc -l || echo 0)
+  # trim wc padding; avoid pipefail + || echo doubling "0\n0" when @{u} is missing
+  HAS_CHANGES=$(git status --porcelain | wc -l | tr -d '[:space:]')
+  if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+    HAS_UNPUSHED=$(git log '@{u}..HEAD' --oneline | wc -l | tr -d '[:space:]')
+  else
+    HAS_UNPUSHED=0
+  fi
 
   if [ "$HAS_CHANGES" -eq 0 ] && [ "$HAS_UNPUSHED" -eq 0 ]; then
     echo "[$(NOW)] nothing to change ..."
@@ -152,8 +157,12 @@ do_push() {
   fi
 
   if [ "$HAS_UNPUSHED" -gt 0 ] || [ "$HAS_CHANGES" -gt 0 ]; then
-    git push
-    echo "[$(NOW)] Push done"
+    if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+      git push
+      echo "[$(NOW)] Push done"
+    else
+      echo "[$(NOW)] no upstream; skip push (set upstream then re-run)"
+    fi
   fi
 }
 
