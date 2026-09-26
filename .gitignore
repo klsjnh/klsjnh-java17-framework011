@@ -33,6 +33,8 @@ target-logs/
 tmp/
 *.tmp
 .tmp-*/
+_tmp*
+_tmp_*.sh
 
 # ---- runtime pid / tool state ----
 *.pid
