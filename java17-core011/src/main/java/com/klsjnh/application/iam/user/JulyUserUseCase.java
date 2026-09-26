@@ -12,6 +12,7 @@ package com.klsjnh.application.iam.user;
  *
  *      2026.09.12  july user use case class
  *      2026.09.26  explicit permission checks (julyUser auth)
+ *      2026.09.26  tokenVersion revoke on status/password/logout
  *
  */
 
@@ -151,27 +152,38 @@ public class JulyUserUseCase {
         }
 
         JulyUser user = new JulyUser(EntityId.generate(), userAccount, userName, passwordPort.encode(password),
-                mobile, email, avatar, pkOrg, null, Status011.ENABLED.getCode(), AuditInfo.empty());
+                mobile, email, avatar, pkOrg, null, 0, Status011.ENABLED.getCode(), AuditInfo.empty());
         repository.insert(user);
 
         return user.id().value();
     }
 
     /**
-     * Update the profile (account and password are not part of profile updates).
+     * Update the profile (account and password are not part of profile
+     * updates). Status is optional: a null / blank value leaves the current
+     * status untouched; a real change bumps {@code tokenVersion} so prior
+     * JWTs fail verify.
      *
      * @param operatorId operator user id
      * @param id         user id
      * @param userName   user name
      * @param mobile     mobile number
      * @param email      email
+     * @param avatar     avatar
+     * @param pkOrg      organization link
+     * @param status     account status ("1" / "0"), nullable
      */
     @Transactional
     public void update(String operatorId, String id, String userName, String mobile, String email, String avatar,
-            String pkOrg) {
+            String pkOrg, String status) {
         authorizationPort.assertHas(operatorId, JulyUserPermissionCodes011.UPDATE);
         JulyUser user = require(id);
         user.updateProfile(userName, mobile, email, avatar, pkOrg);
+
+        if (status != null && !status.isBlank()) {
+            user.changeStatus(status);
+        }
+
         repository.update(user);
     }
 
@@ -303,7 +315,7 @@ public class JulyUserUseCase {
             throw BusinessException.unauthorized("account is disabled");
         }
 
-        String token = authTokenPort.issue(user.id().value(), user.userAccount());
+        String token = authTokenPort.issue(user.id().value(), user.userAccount(), user.tokenVersion());
         repository.touchLastLoginTime(user.id().value());
         userAuditPort.record(user.id().value(), user.userAccount(), AuditType011.LOGIN, AuditObjectCodes011.JULY_USER, "login success", ip);
 
@@ -337,7 +349,7 @@ public class JulyUserUseCase {
             throw BusinessException.unauthorized("account is disabled");
         }
 
-        String token = authTokenPort.issue(user.id().value(), user.userAccount());
+        String token = authTokenPort.issue(user.id().value(), user.userAccount(), user.tokenVersion());
         repository.touchLastLoginTime(user.id().value());
         userAuditPort.record(user.id().value(), user.userAccount(), AuditType011.LOGIN, AuditObjectCodes011.JULY_USER, "passwordless login", ip);
 
@@ -415,9 +427,9 @@ public class JulyUserUseCase {
     }
 
     /**
-     * Logout of the current operator: stateless JWT cannot be revoked, so the
-     * server side only records the LOGOUT audit row — the client clears the
-     * token.
+     * Logout of the current operator: bump {@code tokenVersion} so the current
+     * JWT (and any other sessions) fail verify, then record the LOGOUT audit
+     * row. The client should still clear its copy of the token.
      *
      * @param operatorId  current operator user id, nullable (debug no-token)
      * @param userAccount current operator account, nullable
@@ -425,9 +437,18 @@ public class JulyUserUseCase {
      */
     @Transactional
     public void logout(String operatorId, String userAccount, String ip) {
-        if (operatorId != null && !operatorId.isBlank()) {
-            userAuditPort.record(operatorId, userAccount, AuditType011.LOGOUT, AuditObjectCodes011.JULY_USER, "logout", ip);
+        if (operatorId == null || operatorId.isBlank()) {
+            return;
         }
+
+        JulyUser user = repository.findById(operatorId);
+
+        if (user != null) {
+            user.revokeTokens();
+            repository.update(user);
+        }
+
+        userAuditPort.record(operatorId, userAccount, AuditType011.LOGOUT, AuditObjectCodes011.JULY_USER, "logout", ip);
     }
 
     /**

@@ -32,7 +32,9 @@
 
 3. **SecretCipher 列宽（已有库）**：`secret-cipher-column-widen.sql` —— 将 `api_key` / `access_key` / `secret_key` / `july_datasource.password` 加宽到 `VARCHAR(512)`；**新库 CREATE 已含 512 可跳过**。
 
-4. `base-entity-columns.sql` 仅**模板/说明**，不执行。
+4. **Token 吊销列（已有库）**：`token-version-column.sql` —— 为 `july_user` 增加 `token_version INT NOT NULL DEFAULT 0`；**新库 CREATE 已含可跳过**。
+
+5. `base-entity-columns.sql` 仅**模板/说明**，不执行。
 
 ## 不在本目录的表
 

@@ -11,17 +11,20 @@ package com.klsjnh.infrastructure.messagecenter.inbound.repository;
  *          modify history
  *
  *      2026.09.19  july message channel repository impl class
+ *      2026.09.26  field-level encrypt channel config secrets
  *
  */
 
 import com.klsjnh.common.enums.Status011;
 
+import com.klsjnh.domain.crypto.SecretCipherPort;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannel;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannelQuerySpec;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannelRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
+import com.klsjnh.infrastructure.messagecenter.crypto.ChannelConfigCipher011;
 import com.klsjnh.infrastructure.messagecenter.inbound.entity.JulyInboundChannelPo;
 import com.klsjnh.infrastructure.messagecenter.inbound.mapper.JulyInboundChannelMapper;
 import com.klsjnh.infrastructure.persistence.mapper.CommonMapper;
@@ -38,6 +41,8 @@ import java.util.List;
 /**
  * Repository implementation for the JulyInboundChannel aggregate on the base
  * repository (july_message_inbound_channel, business unique column channel_code).
+ * Sensitive keys inside {@code config} JSON are encrypted via
+ * {@link ChannelConfigCipher011} / {@link SecretCipherPort}.
  */
 
 @Repository
@@ -46,13 +51,21 @@ public class JulyInboundChannelRepositoryImpl
         implements JulyInboundChannelRepository {
 
     /**
+     * Reversible cipher for sensitive config JSON fields.
+     */
+    private final SecretCipherPort secretCipher;
+
+    /**
      * Create the repository.
      *
      * @param mapper       mybatis-plus mapper
      * @param commonMapper native sql mapper
+     * @param secretCipher secret cipher port
      */
-    public JulyInboundChannelRepositoryImpl(JulyInboundChannelMapper mapper, CommonMapper commonMapper) {
+    public JulyInboundChannelRepositoryImpl(JulyInboundChannelMapper mapper, CommonMapper commonMapper,
+            SecretCipherPort secretCipher) {
         super(mapper, commonMapper);
+        this.secretCipher = secretCipher;
     }
 
     /**
@@ -253,7 +266,7 @@ public class JulyInboundChannelRepositoryImpl
         po.setChannelCode(channel.channelCode());
         po.setChannelName(channel.channelName());
         po.setProviderType(channel.providerType());
-        po.setConfig(channel.config());
+        po.setConfig(ChannelConfigCipher011.encryptFields(channel.config(), secretCipher));
         po.setStatus(channel.status());
         po.setRemark(channel.remark());
 
@@ -270,6 +283,8 @@ public class JulyInboundChannelRepositoryImpl
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
         return new JulyInboundChannel(EntityId.of(po.getId()), po.getChannelCode(), po.getSortOrder(),
-                po.getChannelName(), po.getProviderType(), po.getConfig(), po.getStatus(), po.getRemark(), audit);
+                po.getChannelName(), po.getProviderType(),
+                ChannelConfigCipher011.decryptFields(po.getConfig(), secretCipher), po.getStatus(), po.getRemark(),
+                audit);
     }
 }

@@ -120,16 +120,17 @@ public class JulyStorageProviderUseCase {
     }
 
     /**
-     * Update a storage instance; a blank secretKey keeps the stored one. A
-     * non-blank defaultBucket upserts the default bucket child row.
+     * Update a storage instance; blank or {@code ******} accessKey / secretKey
+     * keep the stored values. A non-blank defaultBucket upserts the default
+     * bucket child row.
      *
      * @param id                   storage id
      * @param storageName          display name
      * @param provider             storage type code
      * @param basePath             local root
      * @param endpoint             endpoint
-     * @param accessKey            access key
-     * @param secretKey            secret key, blank keeps the stored one
+     * @param accessKey            access key; blank / mask keeps the stored one
+     * @param secretKey            secret key; blank / mask keeps the stored one
      * @param secure               whether to use HTTPS
      * @param defaultBucket        default bucket, optional
      * @param presignExpirySeconds presigned URL expiry seconds

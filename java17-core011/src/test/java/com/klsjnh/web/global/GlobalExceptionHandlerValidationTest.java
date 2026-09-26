@@ -23,6 +23,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.multipart.MultipartException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,6 +73,37 @@ class GlobalExceptionHandlerValidationTest {
         assertEquals(HttpCodeEnum011.BAD_REQUEST.getCode(), response.getBody().getStatusCode());
         assertEquals("code is required", response.getBody().getMessage());
         assertEquals("", response.getBody().getErrorMessage());
+    }
+
+    /**
+     * MissingServletRequestParameterException maps to HTTP 400.
+     */
+    @Test
+    void missingRequestParameterMapsToBadRequestEnvelope() {
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
+
+        MissingServletRequestParameterException ex = new MissingServletRequestParameterException("objectName",
+                "String");
+
+        ResponseEntity<Response011<Void>> response = handler.handleMissingParameter(ex);
+
+        assertEquals(HttpCodeEnum011.BAD_REQUEST.getCode(), response.getStatusCode().value());
+        assertEquals("objectName is required", response.getBody().getMessage());
+    }
+
+    /**
+     * MultipartException maps to HTTP 400.
+     */
+    @Test
+    void multipartExceptionMapsToBadRequestEnvelope() {
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
+
+        MultipartException ex = new MultipartException("no multipart boundary");
+
+        ResponseEntity<Response011<Void>> response = handler.handleMultipart(ex);
+
+        assertEquals(HttpCodeEnum011.BAD_REQUEST.getCode(), response.getStatusCode().value());
+        assertEquals("multipart request is invalid", response.getBody().getMessage());
     }
 
     /**

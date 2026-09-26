@@ -30,8 +30,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.validation.ConstraintViolation;
@@ -169,6 +171,42 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Response011<Void>> handleUnreadable(HttpMessageNotReadableException ex) {
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "malformed request body");
+
+        if (runtimeStatusPort.isDebug()) {
+            body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
+        }
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Map a missing required request parameter onto a bad request envelope
+     * (empty-param probes must not surface as 500).
+     *
+     * @param ex missing servlet request parameter
+     * @return error envelope
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Response011<Void>> handleMissingParameter(MissingServletRequestParameterException ex) {
+        String message = ex.getParameterName() + " is required";
+        Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, message);
+
+        if (runtimeStatusPort.isDebug()) {
+            body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
+        }
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Map multipart parse / missing-part failures onto a bad request envelope.
+     *
+     * @param ex multipart exception
+     * @return error envelope
+     */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Response011<Void>> handleMultipart(MultipartException ex) {
+        Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "multipart request is invalid");
 
         if (runtimeStatusPort.isDebug()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());

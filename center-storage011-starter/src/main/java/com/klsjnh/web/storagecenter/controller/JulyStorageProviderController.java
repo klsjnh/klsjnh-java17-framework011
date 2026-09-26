@@ -123,14 +123,15 @@ public class JulyStorageProviderController {
     }
 
     /**
-     * Update a storage instance (blank secretKey keeps the stored one).
+     * Update a storage instance (blank / {@code ******} accessKey and secretKey
+     * keep the stored values).
      *
      * @param vo save request
      * @return envelope with the storage id
      */
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/update")
-    @Operation(summary = "修改存储实例（storageCode 不可变；secretKey 留空保持）")
+    @Operation(summary = "修改存储实例（storageCode 不可变；accessKey/secretKey 留空或 ****** 保持）")
     public Response011<IdVo011> update(@Valid @RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);

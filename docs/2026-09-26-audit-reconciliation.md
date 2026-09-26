@@ -10,11 +10,11 @@
 
 | # | 审计原文要点 | 代码现状（路径/证据） | 结论 | 备注 |
 |---|---|---|---|---|
-| P0-1 | 配置文件提交数据库/Druid/JWT/动态数据源/MinIO 等凭据；应改占位符 + 轮换 + 历史扫描 | `application-development.yml` L8–9 `dev202608011`；L14–15 Druid `klsjnh`；L22–24 JWT `dev-secret-klsjnh-…`；L32–33 动态库密码；L37–39 MinIO `demo011`/`123456789`。`application.yml` L7 默认 `spring.profiles.active: development`。未见 Gitleaks/CI secret scan；无 `.github/` | **仍成立** | production 模板用占位符（`application-production.yml`）且 fat-jar excludes production/local（`java17-app011/pom.xml` L86–92），但 **development 共享凭据仍入库**；JWT 泄露风险仍在 |
-| P0-2a | debug 下无 Token 仍放行；免密登录在白名单 | `GlobalAuthFilter` L235–237：`identity == null && !isDebug()` 才 401；debug 不拒绝。`WHITELIST_PATHS` 含 `/loginByUserName`（L94–96）。`FrameworkStatus011.allowsPasswordlessLogin()` 对 DEBUG/DEVELOPMENT 为 true。默认 `krt.status: debug`（development yml L22） | **仍成立** | 默认启动路径仍是「development profile + debug status」 |
+| P0-1 | 配置文件提交数据库/Druid/JWT/动态数据源/MinIO 等凭据；应改占位符 + 轮换 + 历史扫描 | `application-development.yml` 已改为 `${ENV:default}`（见 `.env.example`）；**默认值仍入库可跑本地**。未见 Gitleaks/CI secret scan；无 `.github/` | **部分** | 占位符已落地；默认明文仍属「开发态已知风险」；历史 git 扫描 / 轮换未做 |
+| P0-2a | debug 下无 Token 仍放行；免密登录在白名单 | 同前；**额外**：`KrtSecurityConfig011` 在 `krt.status=debug` 启动时打醒目 WARN | **仍成立** | **有意保留**本地 debug 体验；勿当生产契约 |
 | P0-2b | 权限 opt-in：未 assertHas 则只认证不鉴权；用户 CRUD/assignRoles/resetPassword 无权限；UseCase 无 AuthorizationPort；内置角色 `*` | **相对审计时已变**：`JulyUserUseCase` 已注入 `AuthorizationPort`，insert/update/delete/resetPassword/assignRoles（`JulyUserRoleAssignUseCase`）等均 `assertHas`（如 L143、L278）。生产写路径有 `PermissionWhitelistGate011` + `GlobalAuthFilter.enforcePermissionWhitelist`。但：① debug/development 下 `AuthorizationAdapter.assertHas` **no-op**（L162–164）；② 无 access starter 时 `PermissiveAuthorizationPort` 全放行；③ 内置角色仍返回 `"*"`（`BUILTIN_ALL`，AuthorizationAdapter L58/L120）；④ 读类路径仍豁免写白名单 | **部分** | 生产 + access 时管理面挂齐；**默认 debug 下审计描述的提权链仍可走通** |
 | P0-3 | profile 与 `krt.status` 双开关；卫兵只拦 production profile + 非 production status；缺统一 security-mode；默认不应激活 development | `KrtSecurityConfig011.validate` L85–92 仅检查 profile 名等于 `production`；`application.yml` 仍默认 `development`。无 `app.security-mode`。缺省 `krt.status` 代码落 PRODUCTION（fail-safe），但被 development yml 覆盖为 debug | **仍成立** | `prod-cn`/`k8s` 等 profile 名仍可绕过「production profile 必须 production status」卫兵 |
-| P0-4 | AI/存储/数据源业务密钥库内明文；文档自承未加密 | 原 033 提案未落地；现已落地 `SecretCipherPort` + AES-GCM；Po 经 Repository 加解密；列宽 `VARCHAR(512)` | **已关闭（B0–B2）** | 消息渠道 `config` JSON 字段级仍为 B3；登录密码 bcrypt 另线 |
+| P0-4 | AI/存储/数据源业务密钥库内明文；文档自承未加密 | 原 033 提案未落地；现已落地 `SecretCipherPort` + AES-GCM；Po 经 Repository 加解密；列宽 `VARCHAR(512)`；**消息渠道 `config` JSON 字段级加密亦已落地（B3）** | **已关闭（B0–B3）** | 登录密码 bcrypt 另线 |
 
 ---
 
@@ -35,7 +35,7 @@
 | # | 审计原文要点 | 代码现状（路径/证据） | 结论 | 备注 |
 |---|---|---|---|---|
 | AUTH-1 | 认证与授权割裂；未声明权限默认放行；应默认拒绝 | 生产：写路径未 `assertHas` → 403（白名单 PEP）。开发：assertHas no-op + 无写闸。读路径（select/get…）生产也豁免写闸。无「新增用例缺策略 → **构建失败**」机制 | **部分** | 生产写 fail-closed；非全站默认拒绝；CI 不扫缺策略 |
-| AUTH-2 | Token 生命周期不完整：长有效期、logout 不吊销、无 credentialVersion/jti | `JwtAuthTokenService`：仅 `id`+subject+exp，无 jti/version（L94–100）。默认 `expire-minutes: 480`。`JulyUserUseCase.logout` 注释明确「JWT 无状态不可吊销」仅写审计（L418–430）。改密/禁用不抬版本 | **仍成立** | |
+| AUTH-2 | Token 生命周期不完整：长有效期、logout 不吊销、无 credentialVersion/jti | **已落地 token_version**：`july_user.token_version` + JWT claim `tv`；`JwtAuthTokenService.verify` 比对版本并拒绝 `status=0`；status 变更 / 改密 / 重置密码 / logout 抬版本。默认 `expire-minutes: 480` 仍偏长；无 jti 单票吊销 | **部分** | 版本吊销已达标；长有效期 / 无 jti 仍属产品债 |
 | AUTH-3 | 权限查询每请求 N+1（角色循环查） | `AuthorizationAdapter.listCodes` L107–128：按 roleId 循环 `findById` + `findPermissionCodes`。无 Join SQL / Redis 缓存 | **仍成立** | |
 
 ---
@@ -91,9 +91,9 @@
 | AT-02 | 普通用户高权操作（重置密码/分配角色）拒绝并审计 | **部分** | 生产路径 `assertHas(RESET_PASSWORD/ASSIGN_ROLES)`。debug no-op。拒绝审计是否完备未核（Aspect 偏成功路径） |
 | AT-03 | 新增未声明访问策略的用例 → CI 阻断；运行时不默认放行 | **仍成立（未达标）** | 无 CI Arch/策略扫描。生产写闸运行时 403；读路径与无 access 装配仍可放行；开发完全不拦 |
 | AT-04 | 缺环境/错 Profile/debug 冲突 → 安全模式或拒启 | **部分** | `production` profile + 非 production status → 启动失败；缺省 status→PRODUCTION。默认仍激活 development+debug；非 `production` 名的「类生产」profile 无卫兵 |
-| AT-05 | 改密/禁用/退出后旧 Token 失效 | **仍成立（未达标）** | 无 credentialVersion；logout 不吊销；JWT 仅过期失效 |
+| AT-05 | 改密/禁用/退出后旧 Token 失效 | **已达标** | `token_version` bump + verify 拒禁用；status 变更亦抬版本 |
 | AT-06 | 实例 A 撤权，实例 B 下次请求不放行 | **不适用/未知** | 无授权缓存；多实例一致性依赖每请求查库。未见双实例自动化证据 → 标 **未知（设计上无缓存窗口，亦无正式验收）** |
-| AT-07 | 业务密钥读取/列表/故障不回退明文 | **已达标（B0–B2）** | SecretCipher 落库 `enc:v1:`；出参打码/剔除；存量无前缀兼容读 |
+| AT-07 | 业务密钥读取/列表/故障不回退明文 | **已达标（B0–B3；2026-09-26 补全厂商键）** | SecretCipher 落库 `enc:v1:`；渠道敏感键含 `corpSecret`/`appSecret` 等；出参打码；存储 update mask/blank 保留旧值；存量无前缀兼容读 |
 | AT-08 | 异常分页/超大批量/超大文件受控 | **部分** | Sql 分页 clamp；`@Valid` 已落地（016 §6.7）；通用 `PageQuery011` 仍无上限；Http 二进制仍可整包入堆 |
 | AT-09 | 空库部署/升级/应用回退与 DB 兼容 | **仍成立（未达标）** | 无 Flyway/Liquibase |
 | AT-10 | 双实例调度/重复消息/导出/中途重启无重复副作用 | **仍成立（未达标）** | Quartz RAM；无集群锁验收 |
@@ -111,25 +111,27 @@
 
 | 结论 | 数量 | 条目 ID |
 |---|---:|---|
-| 已修复 | **0** | —（无整项从「成立」变为「完全不成立」） |
-| 部分 | **14** | P0-2b, A-1, A-2, A-3, A-4, AUTH-1, API-1b, CI-1, OBS-1, AT-01, AT-02, AT-04, AT-08, AT-13 |
-| 仍成立 | **24** | P0-1, P0-2a, P0-3, P0-4, A-5, AUTH-2, AUTH-3, API-1, API-2, API-3, CI-2, CI-3, OBS-2, DOC-1, DOC-2, MISC-1…4, 及 AT 未达标项计入下表 |
+| 已修复 | **2** | P0-4（B0–B3）、AT-05（token_version） |
+| 部分 | **16** | **P0-1**, P0-2b, A-1, A-2, A-3, A-4, AUTH-1, **AUTH-2**, API-1b, CI-1, OBS-1, AT-01, AT-02, AT-04, AT-08, AT-13 |
+| 仍成立 | **20** | P0-2a, P0-3, A-5, AUTH-3, API-1, API-2, API-3, CI-2, CI-3, OBS-2, DOC-1, DOC-2, MISC-1…4, 及其余 AT 未达标项 |
 | 不适用/未知 | **2** | AT-06（未知）, AT-15（未知） |
 
-> **主表（不含 AT）计数**：已修复 **0** / 部分 **9** / 仍成立 **18** / 不适用 **0**。  
-> **含 AT-01…15**：已修复 **0** / 部分 **14** / 仍成立 **24**（含 AT 未达标） / 不适用·未知 **2**。
+> **主表（不含 AT）计数**：已修复 **1**（P0-4）/ 部分 **10**（含 AUTH-2）/ 仍成立 **16** / 不适用 **0**。  
+> **含 AT-01…15**：已修复 **2** / 部分 **15** / 仍成立 **21** / 不适用·未知 **2**。
 
-### 相对审计时的主要正向变化（仍不够「已修复」）
+### 相对审计时的主要正向变化
 
 1. 用户/管理面 UseCase **普遍挂上** `assertHas`；生产写白名单 PEP。  
 2. infrastructure 已拆为 **center / starter** 模块。  
 3. gate 从「仅 compile」改为 **`clean install`（跑测）**。  
 4. **observability starter**（actuator + prometheus）已存在。  
-5. 动态 SQL **pageSize clamp [10,500]**；部分 HTTP 流式 API。
+5. 动态 SQL **pageSize clamp [10,500]**；部分 HTTP 流式 API。  
+6. **033 SecretCipher B0–B3**（含消息渠道 config 字段级加密）。  
+7. **AUTH-2 / AT-05**：`token_version` + claim `tv`；status/改密/logout 吊销；禁用 verify 拒绝。
 
 ### 仍阻断企业底座的 P0 残余
 
-默认 **development + debug**、仓库内 **开发凭据/JWT**、debug **免认证 + assertHas no-op**、Token **不可撤销**、无 **secret scan / 企业 CI / Flyway**；业务密钥可逆加密已落地（033 B0–B2），消息渠道 JSON 字段级加密仍为 B3。
+默认 **development + debug**（启动有醒目 WARN）、development yml **`${ENV:default}` 占位但默认值仍可本地跑**、debug **免认证 + assertHas no-op**、JWT **默认 480 分钟偏长 / 无 jti**、无 **secret scan / 企业 CI / Flyway**；业务密钥可逆加密已落地（033 B0–B3，含厂商密钥名）；存储 update mask 安全；download 已挂 SELECT。详见 [api-consistency-fix](2026-09-26-api-consistency-fix.md)。
 
 ---
 

@@ -11,6 +11,7 @@ package com.klsjnh.web.iam.vo.julyuser;
  *          modify history
  *
  *      2026.09.12  july user update vo 011 class
+ *      2026.09.26  add status field (bumps tokenVersion)
  *
  */
 
@@ -22,6 +23,8 @@ import jakarta.validation.constraints.NotBlank;
 
 /**
  * Profile update request VO for a user (account and password excluded).
+ * Status is optional; a real change bumps {@code token_version} so prior
+ * JWTs fail verify.
  */
 
 @Data
@@ -50,4 +53,8 @@ public class JulyUserUpdateVo011 {
 
     /** Organization link (pk_org), nullable. */
     private String pkOrg;
+
+    /** Account status, '1' enabled / '0' disabled; null means keep current. */
+    @Schema(description = "账号状态（1 启用 / 0 停用，可空=不修改；变更后旧 JWT 作废）")
+    private String status;
 }

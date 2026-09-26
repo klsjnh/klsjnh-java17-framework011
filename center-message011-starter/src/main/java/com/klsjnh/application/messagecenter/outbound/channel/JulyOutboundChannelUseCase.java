@@ -29,6 +29,8 @@ import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
+import com.klsjnh.infrastructure.messagecenter.crypto.ChannelConfigCipher011;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,9 +99,10 @@ public class JulyOutboundChannelUseCase {
         authorizationPort.assertHas(operatorId, JulyMessageOutboundChannelPermissionCodes011.UPDATE);
         JulyOutboundChannel channel = require(id);
         requireStatus(status);
+        String mergedConfig = ChannelConfigCipher011.mergeKeepingSecrets(channel.config(), config);
 
         try {
-            channel.update(channelName, providerType, config, sortOrder, status, remark);
+            channel.update(channelName, providerType, mergedConfig, sortOrder, status, remark);
         } catch (IllegalArgumentException ex) {
             throw BusinessException.badRequest(ex.getMessage());
         }

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS july_user (
   avatar varchar(200) DEFAULT NULL COMMENT '头像',
   pk_org varchar(33) DEFAULT NULL COMMENT '组织链接（july_organization.id，可空）',
   last_login_time datetime DEFAULT NULL COMMENT '最后登录时间',
+  token_version int NOT NULL DEFAULT 0 COMMENT 'JWT 凭证版本（改密/改状态/logout 递增；与 token claim tv 比对）',
   status varchar(3) NOT NULL DEFAULT '1' COMMENT '账号状态（0 禁用 / 1 启用）',
   create_by varchar(33) DEFAULT NULL COMMENT '创建人',
   update_by varchar(33) DEFAULT NULL COMMENT '最后修改人',

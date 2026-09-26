@@ -136,12 +136,15 @@ public class StorageObjectUseCase {
     /**
      * Read an object.
      *
+     * @param operatorId  operator id
      * @param storageCode storage code
      * @param bucketName  bucket name
      * @param objectName  object name
      * @return object bytes, never null
      */
-    public byte[] download(String storageCode, String bucketName, String objectName) {
+    public byte[] download(String operatorId, String storageCode, String bucketName, String objectName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
+
         byte[] content = adapter(storageCode).get(bucketName, objectName);
 
         if (content == null) {
@@ -183,12 +186,14 @@ public class StorageObjectUseCase {
     /**
      * Presigned GET URL of an object.
      *
+     * @param operatorId  operator id
      * @param storageCode storage code
      * @param bucketName  bucket name
      * @param objectName  object name
      * @return presigned URL / URI
      */
-    public String presignedUrl(String storageCode, String bucketName, String objectName) {
+    public String presignedUrl(String operatorId, String storageCode, String bucketName, String objectName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
         return adapter(storageCode).presignedGetUrl(bucketName, objectName);
     }
 
@@ -262,12 +267,15 @@ public class StorageObjectUseCase {
     /**
      * Stream an object (no full-object buffering).
      *
+     * @param operatorId  operator id
      * @param storageCode storage code
      * @param bucketName  bucket name
      * @param objectName  object name
      * @return object stream
      */
-    public InputStream downloadStream(String storageCode, String bucketName, String objectName) {
+    public InputStream downloadStream(String operatorId, String storageCode, String bucketName, String objectName) {
+        authorizationPort.assertHas(operatorId, JulyStorageObjectPermissionCodes011.SELECT);
+
         InputStream stream = adapter(storageCode).getStream(bucketName, objectName);
 
         if (stream == null) {

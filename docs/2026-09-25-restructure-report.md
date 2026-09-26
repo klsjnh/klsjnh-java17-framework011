@@ -102,3 +102,5 @@ README（架构总览/模块表/装配说明）· 015.project-info（Maven 骨�
 4. **凭据治理**：入库 development 配置含明文凭据与可预测 JWT secret（需轮换 + 历史清理 + Gitleaks 进 CI）；production 模板改占位符 —— **仍开放**。
 5. ~~工程债：gate 不跑测试~~ → **现行**：`script011.sh gate` = 规范检查 + **`mvn -o clean install`（含 surefire + 装 .m2）**。其余工程债仍在：Druid 探测池泄漏；消息中心克隆家族；starter `@ConditionalOnMissingBean` 覆写完整化。
 6. **033 SecretCipher**：**提案未落地**（无 `SecretCipherPort` 实现），见 [033](infrastructure011/033.topic-platform-security.md)。
+
+> **2026-09-26 勘误**：033 已落地 **B0–B3**（含消息渠道 config 字段级加密）；Token 吊销见 `token_version` / AT-05。上文保留当日重构时事实。

@@ -11,11 +11,13 @@ package com.klsjnh.web.messagecenter.outbound.converter;
  *          modify history
  *
  *      2026.09.19  july message channel converter class
+ *      2026.09.26  mask sensitive config json fields in vo
  *
  */
 
 import com.klsjnh.domain.messagecenter.outbound.channel.JulyOutboundChannel;
 
+import com.klsjnh.infrastructure.messagecenter.crypto.ChannelConfigCipher011;
 import com.klsjnh.web.messagecenter.outbound.vo.channel.JulyOutboundChannelVo011;
 
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import java.util.List;
 
 /**
  * Converter between the JulyOutboundChannel aggregate and the response VO.
+ * Sensitive config JSON fields are masked ({@code ******}) and never echoed.
  */
 
 @Component
@@ -43,7 +46,7 @@ public class JulyOutboundChannelConverter {
         vo.setSortOrder(channel.sortOrder());
         vo.setChannelName(channel.channelName());
         vo.setProviderType(channel.providerType());
-        vo.setConfig(channel.config());
+        vo.setConfig(ChannelConfigCipher011.maskFields(channel.config()));
         vo.setStatus(channel.status());
         vo.setRemark(channel.remark());
         vo.setCreateBy(channel.audit().createBy());

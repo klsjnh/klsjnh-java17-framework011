@@ -89,7 +89,7 @@ class JulyUserUseCaseLoginTest {
         JulyUser user = JulyUser.create(EntityId.of("u1"), "demo", "Demo", "hash", AuditInfo.empty());
         when(repository.findByAccount("demo")).thenReturn(user);
         when(passwordPort.matches("secret", "hash")).thenReturn(true);
-        when(authTokenPort.issue("u1", "demo")).thenReturn("token-011");
+        when(authTokenPort.issue("u1", "demo", 0)).thenReturn("token-011");
         when(userRoleCodesPort.findRoleCodes("u1")).thenReturn(List.of("admin"));
 
         LoginResult result = useCase.login("demo", "secret", "127.0.0.1");
@@ -116,11 +116,24 @@ class JulyUserUseCaseLoginTest {
      */
     @Test
     void loginDisabledAccountFails() {
-        JulyUser user = new JulyUser(EntityId.of("u1"), "demo", "Demo", "hash", null, null, null, null, null,
+        JulyUser user = new JulyUser(EntityId.of("u1"), "demo", "Demo", "hash", null, null, null, null, null, 0,
                 Status011.DISABLED.getCode(), AuditInfo.empty());
         when(repository.findByAccount("demo")).thenReturn(user);
         when(passwordPort.matches("secret", "hash")).thenReturn(true);
 
         assertThrows(BusinessException.class, () -> useCase.login("demo", "secret", "127.0.0.1"));
+    }
+
+    /**
+     * Passwordless login also rejects disabled accounts.
+     */
+    @Test
+    void loginByUserNameDisabledAccountFails() {
+        when(runtimeStatusPort.allowsPasswordlessLogin()).thenReturn(true);
+        JulyUser user = new JulyUser(EntityId.of("u1"), "demo", "Demo", "hash", null, null, null, null, null, 0,
+                Status011.DISABLED.getCode(), AuditInfo.empty());
+        when(repository.findByAccount("demo")).thenReturn(user);
+
+        assertThrows(BusinessException.class, () -> useCase.loginByUserName("demo", "127.0.0.1"));
     }
 }

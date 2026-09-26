@@ -39,6 +39,7 @@ tmp_*
 _fix.py
 _scan_*.sh
 _purge*
+tools/_*
 
 # ---- runtime pid / tool state ----
 *.pid
@@ -51,6 +52,8 @@ application-*.yml
 application-*.yaml
 !application-development.yml
 *.local
+.env
+!.env.example
 
 # ---- node（AST 门禁依赖：tools/package.json → tools/node_modules，不入库）----
 node_modules/

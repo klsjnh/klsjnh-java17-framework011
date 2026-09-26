@@ -119,13 +119,13 @@ public class JulyUserController {
      */
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/update")
-    @Operation(summary = "修改用户资料（不含账号与密码）")
+    @Operation(summary = "修改用户资料（不含账号与密码；可改 status，变更后旧 JWT 作废）")
     public Response011<IdVo011> update(@Valid @RequestBody JulyUserUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
         julyUserUseCase.update(operator.id(), vo.getId(), vo.getUserName(), vo.getMobile(), vo.getEmail(),
-                vo.getAvatar(), vo.getPkOrg());
+                vo.getAvatar(), vo.getPkOrg(), vo.getStatus());
 
         return Response011.successId(funcName, vo.getId());
     }
@@ -279,14 +279,14 @@ public class JulyUserController {
     }
 
     /**
-     * Logout: records the LOGOUT audit row (stateless JWT — the client clears
-     * the token).
+     * Logout: bumps tokenVersion so the JWT fails verify, records LOGOUT
+     * audit; the client should clear its copy of the token.
      *
      * @param request http request (operator from the auth filter)
      * @return empty envelope
      */
     @PostMapping("/logout")
-    @Operation(summary = "登出（记录 LOGOUT 审计，客户端清除 token）")
+    @Operation(summary = "登出（抬 token_version 作废 JWT，写 LOGOUT 审计）")
     public Response011<Void> logout(HttpServletRequest request) {
         String funcName = "logout";
 

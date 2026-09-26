@@ -35,11 +35,6 @@ import java.util.List;
 public class JulyStorageProviderConverter {
 
     /**
-     * Mask echoed back for the access key / secret key.
-     */
-    private static final String MASK_SECRET = "******";
-
-    /**
      * Map the aggregate to the response VO (keys masked).
      *
      * @param storage aggregate
@@ -54,8 +49,8 @@ public class JulyStorageProviderConverter {
         vo.setProvider(storage.provider());
         vo.setBasePath(storage.basePath());
         vo.setEndpoint(storage.endpoint());
-        vo.setAccessKey(MASK_SECRET);
-        vo.setSecretKey(MASK_SECRET);
+        vo.setAccessKey(JulyStorageProvider.SECRET_MASK);
+        vo.setSecretKey(JulyStorageProvider.SECRET_MASK);
         vo.setSecure(storage.secure() ? "1" : "0");
         vo.setPresignExpirySeconds(storage.presignExpirySeconds());
         vo.setRemark(storage.remark());

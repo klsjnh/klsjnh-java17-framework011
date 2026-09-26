@@ -4,7 +4,7 @@
 -- 2026-09-26：文件更名为 july_center_message011.sql（对齐 center-message011-starter）
 -- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
 -- 设计：docs/infrastructure011/016.message-center/（011 设计思路 / 013 整体架构 / 015 怎么使用 / 016 二开）
--- 边界：出/入站渠道均可插拔（实现型 SPI + 注册表）；config 密钥出参打码，加密二期
+-- 边界：出/入站渠道均可插拔（实现型 SPI + 注册表）；config 敏感键 SecretCipher 字段级加密，出参打码
 -- 组成：出站三表（渠道 / 模板 / 发送记录）+ 入站三表（渠道 / 模板 / 接收记录）
 -- ============================================================
 
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS july_message_outbound_channel (
     channel_code  VARCHAR(60)  NOT NULL                COMMENT '渠道编码（全局唯一，不可变）',
     channel_name  VARCHAR(100) NOT NULL                COMMENT '渠道名称',
     provider_type VARCHAR(60)  NOT NULL                COMMENT '提供商类型（绑定 SPI channelCode，如 inapp/webhook/sms）',
-    config        TEXT         NULL                    COMMENT '渠道配置 JSON（url / 密钥等，出参打码）',
+    config        TEXT         NULL                    COMMENT '渠道配置 JSON（url / 密钥等；敏感键 SecretCipher enc:v1:；出参打码）',
     remark        VARCHAR(300) NULL                    COMMENT '备注',
     sort_order    INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status        VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS july_message_inbound_channel (
     channel_code  VARCHAR(60)  NOT NULL                COMMENT '渠道编码（全局唯一，不可变）',
     channel_name  VARCHAR(100) NOT NULL                COMMENT '渠道名称',
     provider_type VARCHAR(60)  NOT NULL                COMMENT '提供商类型（绑定 SPI channelCode，如 webhook/sms）',
-    config        TEXT         NULL                    COMMENT '渠道配置 JSON（回调密钥 / 验签等，出参打码）',
+    config        TEXT         NULL                    COMMENT '渠道配置 JSON（回调密钥 / 验签等；敏感键 SecretCipher enc:v1:；出参打码）',
     remark        VARCHAR(300) NULL                    COMMENT '备注',
     sort_order    INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status        VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',

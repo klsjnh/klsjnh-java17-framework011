@@ -43,6 +43,12 @@ public class JulyStorageProvider {
     private static final int DEFAULT_PRESIGN_SECONDS = 3600;
 
     /**
+     * Mask echoed by the API for accessKey / secretKey; update must treat it
+     * (and blank) as "keep the stored value".
+     */
+    public static final String SECRET_MASK = "******";
+
+    /**
      * Primary key.
      */
     private final EntityId id;
@@ -180,15 +186,16 @@ public class JulyStorageProvider {
     }
 
     /**
-     * Update the mutable fields (storageCode is immutable). A blank secretKey
-     * keeps the stored one.
+     * Update the mutable fields (storageCode is immutable). Blank or
+     * {@link #SECRET_MASK} accessKey / secretKey keep the stored values
+     * (same contract as message-channel {@code mergeKeepingSecrets}).
      *
      * @param storageName          display name
      * @param provider             storage type code
      * @param basePath             local root
      * @param endpoint             endpoint
-     * @param accessKey            access key
-     * @param secretKey            secret key, blank keeps the stored one
+     * @param accessKey            access key; blank / mask keeps the stored one
+     * @param secretKey            secret key; blank / mask keeps the stored one
      * @param secure               whether to use HTTPS
      * @param presignExpirySeconds presigned URL expiry seconds
      * @param remark               remark
@@ -196,14 +203,15 @@ public class JulyStorageProvider {
      */
     public void update(String storageName, String provider, String basePath, String endpoint, String accessKey,
             String secretKey, boolean secure, Integer presignExpirySeconds, String remark, String status) {
-        String keepSecret = StringUtil011.isBlank(secretKey) ? this.secretKey : secretKey;
-        validate(this.storageCode, storageName, provider, basePath, endpoint, accessKey, keepSecret, remark);
+        String keepAccess = isMaskedOrBlank(accessKey) ? this.accessKey : accessKey;
+        String keepSecret = isMaskedOrBlank(secretKey) ? this.secretKey : secretKey;
+        validate(this.storageCode, storageName, provider, basePath, endpoint, keepAccess, keepSecret, remark);
 
         this.storageName = storageName;
         this.provider = provider;
         this.basePath = basePath;
         this.endpoint = endpoint;
-        this.accessKey = accessKey;
+        this.accessKey = keepAccess;
         this.secretKey = keepSecret;
         this.secure = secure;
         this.remark = remark;
@@ -215,6 +223,16 @@ public class JulyStorageProvider {
         if (!StringUtil011.isBlank(status)) {
             this.status = status;
         }
+    }
+
+    /**
+     * Whether a credential field from the client means "keep stored value".
+     *
+     * @param value access or secret key from the request
+     * @return true when blank or the API mask
+     */
+    private static boolean isMaskedOrBlank(String value) {
+        return StringUtil011.isBlank(value) || SECRET_MASK.equals(value.trim());
     }
 
     /**

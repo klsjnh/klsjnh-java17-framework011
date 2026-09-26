@@ -21,7 +21,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 /**
- * Channel response VO (detail and page rows). The config is echoed as stored.
+ * Channel response VO (detail and page rows). Sensitive keys inside config
+ * are masked as {@code ******}.
  */
 
 @Data

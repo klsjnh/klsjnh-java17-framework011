@@ -5,12 +5,13 @@ package com.klsjnh.domain.iam.user;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  july user class
+ *      2026.09.26  tokenVersion for jwt revoke; changeStatus bumps
  *
  */
 
@@ -21,11 +22,13 @@ import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * JulyUser aggregate root (system management context): a login account and its
  * profile. Runtime status reuses the common status column values — transitions
- * go through {@link Status011}.
+ * go through {@link Status011}. {@code tokenVersion} is bumped on credential
+ * invalidating events so previously issued JWTs fail verify.
  */
 
 public class JulyUser {
@@ -77,6 +80,12 @@ public class JulyUser {
     private LocalDateTime lastLoginTime;
 
     /**
+     * JWT credential version: embedded in issued tokens as claim {@code tv};
+     * bump on status change / password change / logout so old tokens fail.
+     */
+    private int tokenVersion;
+
+    /**
      * Account status: '1' enabled / '0' disabled.
      */
     private String status;
@@ -89,20 +98,22 @@ public class JulyUser {
     /**
      * Full constructor (also the rehydration path from persistence).
      *
-     * @param id        primary key
-     * @param userAccount login account, unique
-     * @param userName  user name
-     * @param password  password hash (bcrypt)
-     * @param mobile    mobile number
-     * @param email     email
-     * @param avatar    avatar
-     * @param pkOrg     organization link, nullable
+     * @param id            primary key
+     * @param userAccount   login account, unique
+     * @param userName      user name
+     * @param password      password hash (bcrypt)
+     * @param mobile        mobile number
+     * @param email         email
+     * @param avatar        avatar
+     * @param pkOrg         organization link, nullable
      * @param lastLoginTime last login time
-     * @param status    account status
-     * @param audit     audit info
+     * @param tokenVersion  jwt credential version
+     * @param status        account status
+     * @param audit         audit info
      */
     public JulyUser(EntityId id, String userAccount, String userName, String password, String mobile, String email,
-            String avatar, String pkOrg, LocalDateTime lastLoginTime, String status, AuditInfo audit) {
+            String avatar, String pkOrg, LocalDateTime lastLoginTime, int tokenVersion, String status,
+            AuditInfo audit) {
         this.id = id;
         this.userAccount = userAccount;
         this.userName = userName;
@@ -112,23 +123,25 @@ public class JulyUser {
         this.avatar = avatar;
         this.pkOrg = pkOrg;
         this.lastLoginTime = lastLoginTime;
+        this.tokenVersion = Math.max(0, tokenVersion);
         this.status = status == null ? Status011.ENABLED.getCode() : status;
         this.audit = audit == null ? AuditInfo.empty() : audit;
     }
 
     /**
-     * Factory for a new user: defaults to enabled with a bcrypt password hash.
+     * Factory for a new user: defaults to enabled with a bcrypt password hash
+     * and token version 0.
      *
-     * @param id        primary key
+     * @param id          primary key
      * @param userAccount login account, max 30
-     * @param userName  user name, max 60
-     * @param password  password hash (bcrypt), max 100
-     * @param audit     audit info
+     * @param userName    user name, max 60
+     * @param password    password hash (bcrypt), max 100
+     * @param audit       audit info
      * @return new aggregate in enabled state
      */
     public static JulyUser create(EntityId id, String userAccount, String userName, String password, AuditInfo audit) {
         validate(userAccount, userName, password);
-        return new JulyUser(id, userAccount, userName, password, null, null, null, null, null,
+        return new JulyUser(id, userAccount, userName, password, null, null, null, null, null, 0,
                 Status011.ENABLED.getCode(), audit);
     }
 
@@ -154,7 +167,8 @@ public class JulyUser {
     }
 
     /**
-     * Replace the password hash (the raw password is hashed by the use case).
+     * Replace the password hash (the raw password is hashed by the use case)
+     * and bump the token version so existing JWTs fail verify.
      *
      * @param passwordHash new bcrypt hash
      */
@@ -164,20 +178,59 @@ public class JulyUser {
         }
 
         this.password = passwordHash;
+        bumpTokenVersion();
     }
 
     /**
-     * Switch the account to enabled.
+     * Switch the account to enabled and bump the token version.
      */
     public void enable() {
-        this.status = Status011.ENABLED.getCode();
+        changeStatus(Status011.ENABLED.getCode());
     }
 
     /**
-     * Switch the account to disabled.
+     * Switch the account to disabled and bump the token version.
      */
     public void disable() {
-        this.status = Status011.DISABLED.getCode();
+        changeStatus(Status011.DISABLED.getCode());
+    }
+
+    /**
+     * Apply an explicit status value (used by the update path). Resolves the
+     * raw column value and bumps the token version when the status actually
+     * changes so previously issued JWTs fail verify.
+     *
+     * @param status raw status column value ("1" / "0")
+     */
+    public void changeStatus(String status) {
+        Status011 next = Status011.of(status);
+
+        if (next == null) {
+            throw new IllegalArgumentException("invalid user status: " + status);
+        }
+
+        String nextCode = next.getCode();
+
+        if (Objects.equals(this.status, nextCode)) {
+            return;
+        }
+
+        this.status = nextCode;
+        bumpTokenVersion();
+    }
+
+    /**
+     * Invalidate all outstanding JWTs for this user (logout / explicit revoke).
+     */
+    public void revokeTokens() {
+        bumpTokenVersion();
+    }
+
+    /**
+     * Increment the credential version (overflow wraps within int range).
+     */
+    private void bumpTokenVersion() {
+        this.tokenVersion++;
     }
 
     /**
@@ -283,6 +336,15 @@ public class JulyUser {
      */
     public LocalDateTime lastLoginTime() {
         return lastLoginTime;
+    }
+
+    /**
+     * Get the JWT credential version.
+     *
+     * @return token version
+     */
+    public int tokenVersion() {
+        return tokenVersion;
     }
 
     /**

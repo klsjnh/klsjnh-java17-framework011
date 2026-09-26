@@ -103,6 +103,13 @@ public class KrtSecurityConfig011 {
                     "krt.crypto.master-key is required in production (at least 32 bytes)");
         }
 
+        if (status.isDebug()) {
+            log.warn("**************************************************************");
+            log.warn("* krt.status=debug: auth filter does NOT reject requests;    *");
+            log.warn("* AuthorizationPort.assertHas is a no-op. NEVER ship this.  *");
+            log.warn("**************************************************************");
+        }
+
         log.info("krt.status = {} (passwordless login {}, permission PEP {})", status,
                 status.allowsPasswordlessLogin() ? "enabled" : "disabled",
                 status.isPermissionWhitelistMode() ? "whitelist" : "assertHas-noop");

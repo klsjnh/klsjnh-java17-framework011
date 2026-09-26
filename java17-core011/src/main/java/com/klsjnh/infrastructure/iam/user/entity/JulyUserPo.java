@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
  *          modify history
  *
  *      2026.09.12  july user po class
+ *      2026.09.26  tokenVersion column for jwt revoke
  *
  */
 
@@ -56,4 +57,7 @@ public class JulyUserPo extends BasePo {
 
     /** Last login time. */
     private LocalDateTime lastLoginTime;
+
+    /** JWT credential version (claim tv); bump on status/password/logout. */
+    private Integer tokenVersion;
 }

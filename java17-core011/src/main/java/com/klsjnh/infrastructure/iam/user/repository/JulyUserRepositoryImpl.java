@@ -12,6 +12,7 @@ package com.klsjnh.infrastructure.iam.user.repository;
  *
  *      2026.09.12  july user repository impl class
  *      2026.09.15  clock from date util 011
+ *      2026.09.26  map tokenVersion for jwt revoke
  *
  */
 
@@ -307,6 +308,7 @@ public class JulyUserRepositoryImpl
         po.setAvatar(user.avatar());
         po.setPkOrg(user.pkOrg());
         po.setLastLoginTime(user.lastLoginTime());
+        po.setTokenVersion(user.tokenVersion());
         po.setStatus(user.status());
 
         return po;
@@ -320,9 +322,10 @@ public class JulyUserRepositoryImpl
      */
     private JulyUser toAggregate(JulyUserPo po) {
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
+        int tokenVersion = po.getTokenVersion() == null ? 0 : po.getTokenVersion();
 
         return new JulyUser(EntityId.of(po.getId()), po.getUserAccount(), po.getUserName(), po.getPassword(),
-                po.getMobile(), po.getEmail(), po.getAvatar(), po.getPkOrg(), po.getLastLoginTime(), po.getStatus(),
-                audit);
+                po.getMobile(), po.getEmail(), po.getAvatar(), po.getPkOrg(), po.getLastLoginTime(), tokenVersion,
+                po.getStatus(), audit);
     }
 }

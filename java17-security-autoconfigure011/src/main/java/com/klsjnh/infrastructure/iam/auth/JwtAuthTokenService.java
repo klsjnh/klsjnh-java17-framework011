@@ -5,20 +5,25 @@ package com.klsjnh.infrastructure.iam.auth;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  jwt auth token service class
+ *      2026.09.26  tv claim + token credential revoke check
  *
  */
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.klsjnh.common.enums.Status011;
+
 import com.klsjnh.domain.iam.auth.AuthTokenPort;
 import com.klsjnh.domain.iam.auth.AuthTokenPort.OperatorIdentity;
+import com.klsjnh.domain.iam.auth.TokenCredentialPort;
+import com.klsjnh.domain.iam.auth.TokenCredentialPort.CredentialState;
 
 import com.klsjnh.infrastructure.config.KrtSecurityConfig011;
 
@@ -35,7 +40,9 @@ import java.util.Date;
 
 /**
  * JWT adapter for the AuthTokenPort: HS256 signing with krt.jwt.secret, expiry
- * from krt.jwt.expire-minutes (KrtSecurityConfig011).
+ * from krt.jwt.expire-minutes (KrtSecurityConfig011). Issued tokens carry claim
+ * {@code tv} (token version); verify rejects version mismatch or disabled
+ * accounts via {@link TokenCredentialPort}.
  */
 
 @Component
@@ -52,6 +59,11 @@ public class JwtAuthTokenService implements AuthTokenPort {
     private static final String CLAIM_ID = "id";
 
     /**
+     * Claim name carrying the token version at issue time.
+     */
+    private static final String CLAIM_TOKEN_VERSION = "tv";
+
+    /**
      * Logger.
      */
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthTokenService.class);
@@ -62,23 +74,31 @@ public class JwtAuthTokenService implements AuthTokenPort {
     private final KrtSecurityConfig011 krtConfig;
 
     /**
+     * Durable credential lookup (token version + status).
+     */
+    private final TokenCredentialPort tokenCredentialPort;
+
+    /**
      * Create the service.
      *
-     * @param krtConfig framework config
+     * @param krtConfig            framework config
+     * @param tokenCredentialPort  credential lookup for revoke checks
      */
-    public JwtAuthTokenService(KrtSecurityConfig011 krtConfig) {
+    public JwtAuthTokenService(KrtSecurityConfig011 krtConfig, TokenCredentialPort tokenCredentialPort) {
         this.krtConfig = krtConfig;
+        this.tokenCredentialPort = tokenCredentialPort;
     }
 
     /**
      * Issue a signed token for a user.
      *
-     * @param id          user id
-     * @param userAccount login account
+     * @param id           user id
+     * @param userAccount  login account
+     * @param tokenVersion current token version at issue time
      * @return signed JWT string
      */
     @Override
-    public String issue(String id, String userAccount) {
+    public String issue(String id, String userAccount, int tokenVersion) {
         String secret = krtConfig.getJwt().getSecret();
 
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
@@ -94,6 +114,7 @@ public class JwtAuthTokenService implements AuthTokenPort {
         return Jwts.builder()
                 .subject(userAccount)
                 .claim(CLAIM_ID, id)
+                .claim(CLAIM_TOKEN_VERSION, tokenVersion)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
@@ -106,7 +127,7 @@ public class JwtAuthTokenService implements AuthTokenPort {
      *
      * @param token signed JWT
      * @return operator identity, or null when missing / malformed / expired /
-     *         signature-invalid
+     *         signature-invalid / version-mismatched / account-disabled
      */
     @Override
     public OperatorIdentity verify(String token) {
@@ -122,7 +143,27 @@ public class JwtAuthTokenService implements AuthTokenPort {
             return null;
         }
 
-        return new OperatorIdentity(id.toString(), claims.getSubject());
+        String userId = id.toString();
+        int tokenVersion = readTokenVersion(claims);
+        CredentialState state = tokenCredentialPort.findByUserId(userId);
+
+        if (state == null) {
+            logger.debug("jwt verify rejected: user missing {}", userId);
+            return null;
+        }
+
+        if (Status011.DISABLED.getCode().equals(state.status())) {
+            logger.debug("jwt verify rejected: user disabled {}", userId);
+            return null;
+        }
+
+        if (state.tokenVersion() != tokenVersion) {
+            logger.debug("jwt verify rejected: token version mismatch user={} claim={} db={}", userId, tokenVersion,
+                    state.tokenVersion());
+            return null;
+        }
+
+        return new OperatorIdentity(userId, claims.getSubject());
     }
 
     /**
@@ -130,13 +171,37 @@ public class JwtAuthTokenService implements AuthTokenPort {
      *
      * @param token signed JWT
      * @return the user id claim, or null when missing / malformed / expired /
-     *         signature-invalid
+     *         signature-invalid / version-mismatched / account-disabled
      */
     @Override
     public String verifyAndGetId(String token) {
         OperatorIdentity identity = verify(token);
 
         return identity == null ? null : identity.id();
+    }
+
+    /**
+     * Read the {@code tv} claim; missing claim is treated as 0 (legacy tokens).
+     *
+     * @param claims parsed claims
+     * @return token version
+     */
+    private static int readTokenVersion(Claims claims) {
+        Object raw = claims.get(CLAIM_TOKEN_VERSION);
+
+        if (raw == null) {
+            return 0;
+        }
+
+        if (raw instanceof Number number) {
+            return number.intValue();
+        }
+
+        try {
+            return Integer.parseInt(raw.toString());
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
     }
 
     /**

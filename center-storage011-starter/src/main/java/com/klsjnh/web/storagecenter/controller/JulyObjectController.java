@@ -168,6 +168,7 @@ public class JulyObjectController {
      * @param storageCode storage code, optional
      * @param bucketName  bucket name, optional
      * @param objectName  object name
+     * @param request     http request (operator)
      * @param response    http response
      * @throws Exception on write failure
      */
@@ -175,8 +176,10 @@ public class JulyObjectController {
     @Operation(summary = "下载对象（二进制流，不走信封）")
     public void downloadObject(@RequestParam(value = "storageCode", required = false) String storageCode,
             @RequestParam(value = "bucketName", required = false) String bucketName,
-            @RequestParam("objectName") String objectName, HttpServletResponse response) throws Exception {
-        byte[] content = storageObjectUseCase.download(storageCode, bucketName, objectName);
+            @RequestParam("objectName") String objectName, HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Operator011 operator = Operator011Resolver.resolve(request);
+        byte[] content = storageObjectUseCase.download(operator.id(), storageCode, bucketName, objectName);
         String fileName = objectName.contains("/") ? objectName.substring(objectName.lastIndexOf('/') + 1)
                 : objectName;
 
@@ -197,6 +200,7 @@ public class JulyObjectController {
      * @param storageCode storage code, optional
      * @param bucketName  bucket name, optional
      * @param objectName  object name
+     * @param request     http request (operator)
      * @param response    http response
      * @throws Exception on write failure
      */
@@ -204,7 +208,9 @@ public class JulyObjectController {
     @Operation(summary = "流式下载对象（不整对象进堆，不走信封）")
     public void downloadObjectStream(@RequestParam(value = "storageCode", required = false) String storageCode,
             @RequestParam(value = "bucketName", required = false) String bucketName,
-            @RequestParam("objectName") String objectName, HttpServletResponse response) throws Exception {
+            @RequestParam("objectName") String objectName, HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Operator011 operator = Operator011Resolver.resolve(request);
         String fileName = objectName.contains("/") ? objectName.substring(objectName.lastIndexOf('/') + 1)
                 : objectName;
 
@@ -212,7 +218,8 @@ public class JulyObjectController {
         response.setHeader("Content-Disposition",
                 "attachment; filename=\"" + URLEncoder.encode(fileName, StandardCharsets.UTF_8.name()) + "\"");
 
-        try (InputStream stream = storageObjectUseCase.downloadStream(storageCode, bucketName, objectName)) {
+        try (InputStream stream = storageObjectUseCase.downloadStream(operator.id(), storageCode, bucketName,
+                objectName)) {
             StreamUtils.copy(stream, response.getOutputStream());
         }
 
@@ -370,6 +377,7 @@ public class JulyObjectController {
         Operator011 operator = Operator011Resolver.resolve(request);
 
 
-        return Response011.success(funcName, storageObjectUseCase.presignedUrl(storageCode, bucketName, objectName));
+        return Response011.success(funcName, storageObjectUseCase.presignedUrl(operator.id(), storageCode, bucketName,
+                objectName));
     }
 }
