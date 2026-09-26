@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * One column mapping row (source column / type → target column / type).
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulySyncColumnVo011 {
 
     /** Source column. */
+    @NotBlank(message = "sourceColumn is required")
     @Schema(description = "原表列", requiredMode = Schema.RequiredMode.REQUIRED)
     private String sourceColumn;
 
@@ -34,6 +37,7 @@ public class JulySyncColumnVo011 {
     private String sourceType;
 
     /** Target column. */
+    @NotBlank(message = "targetColumn is required")
     @Schema(description = "目标列", requiredMode = Schema.RequiredMode.REQUIRED)
     private String targetColumn;
 

@@ -41,7 +41,10 @@
             <groupId>com.klsjnh</groupId>
             <artifactId>center-platform011-starter</artifactId>
         </dependency>
-                <!-- NEG-TEST-OFF: center-storage011-starter -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>center-storage011-starter</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.klsjnh</groupId>
             <artifactId>java17-scheduler-quartz011-starter</artifactId>
@@ -50,7 +53,10 @@
             <groupId>com.klsjnh</groupId>
             <artifactId>center-message011-starter</artifactId>
         </dependency>
-        <!-- NEG-TEST-OFF: center-ai011-starter -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>center-ai011-starter</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.klsjnh</groupId>
             <artifactId>java17-observability011-starter</artifactId>

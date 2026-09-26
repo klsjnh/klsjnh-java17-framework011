@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Save editable text request VO.
  */
@@ -34,10 +36,12 @@ public class StorageObjectSaveTextVo011 {
     private String bucketName;
 
     /** Object name. */
+    @NotBlank(message = "objectName is required")
     @Schema(description = "对象名", requiredMode = Schema.RequiredMode.REQUIRED)
     private String objectName;
 
     /** Text content (≤1MB). */
+    @NotBlank(message = "content is required")
     @Schema(description = "文本内容（≤1MB）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String content;
 }

@@ -58,6 +58,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -110,7 +111,7 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/insert")
     @Operation(summary = "新增存储实例（storageCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -130,7 +131,7 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/update")
     @Operation(summary = "修改存储实例（storageCode 不可变；secretKey 留空保持）")
-    public Response011<IdVo011> update(@RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyStorageProviderSaveVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -150,7 +151,7 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除存储实例（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -167,7 +168,7 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除存储实例（批量，逐条回报）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "logic delete batch";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -216,7 +217,7 @@ public class JulyStorageProviderController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（关键字 + 类型 + 状态过滤）")
     public Response011<PageResult011<JulyStorageProviderVo011>> selectListByPage(
-            @RequestBody JulyStorageProviderQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyStorageProviderQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -260,7 +261,7 @@ public class JulyStorageProviderController {
      */
     @PostMapping("/testConnection")
     @Operation(summary = "测试连接（传 id 测已保存；否则测草稿；带 bucketCount + basePath/endpoint）")
-    public Response011<StorageProbeVo011> testConnection(@RequestBody JulyStorageProviderConnectVo011 vo, HttpServletRequest request) {
+    public Response011<StorageProbeVo011> testConnection(@Valid @RequestBody JulyStorageProviderConnectVo011 vo, HttpServletRequest request) {
         String funcName = "test connection";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -282,7 +283,7 @@ public class JulyStorageProviderController {
      */
     @PostMapping("/selectBucketList")
     @Operation(summary = "桶列表（每行 bucketCode/bucketName/isDefault/sortOrder/status）")
-    public Response011<List<StorageBucketVo011>> selectBucketList(@RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
+    public Response011<List<StorageBucketVo011>> selectBucketList(@Valid @RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select bucket list";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -299,7 +300,7 @@ public class JulyStorageProviderController {
     @PostMapping("/selectBucketListByPage")
     @Operation(summary = "桶分页（每行 bucketCode/bucketName/isDefault/sortOrder/status）")
     public Response011<PageResult011<StorageBucketVo011>> selectBucketListByPage(
-            @RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select bucket list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -338,7 +339,7 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER_BUCKET)
     @PostMapping("/insertBucket")
     @Operation(summary = "新建桶（bucketCode 同实例内查重；已存在为幂等）")
-    public Response011<String> insertBucket(@RequestBody StorageBucketInsertVo011 vo, HttpServletRequest request) {
+    public Response011<String> insertBucket(@Valid @RequestBody StorageBucketInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert bucket";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -358,7 +359,7 @@ public class JulyStorageProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_PROVIDER_BUCKET)
     @PostMapping("/removeBucket")
     @Operation(summary = "删除空桶（非空大声失败）")
-    public Response011<String> removeBucket(@RequestBody StorageBucketRemoveVo011 vo, HttpServletRequest request) {
+    public Response011<String> removeBucket(@Valid @RequestBody StorageBucketRemoveVo011 vo, HttpServletRequest request) {
         String funcName = "remove bucket";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -376,7 +377,7 @@ public class JulyStorageProviderController {
      */
     @PostMapping("/testBucketConnection")
     @Operation(summary = "测试桶连接（带 bucketCount + basePath/endpoint）")
-    public Response011<StorageProbeVo011> testBucketConnection(@RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
+    public Response011<StorageProbeVo011> testBucketConnection(@Valid @RequestBody StorageBucketQueryVo011 vo, HttpServletRequest request) {
         String funcName = "test bucket connection";
         Operator011 operator = Operator011Resolver.resolve(request);
 

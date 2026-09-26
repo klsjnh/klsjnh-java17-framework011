@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 /**
@@ -45,6 +47,7 @@ public class AiChatRequestVo011 {
     private String apiId;
 
     /** Model name, required. */
+    @NotBlank(message = "model is required")
     @Schema(description = "模型名（必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String model;
 

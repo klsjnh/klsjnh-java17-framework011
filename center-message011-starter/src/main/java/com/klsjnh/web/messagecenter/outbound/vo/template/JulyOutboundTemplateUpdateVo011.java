@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for a message template (templateCode immutable).
  */
@@ -26,14 +28,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyOutboundTemplateUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Template display name, max 100. */
+    @NotBlank(message = "templateName is required")
     @Schema(description = "模板名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String templateName;
 
     /** Channel code the template is bound to, max 60. */
+    @NotBlank(message = "channelCode is required")
     @Schema(description = "渠道编码（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String channelCode;
 
@@ -42,6 +47,7 @@ public class JulyOutboundTemplateUpdateVo011 {
     private String title;
 
     /** Content body with ${var} placeholders. */
+    @NotBlank(message = "content is required")
     @Schema(description = "内容（支持 ${var} 占位）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String content;
 

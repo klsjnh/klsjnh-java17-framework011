@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Prompt update request (promptCode is immutable).
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyAiDomainPromptUpdateVo011 {
 
     /** Prompt id. */
+    @NotBlank(message = "id is required")
     @Schema(description = "提示词 id", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Prompt name. */
+    @NotBlank(message = "promptName is required")
     @Schema(description = "提示词名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String promptName;
 

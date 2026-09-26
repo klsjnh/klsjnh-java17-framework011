@@ -14,7 +14,7 @@
 | P0-2a | debug 下无 Token 仍放行；免密登录在白名单 | `GlobalAuthFilter` L235–237：`identity == null && !isDebug()` 才 401；debug 不拒绝。`WHITELIST_PATHS` 含 `/loginByUserName`（L94–96）。`FrameworkStatus011.allowsPasswordlessLogin()` 对 DEBUG/DEVELOPMENT 为 true。默认 `krt.status: debug`（development yml L22） | **仍成立** | 默认启动路径仍是「development profile + debug status」 |
 | P0-2b | 权限 opt-in：未 assertHas 则只认证不鉴权；用户 CRUD/assignRoles/resetPassword 无权限；UseCase 无 AuthorizationPort；内置角色 `*` | **相对审计时已变**：`JulyUserUseCase` 已注入 `AuthorizationPort`，insert/update/delete/resetPassword/assignRoles（`JulyUserRoleAssignUseCase`）等均 `assertHas`（如 L143、L278）。生产写路径有 `PermissionWhitelistGate011` + `GlobalAuthFilter.enforcePermissionWhitelist`。但：① debug/development 下 `AuthorizationAdapter.assertHas` **no-op**（L162–164）；② 无 access starter 时 `PermissiveAuthorizationPort` 全放行；③ 内置角色仍返回 `"*"`（`BUILTIN_ALL`，AuthorizationAdapter L58/L120）；④ 读类路径仍豁免写白名单 | **部分** | 生产 + access 时管理面挂齐；**默认 debug 下审计描述的提权链仍可走通** |
 | P0-3 | profile 与 `krt.status` 双开关；卫兵只拦 production profile + 非 production status；缺统一 security-mode；默认不应激活 development | `KrtSecurityConfig011.validate` L85–92 仅检查 profile 名等于 `production`；`application.yml` 仍默认 `development`。无 `app.security-mode`。缺省 `krt.status` 代码落 PRODUCTION（fail-safe），但被 development yml 覆盖为 debug | **仍成立** | `prod-cn`/`k8s` 等 profile 名仍可绕过「production profile 必须 production status」卫兵 |
-| P0-4 | AI/存储/数据源业务密钥库内明文；文档自承未加密 | `docs/infrastructure011/033.topic-platform-security.md` 明确 **未落地**；Po 字段：`AiModelProviderApiPo.apiKey`、`JulyStorageProviderPo.secretKey`、`JulyDatasourcePo.password`。无 `SecretCipherPort` 实现 | **仍成立** | 登录密码 bcrypt 已做，与业务可逆密钥是两类问题 |
+| P0-4 | AI/存储/数据源业务密钥库内明文；文档自承未加密 | 原 033 提案未落地；现已落地 `SecretCipherPort` + AES-GCM；Po 经 Repository 加解密；列宽 `VARCHAR(512)` | **已关闭（B0–B2）** | 消息渠道 `config` JSON 字段级仍为 B3；登录密码 bcrypt 另线 |
 
 ---
 
@@ -44,7 +44,7 @@
 
 | # | 审计原文要点 | 代码现状（路径/证据） | 结论 | 备注 |
 |---|---|---|---|---|
-| API-1 | 缺系统 Bean Validation：`@Valid` / `@NotBlank` 等 | 全仓 `*Controller` **无** `@Valid`；pom **无** `spring-boot-starter-validation`；VO 无 jakarta.validation 注解 | **仍成立** | |
+| API-1 | 缺系统 Bean Validation：`@Valid` / `@NotBlank` 等 | 全仓 Controller `@RequestBody` 已挂 `@Valid`；VO 有 jakarta 约束；`GlobalExceptionHandler` 映 400；约定见 [016 §6.7](016.coding-standards.md) | **已关闭** | 暂无门禁 AST rule（评审项） |
 | API-1b | pageSize / 批量 / 文件上限 | `PageQuery011` 仅把 ≤0 改为 10，**无上限**。动态 SQL `SqlRoutingExecutor` clamp **[10,500]**。未见统一批量 ID / 导出条数上限实现 | **部分** | 仅 Sql 分页有 clamp |
 | API-2 | HttpUtil `ofByteArray` 内存风险 + URL 直传 SSRF | `HttpUtil011` 仍 `ofByteArray`（L139、L209）；另有 `ofInputStream`（L236）。无域名 allowlist / 禁私网。033/消息架构文档指向出口治理未落地 | **仍成立** | 流式下载部分能力有，出口治理无 |
 | API-3 | 限流与幂等不能只靠网关 | `docs/019.backend-api-review.md` L48 仍记「无速率限制/幂等键 → 网关解决」。应用层无统一幂等键中间件 | **仍成立** | 部分业务（sync upsert、调度重注册）自有幂等，非平台能力 |
@@ -93,8 +93,8 @@
 | AT-04 | 缺环境/错 Profile/debug 冲突 → 安全模式或拒启 | **部分** | `production` profile + 非 production status → 启动失败；缺省 status→PRODUCTION。默认仍激活 development+debug；非 `production` 名的「类生产」profile 无卫兵 |
 | AT-05 | 改密/禁用/退出后旧 Token 失效 | **仍成立（未达标）** | 无 credentialVersion；logout 不吊销；JWT 仅过期失效 |
 | AT-06 | 实例 A 撤权，实例 B 下次请求不放行 | **不适用/未知** | 无授权缓存；多实例一致性依赖每请求查库。未见双实例自动化证据 → 标 **未知（设计上无缓存窗口，亦无正式验收）** |
-| AT-07 | 业务密钥读取/列表/故障不回退明文 | **仍成立（未达标）** | SecretCipher 未落地；库内明文 |
-| AT-08 | 异常分页/超大批量/超大文件受控 | **部分** | Sql 分页 clamp；通用 `PageQuery011` 无上限；无 `@Valid`；Http 二进制仍可整包入堆 |
+| AT-07 | 业务密钥读取/列表/故障不回退明文 | **已达标（B0–B2）** | SecretCipher 落库 `enc:v1:`；出参打码/剔除；存量无前缀兼容读 |
+| AT-08 | 异常分页/超大批量/超大文件受控 | **部分** | Sql 分页 clamp；`@Valid` 已落地（016 §6.7）；通用 `PageQuery011` 仍无上限；Http 二进制仍可整包入堆 |
 | AT-09 | 空库部署/升级/应用回退与 DB 兼容 | **仍成立（未达标）** | 无 Flyway/Liquibase |
 | AT-10 | 双实例调度/重复消息/导出/中途重启无重复副作用 | **仍成立（未达标）** | Quartz RAM；无集群锁验收 |
 | AT-11 | 跨用户/部门/租户越界阻断 | **仍成立（未达标）** | 无数据范围模型 |
@@ -129,7 +129,7 @@
 
 ### 仍阻断企业底座的 P0 残余
 
-默认 **development + debug**、仓库内 **开发凭据/JWT**、debug **免认证 + assertHas no-op**、业务密钥 **明文**、Token **不可撤销**、无 **secret scan / 企业 CI / Flyway**。
+默认 **development + debug**、仓库内 **开发凭据/JWT**、debug **免认证 + assertHas no-op**、Token **不可撤销**、无 **secret scan / 企业 CI / Flyway**；业务密钥可逆加密已落地（033 B0–B2），消息渠道 JSON 字段级加密仍为 B3。
 
 ---
 

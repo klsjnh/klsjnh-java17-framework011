@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Sync run request: which rule to run.
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulySyncRunVo011 {
 
     /** Sync code. */
+    @NotBlank(message = "syncCode is required")
     @Schema(description = "同步编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String syncCode;
 }

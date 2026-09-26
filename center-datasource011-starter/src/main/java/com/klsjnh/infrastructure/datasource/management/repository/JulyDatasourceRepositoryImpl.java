@@ -17,6 +17,7 @@ package com.klsjnh.infrastructure.datasource.management.repository;
 import com.klsjnh.common.enums.Status011;
 import com.klsjnh.common.util.StringUtil011;
 
+import com.klsjnh.domain.crypto.SecretCipherPort;
 import com.klsjnh.domain.datasource.management.JulyDatasource;
 import com.klsjnh.domain.datasource.management.JulyDatasourceQuerySpec;
 import com.klsjnh.domain.datasource.management.JulyDatasourceRepository;
@@ -49,13 +50,21 @@ public class JulyDatasourceRepositoryImpl
         implements JulyDatasourceRepository {
 
     /**
+     * Reversible cipher for the stored datasource password.
+     */
+    private final SecretCipherPort secretCipher;
+
+    /**
      * Create the repository.
      *
      * @param mapper       mybatis-plus mapper
      * @param commonMapper native sql mapper
+     * @param secretCipher secret cipher port
      */
-    public JulyDatasourceRepositoryImpl(JulyDatasourceMapper mapper, CommonMapper commonMapper) {
+    public JulyDatasourceRepositoryImpl(JulyDatasourceMapper mapper, CommonMapper commonMapper,
+            SecretCipherPort secretCipher) {
         super(mapper, commonMapper);
+        this.secretCipher = secretCipher;
     }
 
     /**
@@ -282,7 +291,7 @@ public class JulyDatasourceRepositoryImpl
         po.setJdbcUrl(datasource.jdbcUrl());
         po.setSchemaName(datasource.schemaName());
         po.setUsername(datasource.username());
-        po.setPassword(datasource.password());
+        po.setPassword(secretCipher.encrypt(datasource.password()));
         po.setDriverClass(datasource.driverClass());
         po.setPoolConfig(datasource.poolConfig());
         po.setRemark(datasource.remark());
@@ -301,7 +310,8 @@ public class JulyDatasourceRepositoryImpl
         AuditInfo audit = new AuditInfo(po.getCreateBy(), po.getUpdateBy(), po.getCreateTime(), po.getUpdateTime());
 
         return new JulyDatasource(EntityId.of(po.getId()), po.getDsCode(), po.getSortOrder(), po.getDsName(),
-                po.getDbType(), po.getJdbcUrl(), po.getSchemaName(), po.getUsername(), po.getPassword(),
+                po.getDbType(), po.getJdbcUrl(), po.getSchemaName(), po.getUsername(),
+                secretCipher.decrypt(po.getPassword()),
                 po.getDriverClass(), po.getPoolConfig(), po.getRemark(), po.getStatus(), audit);
     }
 }

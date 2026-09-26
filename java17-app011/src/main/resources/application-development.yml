@@ -23,6 +23,9 @@ krt:
   jwt:
     secret: dev-secret-klsjnh-framework011-20260912-change-me-in-production-0123456789
     expire-minutes: 480
+  crypto:
+    # AES-256-GCM master key (≥32 bytes). Production: inject via env, never commit.
+    master-key: dev-crypto-master-key-klsjnh-framework011-change-me-32b
 
   ci011:
     - ds-code: page-demo

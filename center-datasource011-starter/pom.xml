@@ -22,6 +22,12 @@
             <groupId>com.klsjnh</groupId>
             <artifactId>java17-core011</artifactId>
         </dependency>
+        <!-- optional: permission catalog seed registers only when access is present -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>center-access011-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
         <!-- Runtime needs java17-data-mybatis011-starter on the app classpath for
              DynamicDataSourceRegistryPort / SqlRoutingPort / probe impls;
              compile stays against core ports only (storage-shaped split). -->

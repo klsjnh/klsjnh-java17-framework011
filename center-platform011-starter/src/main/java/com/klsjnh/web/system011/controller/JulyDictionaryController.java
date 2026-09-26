@@ -59,6 +59,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -107,7 +108,7 @@ public class JulyDictionaryController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/insert")
     @Operation(summary = "新增字典（dictionaryCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyDictionaryInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyDictionaryInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -125,7 +126,7 @@ public class JulyDictionaryController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/update")
     @Operation(summary = "修改字典（dictionaryCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyDictionaryUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyDictionaryUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -143,7 +144,7 @@ public class JulyDictionaryController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除字典（仍有字典项则拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -191,7 +192,7 @@ public class JulyDictionaryController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称 模糊 + 状态过滤）")
     public Response011<PageResult011<JulyDictionaryVo011>> selectListByPage(
-            @RequestBody JulyDictionaryQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyDictionaryQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -212,7 +213,7 @@ public class JulyDictionaryController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/insertItem")
     @Operation(summary = "新增字典项（同字典内 itemCode 查重）")
-    public Response011<IdVo011> insertItem(@RequestBody JulyDictionaryItemInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insertItem(@Valid @RequestBody JulyDictionaryItemInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert item";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -230,7 +231,7 @@ public class JulyDictionaryController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/updateItem")
     @Operation(summary = "修改字典项（itemCode 不可变）")
-    public Response011<IdVo011> updateItem(@RequestBody JulyDictionaryItemUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> updateItem(@Valid @RequestBody JulyDictionaryItemUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update item";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -248,7 +249,7 @@ public class JulyDictionaryController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DICTIONARY)
     @PostMapping("/logicDeleteItem")
     @Operation(summary = "逻辑删除字典项（单个）")
-    public Response011<IdVo011> logicDeleteItem(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDeleteItem(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete item";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -265,7 +266,7 @@ public class JulyDictionaryController {
     @PostMapping("/selectItemListByType")
     @Operation(summary = "按字典取字典项列表（有序）")
     public Response011<List<JulyDictionaryItemVo011>> selectItemListByType(
-            @RequestBody JulyDictionaryItemQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyDictionaryItemQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select item list by type";
         Operator011 operator = Operator011Resolver.resolve(request);
 

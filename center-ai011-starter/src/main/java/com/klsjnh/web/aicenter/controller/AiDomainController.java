@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +98,7 @@ public class AiDomainController {
      */
     @PostMapping("/insert")
     @Operation(summary = "新增业务域（主表；domainCode 不可变）")
-    public Response011<IdVo011> insert(@RequestBody JulyAiDomainInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyAiDomainInsertVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -114,7 +115,7 @@ public class AiDomainController {
      */
     @PostMapping("/update")
     @Operation(summary = "修改业务域（主表；domainCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyAiDomainUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyAiDomainUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -131,7 +132,7 @@ public class AiDomainController {
      */
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除业务域（有子域或提示词拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "ai domain logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -179,7 +180,7 @@ public class AiDomainController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "业务域分页（keyword/parentId/status）")
-    public Response011<PageResult011<JulyAiDomainVo011>> selectListByPage(@RequestBody JulyAiDomainQueryVo011 vo, HttpServletRequest request) {
+    public Response011<PageResult011<JulyAiDomainVo011>> selectListByPage(@Valid @RequestBody JulyAiDomainQueryVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -221,7 +222,7 @@ public class AiDomainController {
      */
     @PostMapping("/saveWhole")
     @Operation(summary = "整存业务域 + 提示词（主+子，一个事务；子表替换）")
-    public Response011<IdVo011> saveWhole(@RequestBody JulyAiDomainSaveWholeVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> saveWhole(@Valid @RequestBody JulyAiDomainSaveWholeVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain save whole";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -270,7 +271,7 @@ public class AiDomainController {
      */
     @PostMapping("/insertDetail")
     @Operation(summary = "新增提示词（子表；归属业务域）")
-    public Response011<IdVo011> insertDetail(@RequestBody JulyAiDomainPromptInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insertDetail(@Valid @RequestBody JulyAiDomainPromptInsertVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -290,7 +291,7 @@ public class AiDomainController {
      */
     @PostMapping("/updateDetail")
     @Operation(summary = "修改提示词（子表；promptCode 不可变）")
-    public Response011<IdVo011> updateDetail(@RequestBody JulyAiDomainPromptUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> updateDetail(@Valid @RequestBody JulyAiDomainPromptUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -310,7 +311,7 @@ public class AiDomainController {
      */
     @PostMapping("/logicDeleteDetail")
     @Operation(summary = "逻辑删除提示词（子表）")
-    public Response011<IdVo011> logicDeleteDetail(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDeleteDetail(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "ai domain prompt logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -359,7 +360,7 @@ public class AiDomainController {
     @PostMapping("/selectDetailListByPage")
     @Operation(summary = "提示词分页（keyword/pkMt/scene/status）")
     public Response011<PageResult011<JulyAiDomainPromptVo011>> selectDetailListByPage(
-            @RequestBody JulyAiDomainPromptQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyAiDomainPromptQueryVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -398,7 +399,7 @@ public class AiDomainController {
      */
     @PostMapping("/render")
     @Operation(summary = "渲染提示词（${var} 替换；公共件给 AI 开发）")
-    public Response011<String> render(@RequestBody JulyAiDomainPromptRenderVo011 vo, HttpServletRequest request) {
+    public Response011<String> render(@Valid @RequestBody JulyAiDomainPromptRenderVo011 vo, HttpServletRequest request) {
         String funcName = "ai domain prompt render";
         Operator011 operator = Operator011Resolver.resolve(request);
 

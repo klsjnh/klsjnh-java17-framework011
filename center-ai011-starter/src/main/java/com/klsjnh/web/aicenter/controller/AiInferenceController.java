@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -85,7 +86,7 @@ public class AiInferenceController {
      */
     @PostMapping("/chat")
     @Operation(summary = "AI 推理（provider/api 支持 id 或 code；model 必传）")
-    public Response011<AiChatResponseVo011> chat(@RequestBody AiChatRequestVo011 vo, HttpServletRequest request) {
+    public Response011<AiChatResponseVo011> chat(@Valid @RequestBody AiChatRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai inference";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -107,7 +108,7 @@ public class AiInferenceController {
      */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "AI 推理流式（SSE；provider/api 支持 id 或 code；model 必传）")
-    public SseEmitter chatStream(@RequestBody AiChatRequestVo011 vo, HttpServletRequest request) {
+    public SseEmitter chatStream(@Valid @RequestBody AiChatRequestVo011 vo, HttpServletRequest request) {
         Operator011 operator = Operator011Resolver.resolve(request);
 
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),

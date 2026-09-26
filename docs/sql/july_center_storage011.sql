@@ -7,7 +7,8 @@
 -- 方案：docs/requirement013/029.topic-storage-migration.md
 -- 架构（已归档备查）：docs/archive011/infrastructure011/011.storage-center/
 -- 现行文档：docs/infrastructure011/015.storage-center/
--- 边界：yaml krt.storage-center.* 仅作播种（默认桶除外）；表为运行时唯一真源；AK/SK 出参打码
+-- 边界：yaml krt.storage-center.* 仅作播种（默认桶除外）；表为运行时唯一真源；
+--       AK/SK 出参打码；库内 SecretCipher（enc:v1:）；access_key/secret_key 列宽 VARCHAR(512)
 -- 组成：存储实例（主）+ 桶（子）；对象元数据不建业务表（走 ObjectStoragePort）
 -- ============================================================
 
@@ -18,8 +19,8 @@ CREATE TABLE IF NOT EXISTS july_storage_provider (
     provider               VARCHAR(20)  NOT NULL DEFAULT 'local011' COMMENT '存储类型（开放字符串：内置 local011/minio011/s3011，其余由使用者扩展）',
     base_path              VARCHAR(500) NULL                    COMMENT '本地根目录（local011 必填）',
     endpoint               VARCHAR(300) NULL                    COMMENT 'Endpoint（S3 系必填）',
-    access_key             VARCHAR(100) NULL                    COMMENT 'Access Key',
-    secret_key             VARCHAR(300) NULL                    COMMENT 'Secret Key（出参打码 ******）',
+    access_key             VARCHAR(512) NULL                    COMMENT 'Access Key（SecretCipher enc:v1:；明文域上限 100）',
+    secret_key             VARCHAR(512) NULL                    COMMENT 'Secret Key（SecretCipher enc:v1:；出参打码 ******；明文域上限 300）',
     secure                 VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT 'HTTPS（0 否 / 1 是）',
     presign_expiry_seconds INT          NOT NULL DEFAULT 3600   COMMENT '预签名有效期（秒）',
     sort_order             INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',

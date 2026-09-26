@@ -51,6 +51,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -97,7 +98,7 @@ public class JulyMenuController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/insert")
     @Operation(summary = "新增菜单")
-    public Response011<IdVo011> insert(@RequestBody JulyMenuInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyMenuInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -116,7 +117,7 @@ public class JulyMenuController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/update")
     @Operation(summary = "修改菜单（编码不可改，可移动上级）")
-    public Response011<IdVo011> update(@RequestBody JulyMenuUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyMenuUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -136,7 +137,7 @@ public class JulyMenuController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个，有子菜单拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -153,7 +154,7 @@ public class JulyMenuController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MENU)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量，有子菜单拒绝的逐条回报）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo,
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo,
             HttpServletRequest request) {
         String funcName = "logic delete batch";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -186,7 +187,7 @@ public class JulyMenuController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称模糊过滤）")
-    public Response011<PageResult011<JulyMenuVo011>> selectListByPage(@RequestBody JulyMenuQueryVo011 query,
+    public Response011<PageResult011<JulyMenuVo011>> selectListByPage(@Valid @RequestBody JulyMenuQueryVo011 query,
             HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);

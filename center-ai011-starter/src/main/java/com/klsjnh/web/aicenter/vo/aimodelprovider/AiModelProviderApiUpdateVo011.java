@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for an api key (apiCode immutable).
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class AiModelProviderApiUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Api key display name, max 100. */
+    @NotBlank(message = "apiName is required")
     @Schema(description = "密钥名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String apiName;
 
@@ -37,8 +41,8 @@ public class AiModelProviderApiUpdateVo011 {
     @Schema(description = "排序（越小越靠前，留空保持原值）")
     private Integer sortOrder;
 
-    /** Api key secret, max 300; BLANK keeps the stored one. */
-    @Schema(description = "API Key（最长 300；留空表示保持原值，出参不回显）")
+    /** Api key secret, max 300 plaintext; BLANK keeps the stored one (stored as enc:v1:). */
+    @Schema(description = "API Key（明文最长 300；留空保持原值，落库密文；出参不回显）")
     private String apiKey;
 
     /** Row status: 0 disabled / 1 enabled; blank keeps the stored one. */

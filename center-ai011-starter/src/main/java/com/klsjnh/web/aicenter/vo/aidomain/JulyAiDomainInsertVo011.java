@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Domain insert request.
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyAiDomainInsertVo011 {
 
     /** Domain code, globally unique, immutable. */
+    @NotBlank(message = "domainCode is required")
     @Schema(description = "域编码（全局唯一，不可变）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String domainCode;
 
     /** Domain name. */
+    @NotBlank(message = "domainName is required")
     @Schema(description = "域名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String domainName;
 

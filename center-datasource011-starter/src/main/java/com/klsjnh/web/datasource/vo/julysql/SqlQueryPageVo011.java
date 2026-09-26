@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 /**
@@ -29,10 +31,12 @@ import java.util.List;
 public class SqlQueryPageVo011 {
 
     /** Dynamic datasource code. */
+    @NotBlank(message = "dsCode is required")
     @Schema(description = "数据源编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dsCode;
 
     /** Select statement with {@code ?} placeholders (read-only). */
+    @NotBlank(message = "sql is required")
     @Schema(description = "SELECT 语句（? 占位，只读）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String sql;
 

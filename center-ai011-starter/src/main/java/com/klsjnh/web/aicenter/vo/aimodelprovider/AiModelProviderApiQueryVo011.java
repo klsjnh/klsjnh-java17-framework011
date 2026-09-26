@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Api key list request VO: keys of one provider, optional status filter.
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class AiModelProviderApiQueryVo011 {
 
     /** Provider code. */
+    @NotBlank(message = "providerCode is required")
     @Schema(description = "提供商编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String providerCode;
 

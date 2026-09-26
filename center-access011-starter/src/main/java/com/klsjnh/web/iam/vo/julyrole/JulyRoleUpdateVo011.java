@@ -19,6 +19,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for a role (the role code is immutable).
  */
@@ -27,10 +29,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyRoleUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Role name, max 60. */
+    @NotBlank(message = "roleName is required")
     @Schema(description = "角色名称（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String roleName;
 

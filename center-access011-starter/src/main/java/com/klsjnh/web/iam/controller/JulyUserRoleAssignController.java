@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * Access-center endpoint: assign roles to a user. Same URL as before
@@ -73,7 +74,7 @@ public class JulyUserRoleAssignController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/assignRoles")
     @Operation(summary = "分配角色（整存替换）")
-    public Response011<IdVo011> assignRoles(@RequestBody JulyUserAssignRolesVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> assignRoles(@Valid @RequestBody JulyUserAssignRolesVo011 vo, HttpServletRequest request) {
         String funcName = "assign roles";
         Operator011 operator = Operator011Resolver.resolve(request);
 

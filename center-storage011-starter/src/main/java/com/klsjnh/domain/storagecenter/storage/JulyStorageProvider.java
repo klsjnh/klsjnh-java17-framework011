@@ -78,12 +78,15 @@ public class JulyStorageProvider {
     private String endpoint;
 
     /**
-     * Access key (S3 family).
+     * Access key (S3 family); plaintext max 100 at domain boundary;
+     * persistence may store ciphertext ({@code enc:v1:}, DB column VARCHAR(512)).
      */
     private String accessKey;
 
     /**
      * Secret key (S3 family); never echoed back by the web layer.
+     * Plaintext max 300 at domain boundary; persistence may store ciphertext
+     * ({@code enc:v1:}, DB column VARCHAR(512)).
      */
     private String secretKey;
 

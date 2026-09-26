@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Item list request VO: items of one dictionary, optional status filter.
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyDictionaryItemQueryVo011 {
 
     /** Dictionary code. */
+    @NotBlank(message = "dictionaryCode is required")
     @Schema(description = "字典编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictionaryCode;
 

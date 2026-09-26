@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Domain update request (domainCode is immutable).
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyAiDomainUpdateVo011 {
 
     /** Domain id. */
+    @NotBlank(message = "id is required")
     @Schema(description = "域 id", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Domain name. */
+    @NotBlank(message = "domainName is required")
     @Schema(description = "域名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String domainName;
 

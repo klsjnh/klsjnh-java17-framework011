@@ -57,6 +57,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -105,7 +106,7 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/insert")
     @Operation(summary = "新增提供商（providerCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody AiModelProviderInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody AiModelProviderInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -123,7 +124,7 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/update")
     @Operation(summary = "修改提供商（providerCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody AiModelProviderUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody AiModelProviderUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -141,7 +142,7 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除提供商（仍有密钥则拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -174,7 +175,7 @@ public class AiModelProviderController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称/URL 模糊 + 状态过滤）")
     public Response011<PageResult011<AiModelProviderVo011>> selectListByPage(
-            @RequestBody AiModelProviderQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody AiModelProviderQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -195,7 +196,7 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/insertApi")
     @Operation(summary = "新增密钥（同提供商内 apiCode 查重）")
-    public Response011<IdVo011> insertApi(@RequestBody AiModelProviderApiInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insertApi(@Valid @RequestBody AiModelProviderApiInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert api";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -213,7 +214,7 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/updateApi")
     @Operation(summary = "修改密钥（apiCode 不可变；apiKey 留空保持原值）")
-    public Response011<IdVo011> updateApi(@RequestBody AiModelProviderApiUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> updateApi(@Valid @RequestBody AiModelProviderApiUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update api";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -231,7 +232,7 @@ public class AiModelProviderController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_AI_MODEL_PROVIDER)
     @PostMapping("/logicDeleteApi")
     @Operation(summary = "逻辑删除密钥（单个）")
-    public Response011<IdVo011> logicDeleteApi(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDeleteApi(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete api";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -248,7 +249,7 @@ public class AiModelProviderController {
     @PostMapping("/selectApiListByProvider")
     @Operation(summary = "按提供商取密钥列表（有序，出参不含密钥）")
     public Response011<List<AiModelProviderApiVo011>> selectApiListByProvider(
-            @RequestBody AiModelProviderApiQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody AiModelProviderApiQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select api list by provider";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -266,7 +267,7 @@ public class AiModelProviderController {
      */
     @PostMapping("/testConnection")
     @Operation(summary = "测试连接（提供商级，用默认密钥 GET baseUrl/models）")
-    public Response011<AiModelProviderTestResultVo011> testConnection(@RequestBody AiModelProviderTestVo011 vo, HttpServletRequest request) {
+    public Response011<AiModelProviderTestResultVo011> testConnection(@Valid @RequestBody AiModelProviderTestVo011 vo, HttpServletRequest request) {
         String funcName = "test connection";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -282,7 +283,7 @@ public class AiModelProviderController {
      */
     @PostMapping("/testConnectionApi")
     @Operation(summary = "测试连接（密钥级，指定 apiKey 记录）")
-    public Response011<AiModelProviderTestResultVo011> testConnectionApi(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<AiModelProviderTestResultVo011> testConnectionApi(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "test connection api";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -299,7 +300,7 @@ public class AiModelProviderController {
      */
     @PostMapping("/saveWhole")
     @Operation(summary = "整存提供商 + 密钥（主+子，一个事务；子表替换）")
-    public Response011<IdVo011> saveWhole(@RequestBody AiModelProviderSaveWholeVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> saveWhole(@Valid @RequestBody AiModelProviderSaveWholeVo011 vo, HttpServletRequest request) {
         String funcName = "save whole";
         Operator011 operator = Operator011Resolver.resolve(request);
 

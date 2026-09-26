@@ -35,6 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -70,7 +72,7 @@ public class Demo011Controller {
      */
     @PostMapping("/insert")
     @Operation(summary = "新增演示数据")
-    public Response011<IdVo011> insert(@RequestBody Demo011Vo vo) {
+    public Response011<IdVo011> insert(@Valid @RequestBody Demo011Vo vo) {
         String funcName = "insert";
 
         return Response011.successId(funcName, useCase.insert(vo.getCode(), vo.getName()));
@@ -84,7 +86,7 @@ public class Demo011Controller {
      */
     @PostMapping("/update")
     @Operation(summary = "修改名称（编码不可改）")
-    public Response011<IdVo011> update(@RequestBody Demo011Vo vo) {
+    public Response011<IdVo011> update(@Valid @RequestBody Demo011Vo vo) {
         String funcName = "update";
 
         useCase.update(vo.getId(), vo.getName());
@@ -100,7 +102,7 @@ public class Demo011Controller {
      */
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
 
         useCase.logicDelete(idVo.getId());
@@ -130,7 +132,7 @@ public class Demo011Controller {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称模糊过滤）")
-    public Response011<PageResult011<Demo011Vo>> selectListByPage(@RequestBody Demo011Vo vo) {
+    public Response011<PageResult011<Demo011Vo>> selectListByPage(@Valid @RequestBody Demo011Vo vo) {
         String funcName = "select list by page";
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());

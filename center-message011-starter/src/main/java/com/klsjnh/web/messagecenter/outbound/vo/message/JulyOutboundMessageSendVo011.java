@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.Map;
 
 /**
@@ -29,6 +31,7 @@ import java.util.Map;
 public class JulyOutboundMessageSendVo011 {
 
     /** Channel code. */
+    @NotBlank(message = "channelCode is required")
     @Schema(description = "渠道编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String channelCode;
 

@@ -19,6 +19,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Speech synthesis request: provider / key may be an id or a code. Persistence
  * requires an explicit storage locator (no framework default).
@@ -44,6 +46,7 @@ public class AiTtsRequestVo011 {
     private String apiId;
 
     /** Model name; blank for the provider default. */
+    @NotBlank(message = "model is required")
     @Schema(description = "模型名（必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String model;
 
@@ -52,6 +55,7 @@ public class AiTtsRequestVo011 {
     private String returnType;
 
     /** Text to synthesize. */
+    @NotBlank(message = "input is required")
     @Schema(description = "待合成文本", requiredMode = Schema.RequiredMode.REQUIRED)
     private String input;
 
@@ -80,6 +84,7 @@ public class AiTtsRequestVo011 {
     private Integer sampleRate;
 
     /** Storage instance code (preferred). Required with bucket unless storageId is set. */
+    @NotBlank(message = "storageCode is required")
     @Schema(description = "存储实例 code（优先；与 storageId 二选一必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String storageCode;
 
@@ -88,6 +93,7 @@ public class AiTtsRequestVo011 {
     private String storageId;
 
     /** Bucket code within the instance (preferred). Required with storage unless bucketId is set. */
+    @NotBlank(message = "bucketCode is required")
     @Schema(description = "桶 code（优先；与 bucketId 二选一必传；缺参 400，不走默认桶）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String bucketCode;
 

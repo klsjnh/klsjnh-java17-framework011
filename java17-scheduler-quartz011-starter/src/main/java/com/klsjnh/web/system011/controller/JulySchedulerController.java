@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyScheduler HTTP adapter: scheduled task management endpoints (including
@@ -120,7 +121,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/insert")
     @Operation(summary = "新增定时任务（默认停止态）")
-    public Response011<IdVo011> insert(@RequestBody JulySchedulerInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulySchedulerInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -140,7 +141,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/update")
     @Operation(summary = "修改定时任务（含启停状态，变更触发调度引擎联动）")
-    public Response011<IdVo011> update(@RequestBody JulySchedulerUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulySchedulerUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -160,7 +161,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个，运行中任务先摘出调度引擎）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -177,7 +178,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量，运行中任务先摘出调度引擎）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo,
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo,
             HttpServletRequest request) {
         String funcName = "logic delete batch";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -212,7 +213,7 @@ public class JulySchedulerController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（任务编码/名称模糊过滤）")
     public Response011<PageResult011<JulySchedulerVo011>> selectListByPage(
-            @RequestBody JulySchedulerQueryVo011 query, HttpServletRequest request) {
+            @Valid @RequestBody JulySchedulerQueryVo011 query, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -233,7 +234,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/start")
     @Operation(summary = "启动任务（注册调度引擎）")
-    public Response011<IdVo011> start(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> start(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "start";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -250,7 +251,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/stop")
     @Operation(summary = "停止任务（摘出调度引擎）")
-    public Response011<IdVo011> stop(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> stop(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "stop";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -268,7 +269,7 @@ public class JulySchedulerController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_SCHEDULER)
     @PostMapping("/runOnce")
     @Operation(summary = "立即执行一次（不改变运行态；用户审计记谁 + 子表记结果）")
-    public Response011<IdVo011> runOnce(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> runOnce(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "run once";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -286,7 +287,7 @@ public class JulySchedulerController {
     @PostMapping("/selectExecListByPage")
     @Operation(summary = "执行审计分页（按主表 pk_mt；SUCCESS/FAIL 子表）")
     public Response011<PageResult011<JulySchedulerAuditVo011>> selectExecListByPage(
-            @RequestBody JulySchedulerAuditQueryVo011 query, HttpServletRequest request) {
+            @Valid @RequestBody JulySchedulerAuditQueryVo011 query, HttpServletRequest request) {
         String funcName = "select exec list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 

@@ -27,8 +27,8 @@
 | **消息中心** | [016.message-center](infrastructure011/016.message-center/011.topic-design.md)（[013 架构](infrastructure011/016.message-center/013.topic-architecture.md) · [015 用法](infrastructure011/016.message-center/015.topic-usage.md) · [016 二开](infrastructure011/016.message-center/016.topic-secondary-dev.md)） | `center-message011-starter`；web=`…messagecenter.inbound|outbound.*`；URL `/klsjnh/messagecenter/**`；[july_center_message011.sql](sql/july_center_message011.sql) | [archive 013.message-center](archive011/013.message-center/011.topic-design.md)；原 `026.center-message011-starter` 已删 |
 | **AI 中心** | [017.ai-center](infrastructure011/017.ai-center/011.topic-design.md) | `center-ai011-starter`；[july_center_ai011.sql](sql/july_center_ai011.sql) | [archive 015.ai-center](archive011/015.ai-center/011.topic-design.md)；原 `025.center-ai011-starter` 已删 |
 | **数据源中心** | [018.datasource-center](infrastructure011/018.datasource-center/011.topic-design.md) | **`center-datasource011-starter`**（管理面 / Sql HTTP / Sync）+ kernel 端口留 core + 执行器在 `java17-data-mybatis011-starter`；[july_center_datasource011.sql](sql/july_center_datasource011.sql) | 原 `017.datasource-center` 已删（017 让给 AI） |
-| **调度 julyScheduler** | [022](infrastructure011/022.topic-july-scheduler.md) | `java17-scheduler-quartz011-starter`（整栈独立）；权限目录播种在 access（`ConditionalOnClass`）；[july_scheduler011.sql](sql/july_scheduler011.sql) · 设计 [requirement013/022](requirement013/022.topic-july-scheduler.md) | — |
-| **机密加密** | [033](infrastructure011/033.topic-platform-security.md) | — | **未落地**（SecretCipher 提案） |
+| **调度 julyScheduler** | [022](infrastructure011/022.topic-july-scheduler.md) | `java17-scheduler-quartz011-starter`（整栈独立）；权限目录种子在本 starter（`@ConditionalOnBean(JulyPermObjectRepository)`）；[july_scheduler011.sql](sql/july_scheduler011.sql) · 设计 [requirement013/022](requirement013/022.topic-july-scheduler.md) | — |
+| **机密加密** | [033](infrastructure011/033.topic-platform-security.md) | `SecretCipherPort` + AES-GCM；AI/存储/数据源落库贯通；DDL 列宽见 [secret-cipher-column-widen.sql](sql/secret-cipher-column-widen.sql) | **已落地 B0–B2**（B3 消息 JSON 未做） |
 | **金标准回归** | [029](infrastructure011/029.topic-golden-verification.md) | `script011.sh gate` = 规范 + `mvn -o clean install` | — |
 | **部署机制** | [020](infrastructure011/020.topic-deploy-docker.md) | 落地件 [deploy/](deploy/) | — |
 | **选型 / 结构 / 配置** | [011](infrastructure011/011.topic-infrastructure.md) · [013](infrastructure011/013.topic-project-structure.md) · [015](infrastructure011/015.topic-config.md) | 根 `pom.xml`（BOM + 瘦 core + center/tech starters） | 旧六层 Maven 模块名已废 |
@@ -76,7 +76,7 @@
 | 030 | 在用 | requirement011/030 AI 模型调用 |
 | 031 | 在用 | requirement013 数据源中心；旧持久化文档号（`031.persistence-center` 已删）→ 现行 [011.persistence-spec](infrastructure011/011.persistence-spec/011.topic-design.md) |
 | 032 | 在用 | requirement011/032 平台导入 |
-| 033 | 在用 | infrastructure011/033 机密加密存储提案（SecretCipher）——**未落地**；权限 → 013.access-center/016 |
+| 033 | 在用 | infrastructure011/033 机密加密存储（SecretCipher）——**已落地 B0–B2**；权限 → 013.access-center/016 |
 
 > 历史占用号不回收。本表仅登记**现行**用途。
 
@@ -84,7 +84,8 @@
 
 > ✅ 2026-09-25：AI / 消息 / 存储 → `center-<名>011-starter`；金标准 029。
 > ✅ 2026-09-24：`docs/deploy/`；IAM 包/URL；中心 SQL `july_center_<slug>`；`system011` 不再写成菜单/组织归属。
-> ✅ 2026-09-26：文档反向审核——gate 口径对齐 `clean install`；Demo Seed = test 域；033 标未落地；旧中心底册确认已在 archive011。
+> ✅ 2026-09-26：文档反向审核——gate 口径对齐 `clean install`；Demo Seed = test 域；旧中心底册确认已在 archive011。
 > ✅ 2026-09-26：中心文档号位重排——`011.persistence-spec` / `013.access-center` / `015–017` 中心 / `018.datasource-center`；旧空壳目录已删（不留跳转）。
 > ✅ 2026-09-26：消息中心文档收敛——现行唯一入口 [016.message-center](infrastructure011/016.message-center/011.topic-design.md)；包/URL/SPI 按 inbound·outbound 校正；归档底册勿当真源。
 > ✅ 2026-09-26：文档↔代码再收敛——瘦 core 叙事；SQL `july_*011`；调度非中心 + 执行审计 `pk_mt`；G9a=`tools/demo011-dual-mode-smoke.sh`（dev+prod）；requirement013 类清单模块归属校正。
+> ✅ 2026-09-26：033 SecretCipher **已落地 B0–B2**（文档/DDL 同步；权限种子下沉各 starter；消息 config JSON=B3 未做）。

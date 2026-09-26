@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for a config entry (code immutable).
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyConfigUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Config value, max 300. */
+    @NotBlank(message = "data is required")
     @Schema(description = "配置值（最长 300）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String data;
 

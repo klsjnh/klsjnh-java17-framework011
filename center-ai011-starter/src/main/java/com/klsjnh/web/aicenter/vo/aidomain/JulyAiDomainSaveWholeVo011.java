@@ -20,6 +20,9 @@ import com.klsjnh.web.aicenter.vo.aidomainprompt.JulyAiDomainPromptSaveVo011;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +43,7 @@ public class JulyAiDomainSaveWholeVo011 {
     private String domainCode;
 
     /** Domain name, max 100. */
+    @NotBlank(message = "domainName is required")
     @Schema(description = "域名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String domainName;
 
@@ -60,6 +64,7 @@ public class JulyAiDomainSaveWholeVo011 {
     private String status;
 
     /** Prompt rows replacing the old children; blank means none. */
+    @Valid
     @Schema(description = "提示词列表（整存替换：旧子表逻辑删 + 新列表插入）")
     private List<JulyAiDomainPromptSaveVo011> prompts = new ArrayList<>();
 }

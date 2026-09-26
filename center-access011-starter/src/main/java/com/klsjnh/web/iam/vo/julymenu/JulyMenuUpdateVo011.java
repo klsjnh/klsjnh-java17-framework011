@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for a menu node (code immutable; parent move allowed).
  */
@@ -26,14 +28,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyMenuUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Menu name, max 60. */
+    @NotBlank(message = "menuName is required")
     @Schema(description = "菜单名称（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String menuName;
 
     /** Menu type: 1 directory / 2 page / 3 button. */
+    @NotBlank(message = "menuType is required")
     @Schema(description = "菜单类型（1 目录 / 2 菜单 / 3 按钮）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String menuType;
 

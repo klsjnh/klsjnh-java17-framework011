@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.Map;
 
 /**
@@ -29,6 +31,7 @@ import java.util.Map;
 public class JulyAiDomainPromptRenderVo011 {
 
     /** Prompt code. */
+    @NotBlank(message = "promptCode is required")
     @Schema(description = "提示词编码（全局唯一）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String promptCode;
 

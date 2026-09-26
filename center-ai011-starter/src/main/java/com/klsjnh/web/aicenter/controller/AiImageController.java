@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.Base64;
 
@@ -82,7 +83,7 @@ public class AiImageController {
      */
     @PostMapping("/generate")
     @Operation(summary = "文生图 / 图生图 / 文图生图（必传 storageCode|storageId + bucketCode|bucketId；缺参 400；有输入图即图生图/文图生图）")
-    public Response011<AiImageResponseVo011> generate(@RequestBody AiImageRequestVo011 vo, HttpServletRequest request) {
+    public Response011<AiImageResponseVo011> generate(@Valid @RequestBody AiImageRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai image generate";
         Operator011 operator = Operator011Resolver.resolve(request);
 

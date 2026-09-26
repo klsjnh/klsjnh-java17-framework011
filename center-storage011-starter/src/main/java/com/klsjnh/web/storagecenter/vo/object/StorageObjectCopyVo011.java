@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Copy an object within / across buckets.
  */
@@ -30,18 +32,22 @@ public class StorageObjectCopyVo011 {
     private String storageCode;
 
     /** Source bucket. */
+    @NotBlank(message = "bucketName is required")
     @Schema(description = "源桶", requiredMode = Schema.RequiredMode.REQUIRED)
     private String bucketName;
 
     /** Source object. */
+    @NotBlank(message = "objectName is required")
     @Schema(description = "源对象", requiredMode = Schema.RequiredMode.REQUIRED)
     private String objectName;
 
     /** Target bucket. */
+    @NotBlank(message = "targetBucket is required")
     @Schema(description = "目标桶", requiredMode = Schema.RequiredMode.REQUIRED)
     private String targetBucket;
 
     /** Target object. */
+    @NotBlank(message = "targetName is required")
     @Schema(description = "目标对象", requiredMode = Schema.RequiredMode.REQUIRED)
     private String targetName;
 }

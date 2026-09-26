@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyUserAudit HTTP adapter: read-only query over the append-only audit
@@ -83,7 +84,7 @@ public class JulyUserAuditController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（账号模糊/类型精确/时间段过滤）")
     public Response011<PageResult011<JulyUserAuditVo011>> selectListByPage(
-            @RequestBody JulyUserAuditQueryVo011 query, HttpServletRequest request) {
+            @Valid @RequestBody JulyUserAuditQueryVo011 query, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 

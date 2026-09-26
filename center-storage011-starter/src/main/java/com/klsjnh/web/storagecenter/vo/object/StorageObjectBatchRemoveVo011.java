@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 
 /**
@@ -36,6 +38,7 @@ public class StorageObjectBatchRemoveVo011 {
     private String bucketName;
 
     /** Object names. */
+    @NotNull(message = "objectNames is required")
     @Schema(description = "对象名列表", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> objectNames;
 }

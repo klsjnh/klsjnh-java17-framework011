@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Page query request VO for scheduler execution-audit rows (child table).
  */
@@ -34,6 +36,7 @@ public class JulySchedulerAuditQueryVo011 {
     private Integer pageSize;
 
     /** Master link: july_scheduler.id (pk_mt), required. */
+    @NotBlank(message = "pkMt is required")
     @Schema(description = "主表链接（july_scheduler.id / pk_mt，必填）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String pkMt;
 }

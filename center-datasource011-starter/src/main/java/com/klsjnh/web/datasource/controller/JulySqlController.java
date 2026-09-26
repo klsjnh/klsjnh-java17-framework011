@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -70,7 +71,7 @@ public class JulySqlController {
      */
     @PostMapping("/selectByPage")
     @Operation(summary = "执行 SQL 分页查询（只读 SELECT；参数化；pageSize 夹取 [10,500]）")
-    public Response011<PageResult011<Map<String, Object>>> selectByPage(@RequestBody SqlQueryPageVo011 vo,
+    public Response011<PageResult011<Map<String, Object>>> selectByPage(@Valid @RequestBody SqlQueryPageVo011 vo,
             HttpServletRequest request) {
         String funcName = "sql select by page";
         Operator011 operator = Operator011Resolver.resolve(request);

@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Insert request VO for a dictionary type.
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyDictionaryInsertVo011 {
 
     /** Dictionary code, unique, immutable, max 60. */
+    @NotBlank(message = "dictionaryCode is required")
     @Schema(description = "字典编码（唯一，最长 60，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictionaryCode;
 
@@ -34,6 +37,7 @@ public class JulyDictionaryInsertVo011 {
     private Integer sortOrder;
 
     /** Dictionary display name, max 100. */
+    @NotBlank(message = "dictionaryName is required")
     @Schema(description = "字典名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictionaryName;
 

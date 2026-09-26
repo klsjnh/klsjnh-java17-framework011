@@ -28,9 +28,14 @@ import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Global exception handler: maps every exception onto the unified response
@@ -78,6 +83,81 @@ public class GlobalExceptionHandler {
         Response011<Void> body = Response011.of(ex.getCode(), ex.getMessage());
 
         return ResponseEntity.status(ex.getCode()).body(body);
+    }
+
+    /**
+     * Map {@code @Valid} / {@code @Validated} body failures onto a bad request
+     * envelope. The first field error becomes {@code message}; full detail
+     * stays in {@code errorMessage} only in debug mode.
+     *
+     * @param ex method argument not valid
+     * @return error envelope
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Response011<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        String message = firstFieldErrorMessage(ex);
+        Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, message);
+
+        if (runtimeStatusPort.isDebug()) {
+            body.setErrorMessage(ex.getClass().getSimpleName() + ": " + message);
+        }
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Map constraint violations (e.g. {@code @Validated} on params) onto a bad
+     * request envelope.
+     *
+     * @param ex constraint violation
+     * @return error envelope
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Response011<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+        String message = firstConstraintMessage(ex);
+        Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, message);
+
+        if (runtimeStatusPort.isDebug()) {
+            body.setErrorMessage(ex.getClass().getSimpleName() + ": " + message);
+        }
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * First field error message from a {@link MethodArgumentNotValidException}.
+     *
+     * @param ex exception
+     * @return message
+     */
+    private static String firstFieldErrorMessage(MethodArgumentNotValidException ex) {
+        FieldError fieldError = ex.getBindingResult().getFieldError();
+
+        if (fieldError == null) {
+            return "validation failed";
+        }
+
+        String defaultMessage = fieldError.getDefaultMessage();
+
+        if (defaultMessage == null || defaultMessage.isBlank()) {
+            return fieldError.getField() + " is invalid";
+        }
+
+        return defaultMessage;
+    }
+
+    /**
+     * First constraint violation message.
+     *
+     * @param ex exception
+     * @return message
+     */
+    private static String firstConstraintMessage(ConstraintViolationException ex) {
+        return ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .filter(msg -> msg != null && !msg.isBlank())
+                .findFirst()
+                .orElse("validation failed");
     }
 
     /**

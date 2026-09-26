@@ -16,6 +16,8 @@ package com.klsjnh.common.vo;
 
 import lombok.Data;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Shared id payload VO carried by the unified response envelope.
  */
@@ -24,5 +26,6 @@ import lombok.Data;
 public class IdVo011 {
 
     /** Primary key of the affected row. */
+    @NotBlank(message = "id is required")
     private String id;
 }

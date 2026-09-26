@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for a message channel (channelCode immutable).
  */
@@ -26,14 +28,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyOutboundChannelUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Channel display name, max 100. */
+    @NotBlank(message = "channelName is required")
     @Schema(description = "渠道名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String channelName;
 
     /** Provider type (SPI channelCode), max 60. */
+    @NotBlank(message = "providerType is required")
     @Schema(description = "提供商类型（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String providerType;
 

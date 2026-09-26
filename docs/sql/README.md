@@ -30,7 +30,9 @@
 
 2. **逻辑删除唯一键迁移**：`logic-delete-unique-fix.sql` —— 把业务唯一键切到 `alive_*` 生成列，**必须在对应表建好之后执行一次**（新库若 CREATE 已含 `alive_*` 可跳过）。
 
-3. `base-entity-columns.sql` 仅**模板/说明**，不执行。
+3. **SecretCipher 列宽（已有库）**：`secret-cipher-column-widen.sql` —— 将 `api_key` / `access_key` / `secret_key` / `july_datasource.password` 加宽到 `VARCHAR(512)`；**新库 CREATE 已含 512 可跳过**。
+
+4. `base-entity-columns.sql` 仅**模板/说明**，不执行。
 
 ## 不在本目录的表
 

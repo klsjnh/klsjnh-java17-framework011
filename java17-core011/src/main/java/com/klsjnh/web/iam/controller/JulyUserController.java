@@ -56,6 +56,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyUser HTTP adapter: user CRUD, role assignment, password reset and the
@@ -100,7 +101,7 @@ public class JulyUserController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/insert")
     @Operation(summary = "新增用户")
-    public Response011<IdVo011> insert(@RequestBody JulyUserInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyUserInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -119,7 +120,7 @@ public class JulyUserController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/update")
     @Operation(summary = "修改用户资料（不含账号与密码）")
-    public Response011<IdVo011> update(@RequestBody JulyUserUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyUserUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -139,7 +140,7 @@ public class JulyUserController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -156,7 +157,7 @@ public class JulyUserController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除（批量）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo,
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo,
             HttpServletRequest request) {
         String funcName = "logic delete batch";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -189,7 +190,7 @@ public class JulyUserController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（账号/姓名模糊过滤）")
-    public Response011<PageResult011<JulyUserVo011>> selectListByPage(@RequestBody JulyUserQueryVo011 query,
+    public Response011<PageResult011<JulyUserVo011>> selectListByPage(@Valid @RequestBody JulyUserQueryVo011 query,
             HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -211,7 +212,7 @@ public class JulyUserController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_USER)
     @PostMapping("/resetPassword")
     @Operation(summary = "重置密码（管理员动作）")
-    public Response011<IdVo011> resetPassword(@RequestBody JulyUserResetPasswordVo011 vo,
+    public Response011<IdVo011> resetPassword(@Valid @RequestBody JulyUserResetPasswordVo011 vo,
             HttpServletRequest request) {
         String funcName = "reset password";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -230,7 +231,8 @@ public class JulyUserController {
      */
     @PostMapping("/login")
     @Operation(summary = "账号密码登录（任何环境）")
-    public Response011<JulyUserSessionVo011> login(@RequestBody JulyUserLoginVo011 vo, HttpServletRequest request) {
+    public Response011<JulyUserSessionVo011> login(@Valid @RequestBody JulyUserLoginVo011 vo,
+            HttpServletRequest request) {
         String funcName = "login";
 
         LoginResult result = julyUserUseCase.login(vo.getUserAccount(), vo.getPassword(),
@@ -248,7 +250,7 @@ public class JulyUserController {
      */
     @PostMapping("/loginByUserName")
     @Operation(summary = "免密登录（仅 debug / development 运行态）")
-    public Response011<JulyUserSessionVo011> loginByUserName(@RequestBody JulyUserLoginVo011 vo,
+    public Response011<JulyUserSessionVo011> loginByUserName(@Valid @RequestBody JulyUserLoginVo011 vo,
             HttpServletRequest request) {
         String funcName = "login by user name";
 
@@ -266,7 +268,7 @@ public class JulyUserController {
      */
     @PostMapping("/changePassword")
     @Operation(summary = "本人修改密码（验旧密）")
-    public Response011<IdVo011> changePassword(@RequestBody JulyUserChangePasswordVo011 vo,
+    public Response011<IdVo011> changePassword(@Valid @RequestBody JulyUserChangePasswordVo011 vo,
             HttpServletRequest request) {
         String funcName = "change password";
         Operator011 operator = Operator011Resolver.resolve(request);

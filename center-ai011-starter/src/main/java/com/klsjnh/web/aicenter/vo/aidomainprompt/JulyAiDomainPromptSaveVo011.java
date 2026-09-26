@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Save item for one prompt inside the whole save (saveWhole): the master link
  * comes from the parent, so there is no pkMt here.
@@ -27,10 +29,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyAiDomainPromptSaveVo011 {
 
     /** Prompt code, unique, immutable. */
+    @NotBlank(message = "promptCode is required")
     @Schema(description = "提示词编码（全局唯一，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String promptCode;
 
     /** Prompt name, max 100. */
+    @NotBlank(message = "promptName is required")
     @Schema(description = "提示词名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String promptName;
 

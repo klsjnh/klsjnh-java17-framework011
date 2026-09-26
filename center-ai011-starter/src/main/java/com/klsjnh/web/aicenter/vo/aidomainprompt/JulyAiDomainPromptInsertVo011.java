@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Prompt insert request.
  */
@@ -26,14 +28,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyAiDomainPromptInsertVo011 {
 
     /** Master domain id (pk_mt). */
+    @NotBlank(message = "pkMt is required")
     @Schema(description = "业务域 id（pk_mt）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String pkMt;
 
     /** Prompt code, globally unique, immutable. */
+    @NotBlank(message = "promptCode is required")
     @Schema(description = "提示词编码（全局唯一，不可变）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String promptCode;
 
     /** Prompt name. */
+    @NotBlank(message = "promptName is required")
     @Schema(description = "提示词名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String promptName;
 

@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Single object reference request VO.
  */
@@ -34,6 +36,7 @@ public class StorageObjectRefVo011 {
     private String bucketName;
 
     /** Object name. */
+    @NotBlank(message = "objectName is required")
     @Schema(description = "对象名", requiredMode = Schema.RequiredMode.REQUIRED)
     private String objectName;
 }

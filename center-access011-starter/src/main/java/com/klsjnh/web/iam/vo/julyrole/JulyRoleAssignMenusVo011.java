@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 /**
@@ -29,6 +31,7 @@ import java.util.List;
 public class JulyRoleAssignMenusVo011 {
 
     /** Role id. */
+    @NotBlank(message = "id is required")
     @Schema(description = "角色 id", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 

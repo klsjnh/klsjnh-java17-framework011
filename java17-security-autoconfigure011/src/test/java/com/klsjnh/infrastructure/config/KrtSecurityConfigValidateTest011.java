@@ -73,7 +73,22 @@ class KrtSecurityConfigValidateTest011 {
         KrtSecurityConfig011 config = new KrtSecurityConfig011(environment);
         config.setStatus(FrameworkStatus011.PRODUCTION);
         config.getJwt().setSecret("test-secret-for-guard");
+        config.getCrypto().setMasterKey("dev-crypto-master-key-klsjnh-framework011-change-me-32b");
 
         assertDoesNotThrow(config::validate);
+    }
+
+    /**
+     * production status without crypto master key must fail.
+     */
+    @Test
+    void productionStatusRequiresCryptoMasterKey() {
+        when(environment.getActiveProfiles()).thenReturn(new String[] {});
+        KrtSecurityConfig011 config = new KrtSecurityConfig011(environment);
+        config.setStatus(FrameworkStatus011.PRODUCTION);
+        config.getJwt().setSecret("test-secret-for-guard");
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, config::validate);
+        assertTrue(ex.getMessage() != null && ex.getMessage().contains("krt.crypto.master-key"));
     }
 }

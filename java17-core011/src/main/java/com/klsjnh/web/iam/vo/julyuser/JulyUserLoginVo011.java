@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Login request VO. Two kinds: account + password (any environment), or
  * account only (passwordless — debug / development runtime modes only).
@@ -27,6 +29,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyUserLoginVo011 {
 
     /** Login account. */
+    @NotBlank(message = "userAccount is required")
     @Schema(description = "登录账号", requiredMode = Schema.RequiredMode.REQUIRED)
     private String userAccount;
 

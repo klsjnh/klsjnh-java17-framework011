@@ -49,7 +49,7 @@ public class JulyDatasourcePo extends BasePo011 {
     /** Login user, optional. */
     private String username;
 
-    /** Login password, optional. */
+    /** Login password, optional (may be ciphertext enc:v1: in DB). */
     private String password;
 
     /** JDBC driver class, optional. */

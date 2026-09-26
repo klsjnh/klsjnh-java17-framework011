@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Insert request VO for an organization node.
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyOrganizationInsertVo011 {
 
     /** Organization code, unique, max 30, immutable after create. */
+    @NotBlank(message = "orgCode is required")
     @Schema(description = "组织编码（唯一，最长 30，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String orgCode;
 
     /** Organization name, max 60. */
+    @NotBlank(message = "orgName is required")
     @Schema(description = "组织名称（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String orgName;
 

@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Rename (move) an object within the same bucket.
  */
@@ -30,14 +32,17 @@ public class StorageObjectRenameVo011 {
     private String storageCode;
 
     /** Bucket. */
+    @NotBlank(message = "bucketName is required")
     @Schema(description = "桶", requiredMode = Schema.RequiredMode.REQUIRED)
     private String bucketName;
 
     /** Source object. */
+    @NotBlank(message = "objectName is required")
     @Schema(description = "源对象", requiredMode = Schema.RequiredMode.REQUIRED)
     private String objectName;
 
     /** Target object. */
+    @NotBlank(message = "targetName is required")
     @Schema(description = "目标对象", requiredMode = Schema.RequiredMode.REQUIRED)
     private String targetName;
 }

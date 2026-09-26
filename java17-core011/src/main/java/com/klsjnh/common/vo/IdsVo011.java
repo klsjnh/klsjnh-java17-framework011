@@ -16,6 +16,8 @@ package com.klsjnh.common.vo;
 
 import lombok.Data;
 
+import jakarta.validation.constraints.NotEmpty;
+
 import java.util.List;
 
 /**
@@ -28,5 +30,6 @@ import java.util.List;
 public class IdsVo011 {
 
     /** Primary keys of the affected rows. */
+    @NotEmpty(message = "ids is required")
     private List<String> ids;
 }

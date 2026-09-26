@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Native paged object listing (delimiter + marker).
  */
@@ -30,6 +32,7 @@ public class StorageObjectPageVo011 {
     private String storageCode;
 
     /** Bucket. */
+    @NotBlank(message = "bucketName is required")
     @Schema(description = "桶", requiredMode = Schema.RequiredMode.REQUIRED)
     private String bucketName;
 

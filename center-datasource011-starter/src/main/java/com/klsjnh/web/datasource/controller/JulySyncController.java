@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +85,7 @@ public class JulySyncController {
      */
     @PostMapping("/insert")
     @Operation(summary = "新增同步规则（含列对照）")
-    public Response011<IdVo011> insert(@RequestBody JulySyncInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulySyncInsertVo011 vo, HttpServletRequest request) {
         String funcName = "sync rule insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -113,7 +114,7 @@ public class JulySyncController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "同步规则分页（keyword/status）")
-    public Response011<PageResult011<JulySyncRuleVo011>> selectListByPage(@RequestBody JulySyncQueryVo011 vo,
+    public Response011<PageResult011<JulySyncRuleVo011>> selectListByPage(@Valid @RequestBody JulySyncQueryVo011 vo,
             HttpServletRequest request) {
         String funcName = "sync rule select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -154,7 +155,7 @@ public class JulySyncController {
      */
     @PostMapping("/saveWhole")
     @Operation(summary = "整存同步规则 + 列映射（主+子，一个事务；子表替换）")
-    public Response011<IdVo011> saveWhole(@RequestBody JulySyncSaveWholeVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> saveWhole(@Valid @RequestBody JulySyncSaveWholeVo011 vo, HttpServletRequest request) {
         String funcName = "sync rule save whole";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -231,7 +232,7 @@ public class JulySyncController {
      */
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除同步规则（含列对照）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "sync rule logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -247,7 +248,7 @@ public class JulySyncController {
      */
     @PostMapping("/run")
     @Operation(summary = "执行同步规则一次（单表：源分页读 → 列对照 → 目标 upsert）")
-    public Response011<SyncRunResult> run(@RequestBody JulySyncRunVo011 vo, HttpServletRequest request) {
+    public Response011<SyncRunResult> run(@Valid @RequestBody JulySyncRunVo011 vo, HttpServletRequest request) {
         String funcName = "sync rule run";
         Operator011 operator = Operator011Resolver.resolve(request);
 

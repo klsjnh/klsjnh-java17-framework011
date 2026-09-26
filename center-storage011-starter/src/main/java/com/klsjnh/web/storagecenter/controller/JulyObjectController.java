@@ -51,6 +51,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -89,7 +90,7 @@ public class JulyObjectController {
      */
     @PostMapping("/selectObjectList")
     @Operation(summary = "对象列表（前缀过滤）")
-    public Response011<List<String>> selectObjectList(@RequestBody StorageObjectQueryVo011 vo, HttpServletRequest request) {
+    public Response011<List<String>> selectObjectList(@Valid @RequestBody StorageObjectQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select object list";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -106,7 +107,7 @@ public class JulyObjectController {
      */
     @PostMapping("/selectObjectListByPage")
     @Operation(summary = "对象分页（每行带 key/size/lastModified/contentType）")
-    public Response011<PageResult011<ObjectStat>> selectObjectListByPage(@RequestBody StorageObjectQueryVo011 vo, HttpServletRequest request) {
+    public Response011<PageResult011<ObjectStat>> selectObjectListByPage(@Valid @RequestBody StorageObjectQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select object list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -227,7 +228,7 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/copyObject")
     @Operation(summary = "复制对象（同/跨桶）")
-    public Response011<String> copyObject(@RequestBody StorageObjectCopyVo011 vo, HttpServletRequest request) {
+    public Response011<String> copyObject(@Valid @RequestBody StorageObjectCopyVo011 vo, HttpServletRequest request) {
         String funcName = "copy object";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -245,7 +246,7 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/renameObject")
     @Operation(summary = "重命名对象（同桶 move）")
-    public Response011<String> renameObject(@RequestBody StorageObjectRenameVo011 vo, HttpServletRequest request) {
+    public Response011<String> renameObject(@Valid @RequestBody StorageObjectRenameVo011 vo, HttpServletRequest request) {
         String funcName = "rename object";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -262,7 +263,7 @@ public class JulyObjectController {
      */
     @PostMapping("/selectObjectPage")
     @Operation(summary = "对象原生分页（delimiter 目录 + marker 续传）")
-    public Response011<ObjectListing> selectObjectPage(@RequestBody StorageObjectPageVo011 vo, HttpServletRequest request) {
+    public Response011<ObjectListing> selectObjectPage(@Valid @RequestBody StorageObjectPageVo011 vo, HttpServletRequest request) {
         String funcName = "select object page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -283,7 +284,7 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/removeObject")
     @Operation(summary = "删除对象")
-    public Response011<String> removeObject(@RequestBody StorageObjectRefVo011 vo, HttpServletRequest request) {
+    public Response011<String> removeObject(@Valid @RequestBody StorageObjectRefVo011 vo, HttpServletRequest request) {
         String funcName = "remove object";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -302,7 +303,7 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/batchRemoveObject")
     @Operation(summary = "批量删除对象")
-    public Response011<String> batchRemoveObject(@RequestBody StorageObjectBatchRemoveVo011 vo, HttpServletRequest request) {
+    public Response011<String> batchRemoveObject(@Valid @RequestBody StorageObjectBatchRemoveVo011 vo, HttpServletRequest request) {
         String funcName = "batch remove object";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -342,7 +343,7 @@ public class JulyObjectController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_STORAGE_OBJECT)
     @PostMapping("/saveObjectText")
     @Operation(summary = "在线编辑·保存（≤1MB）")
-    public Response011<String> saveObjectText(@RequestBody StorageObjectSaveTextVo011 vo, HttpServletRequest request) {
+    public Response011<String> saveObjectText(@Valid @RequestBody StorageObjectSaveTextVo011 vo, HttpServletRequest request) {
         String funcName = "save object text";
         Operator011 operator = Operator011Resolver.resolve(request);
 

@@ -10,7 +10,7 @@
 | artifactId | `center-platform011-starter`（无 `java17-` 前缀，与 access / storage / message 同构） |
 | 迁入 | `domain/application/infrastructure/web` 下的 julyDictionary + julyConfig 全栈，含各自 Export/Import Provider |
 | DDL | [july_center_platform011.sql](../../sql/july_center_platform011.sql) |
-| 权限种子 | 由 access 侧 `JulyPlatformPermCatalogSeed011` 在 platform 在 classpath 时 `ConditionalOnClass` 播种（与 message / scheduler 同构；perm 仓储在 access） |
+| 权限种子 | 本 starter 内 `JulyPlatformPermCatalogSeed011`（`@ConditionalOnBean(JulyPermObjectRepository)`）；**platform + access 同时在场**才播种（与 message / scheduler / ai / storage / datasource 同构） |
 | 暂留 core | `domain/application/infrastructure.platform011` 的导出/导入/备份内核（多业务对象 Provider 共用，牵连面大） |
 
 ## 依赖方向

@@ -54,6 +54,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyDatasource HTTP adapter: admin CRUD over the runtime datasource
@@ -98,7 +99,7 @@ public class JulyDatasourceController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/insert")
     @Operation(summary = "新增数据源（dsCode 查重；落库后刷新注册表）")
-    public Response011<IdVo011> insert(@RequestBody JulyDatasourceInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyDatasourceInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -120,7 +121,7 @@ public class JulyDatasourceController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/update")
     @Operation(summary = "修改数据源（dsCode 不可变；密码留空保持原值；落库后刷新注册表）")
-    public Response011<IdVo011> update(@RequestBody JulyDatasourceUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyDatasourceUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -141,7 +142,7 @@ public class JulyDatasourceController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（落库后刷新注册表，运行时应立即摘除该数据源）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -160,7 +161,7 @@ public class JulyDatasourceController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_DATASOURCE)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "批量逻辑删除（逐条判定，整批只刷新一次注册表）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "logic delete batch";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -192,7 +193,7 @@ public class JulyDatasourceController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码 / 名称 / URL 模糊 + 状态过滤）")
-    public Response011<PageResult011<JulyDatasourceVo011>> selectListByPage(@RequestBody JulyDatasourceQueryVo011 vo,
+    public Response011<PageResult011<JulyDatasourceVo011>> selectListByPage(@Valid @RequestBody JulyDatasourceQueryVo011 vo,
             HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -215,7 +216,7 @@ public class JulyDatasourceController {
      */
     @PostMapping("/testConnection")
     @Operation(summary = "测试连接（不传 id 为草稿态测试；传 id 为重测已保存数据源；不回灌注册表）")
-    public Response011<JulyDatasourceTestResultVo011> testConnection(@RequestBody JulyDatasourceTestVo011 vo,
+    public Response011<JulyDatasourceTestResultVo011> testConnection(@Valid @RequestBody JulyDatasourceTestVo011 vo,
             HttpServletRequest request) {
         String funcName = "test connection";
         Operator011 operator = Operator011Resolver.resolve(request);

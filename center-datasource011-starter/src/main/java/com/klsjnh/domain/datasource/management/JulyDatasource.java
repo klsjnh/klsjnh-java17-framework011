@@ -86,6 +86,8 @@ public class JulyDatasource {
 
     /**
      * Login password, optional; never echoed back by the web layer.
+     * Domain validates plaintext length ≤300; persistence may store ciphertext
+     * ({@code enc:v1:}, DB column VARCHAR(512)).
      */
     private String password;
 

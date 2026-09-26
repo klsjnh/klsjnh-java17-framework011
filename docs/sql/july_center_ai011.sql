@@ -4,7 +4,7 @@
 -- 2026-09-26：文件更名为 july_center_ai011.sql（对齐 center-ai011-starter）
 -- 列顺序规范：id → 业务字段 → sort_order（有排序需求时）→ status → 审计四列 → dr
 -- 设计：docs/infrastructure011/017.ai-center/（011 设计思路 / 013 整体架构 / 015 怎么使用）
--- 边界：api_key 出参不回显（VO 类型层无该字段）；本期明文入库，加密留二期
+-- 边界：api_key 出参不回显（VO 类型层无该字段）；库内 SecretCipher（enc:v1:）；列宽 VARCHAR(512) 容纳密文
 -- 组成：模型接入（provider 主 + api 子）+ 提示词（domain 主树 + domain_prompt 子）
 -- ============================================================
 
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS july_ai_model_provider_api (
     pk_mt       VARCHAR(33)  NOT NULL                COMMENT '主表链接（july_ai_model_provider.id）',
     api_code    VARCHAR(60)  NOT NULL                COMMENT '密钥编码（同提供商内唯一，不可变）',
     api_name    VARCHAR(100) NOT NULL                COMMENT '密钥名称',
-    api_key     VARCHAR(300) NOT NULL                COMMENT 'API Key（出参不回显）',
+    api_key     VARCHAR(512) NOT NULL                COMMENT 'API Key（SecretCipher enc:v1:；出参不回显；明文域上限 300）',
     sort_order  INT          NOT NULL DEFAULT 9999   COMMENT '排序（越小越靠前）',
     status      VARCHAR(3)   NOT NULL DEFAULT '1'    COMMENT '状态（0 停用 / 1 启用）',
     remark      VARCHAR(300) NULL                    COMMENT '备注',

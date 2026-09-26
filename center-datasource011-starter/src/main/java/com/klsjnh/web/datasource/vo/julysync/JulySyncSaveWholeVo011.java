@@ -18,6 +18,9 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +41,7 @@ public class JulySyncSaveWholeVo011 {
     private String syncCode;
 
     /** Sync name, max 100. */
+    @NotBlank(message = "syncName is required")
     @Schema(description = "同步名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String syncName;
 
@@ -90,6 +94,7 @@ public class JulySyncSaveWholeVo011 {
     private String status;
 
     /** Column mappings replacing the old children; blank means none. */
+    @Valid
     @Schema(description = "列映射列表（整存替换：旧子表逻辑删 + 新列表插入）")
     private List<JulySyncColumnVo011> columns = new ArrayList<>();
 }

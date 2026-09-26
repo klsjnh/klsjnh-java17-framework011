@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 /**
@@ -29,10 +31,12 @@ import java.util.List;
 public class JulyRoleAssignObjectActionsVo011 {
 
     /** Role id. */
+    @NotBlank(message = "id is required")
     @Schema(description = "角色 id", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Catalog object code (e.g. julyScheduler). */
+    @NotBlank(message = "objectCode is required")
     @Schema(description = "权限对象编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String objectCode;
 

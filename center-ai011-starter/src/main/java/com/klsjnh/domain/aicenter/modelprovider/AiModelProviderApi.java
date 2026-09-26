@@ -59,6 +59,8 @@ public class AiModelProviderApi {
 
     /**
      * API key secret; never echoed back by the web layer.
+     * Plaintext max 300 at domain boundary; persistence may store ciphertext
+     * ({@code enc:v1:}, DB column VARCHAR(512)).
      */
     private String apiKey;
 

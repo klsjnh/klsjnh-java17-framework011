@@ -12,6 +12,7 @@ package com.klsjnh.infrastructure.config;
  *
  *      2026.09.25  security-side krt config (split from KrtConfig011)
  *      2026.09.26  krt.web.auth-whitelist-paths / prefixes (JWT bypass)
+ *      2026.09.26  krt.crypto.master-key (SecretCipher)
  *
  */
 
@@ -34,10 +35,10 @@ import java.util.List;
 
 /**
  * Security-side framework config bound to the {@code krt.*} keys: runtime
- * status, JWT settings and web client-IP settings. Lives in the security
- * autoconfigure module; business code reads config through these binding
- * classes, never {@code @Value}. Value semantics live in
- * {@link FrameworkStatus011}, this class only binds and guards.
+ * status, JWT settings, reversible crypto master key and web client-IP
+ * settings. Lives in the security autoconfigure module; business code reads
+ * config through these binding classes, never {@code @Value}. Value semantics
+ * live in {@link FrameworkStatus011}, this class only binds and guards.
  */
 
 @Slf4j
@@ -73,11 +74,17 @@ public class KrtSecurityConfig011 {
     private WebConfig web = new WebConfig();
 
     /**
+     * Reversible crypto settings (SecretCipher master key).
+     */
+    private CryptoConfig crypto = new CryptoConfig();
+
+    /**
      * Startup guard: reject unsafe config combinations at boot.
      * <p>
      * The production Spring profile must bind {@code krt.status=production}
      * (debug / development with production profile fail fast). Production
-     * status also requires a non-blank JWT secret.
+     * status also requires a non-blank JWT secret and a crypto master key of
+     * at least 32 bytes.
      * </p>
      */
     @PostConstruct
@@ -89,6 +96,11 @@ public class KrtSecurityConfig011 {
 
         if (status == FrameworkStatus011.PRODUCTION && jwtSecretBlank()) {
             throw new IllegalStateException("krt.jwt.secret is required in production");
+        }
+
+        if (status == FrameworkStatus011.PRODUCTION && cryptoMasterKeyInvalid()) {
+            throw new IllegalStateException(
+                    "krt.crypto.master-key is required in production (at least 32 bytes)");
         }
 
         log.info("krt.status = {} (passwordless login {}, permission PEP {})", status,
@@ -106,6 +118,19 @@ public class KrtSecurityConfig011 {
     }
 
     /**
+     * Whether the crypto master key is missing or shorter than 32 UTF-8 bytes.
+     *
+     * @return true when invalid for production
+     */
+    private boolean cryptoMasterKeyInvalid() {
+        if (crypto == null || crypto.getMasterKey() == null || crypto.getMasterKey().isBlank()) {
+            return true;
+        }
+
+        return crypto.getMasterKey().getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32;
+    }
+
+    /**
      * JWT settings.
      */
     @Data
@@ -120,6 +145,20 @@ public class KrtSecurityConfig011 {
          * Token expire minutes, int, default 480.
          */
         private int expireMinutes = 480;
+    }
+
+    /**
+     * Reversible crypto settings for {@code SecretCipherPort}.
+     */
+    @Data
+    public static class CryptoConfig {
+
+        /**
+         * AES master key material, string, no default — inject via env in
+         * production. Must be at least 32 UTF-8 bytes when
+         * {@code krt.status=production}. Hashed with SHA-256 before use.
+         */
+        private String masterKey;
     }
 
     /**

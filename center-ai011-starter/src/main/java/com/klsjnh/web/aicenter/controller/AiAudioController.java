@@ -44,6 +44,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.Base64;
 
@@ -94,7 +95,7 @@ public class AiAudioController {
      */
     @PostMapping("/synthesize")
     @Operation(summary = "文字转语音（必传 storageCode|storageId + bucketCode|bucketId；缺参 400）")
-    public Response011<AiTtsResponseVo011> synthesize(@RequestBody AiTtsRequestVo011 vo, HttpServletRequest request) {
+    public Response011<AiTtsResponseVo011> synthesize(@Valid @RequestBody AiTtsRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai tts synthesize";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -119,7 +120,7 @@ public class AiAudioController {
      */
     @PostMapping("/recognize")
     @Operation(summary = "语音识别（provider/api 支持 id 或 code；音频传 base64 或 url）")
-    public Response011<AiAsrResponseVo011> recognize(@RequestBody AiAsrRequestVo011 vo, HttpServletRequest request) {
+    public Response011<AiAsrResponseVo011> recognize(@Valid @RequestBody AiAsrRequestVo011 vo, HttpServletRequest request) {
         String funcName = "ai asr recognize";
         Operator011 operator = Operator011Resolver.resolve(request);
 

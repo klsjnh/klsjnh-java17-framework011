@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -95,7 +96,7 @@ public class JulyOrganizationController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_ORGANIZATION)
     @PostMapping("/insert")
     @Operation(summary = "新增组织（层级由上级推导）")
-    public Response011<IdVo011> insert(@RequestBody JulyOrganizationInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyOrganizationInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -114,7 +115,7 @@ public class JulyOrganizationController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_ORGANIZATION)
     @PostMapping("/update")
     @Operation(summary = "修改组织（编码不可改，可移动上级并重排层级）")
-    public Response011<IdVo011> update(@RequestBody JulyOrganizationUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyOrganizationUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -134,7 +135,7 @@ public class JulyOrganizationController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_ORGANIZATION)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（有子组织或挂有用户拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -188,7 +189,7 @@ public class JulyOrganizationController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称模糊过滤）")
     public Response011<PageResult011<JulyOrganizationVo011>> selectListByPage(
-            @RequestBody JulyOrganizationQueryVo011 query, HttpServletRequest request) {
+            @Valid @RequestBody JulyOrganizationQueryVo011 query, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 

@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Insert / update request VO for a storage instance.
  */
@@ -30,6 +32,7 @@ public class JulyStorageProviderSaveVo011 {
     private String id;
 
     /** Storage code, unique, immutable. */
+    @NotBlank(message = "storageCode is required")
     @Schema(description = "存储编码（唯一，不可变）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String storageCode;
 
@@ -38,10 +41,12 @@ public class JulyStorageProviderSaveVo011 {
     private Integer sortOrder;
 
     /** Display name. */
+    @NotBlank(message = "storageName is required")
     @Schema(description = "存储名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String storageName;
 
     /** Storage type code. */
+    @NotBlank(message = "provider is required")
     @Schema(description = "存储类型（local011/minio011/cos011/tos011/oss011/s3011）",
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String provider;
@@ -54,12 +59,12 @@ public class JulyStorageProviderSaveVo011 {
     @Schema(description = "Endpoint（S3 系必填）")
     private String endpoint;
 
-    /** Access key. */
-    @Schema(description = "Access Key")
+    /** Access key (plaintext max 100; may be stored as enc:v1:). */
+    @Schema(description = "Access Key（明文最长 100，落库密文）")
     private String accessKey;
 
-    /** Secret key, write-only; blank on update keeps the stored one. */
-    @Schema(description = "Secret Key（出参不回显；修改留空保持原值）")
+    /** Secret key, write-only; blank on update keeps the stored one (plaintext max 300; stored as enc:v1:). */
+    @Schema(description = "Secret Key（明文最长 300，落库密文；出参不回显；修改留空保持原值）")
     private String secretKey;
 
     /** Whether to use HTTPS. */

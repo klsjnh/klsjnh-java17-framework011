@@ -49,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyInboundTemplate HTTP adapter: message template CRUD.
@@ -90,7 +91,7 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/insert")
     @Operation(summary = "新增模板（templateCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyInboundTemplateInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyInboundTemplateInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -109,7 +110,7 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/update")
     @Operation(summary = "修改模板（templateCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyInboundTemplateUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyInboundTemplateUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -127,7 +128,7 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除模板（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -144,7 +145,7 @@ public class JulyInboundTemplateController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND_TEMPLATE)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除模板（批量，全有或全无）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "batch logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -177,7 +178,7 @@ public class JulyInboundTemplateController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称模糊 + 渠道/状态过滤）")
     public Response011<PageResult011<JulyInboundTemplateVo011>> selectListByPage(
-            @RequestBody JulyInboundTemplateQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyInboundTemplateQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 

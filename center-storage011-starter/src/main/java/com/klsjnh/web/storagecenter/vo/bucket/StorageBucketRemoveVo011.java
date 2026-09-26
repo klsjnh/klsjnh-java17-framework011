@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Remove bucket request VO.
  */
@@ -30,6 +32,7 @@ public class StorageBucketRemoveVo011 {
     private String storageCode;
 
     /** Bucket code. */
+    @NotBlank(message = "bucketCode is required")
     @Schema(description = "桶编码（同实例内唯一）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String bucketCode;
 }

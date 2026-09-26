@@ -20,6 +20,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Image generation request: provider / key may be an id or a code. Modes:
  * prompt only = text-to-image; prompt + imageUrl/imageBase64 = image-to-image /
@@ -47,6 +49,7 @@ public class AiImageRequestVo011 {
     private String apiId;
 
     /** Model name; blank for the provider default. */
+    @NotBlank(message = "model is required")
     @Schema(description = "模型名（必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String model;
 
@@ -55,6 +58,7 @@ public class AiImageRequestVo011 {
     private String returnType;
 
     /** Text prompt (required; also the edit instruction when an input image is set). */
+    @NotBlank(message = "prompt is required")
     @Schema(description = "提示词（必填；有输入图时为编辑/图生图指令）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String prompt;
 
@@ -87,6 +91,7 @@ public class AiImageRequestVo011 {
     private String imageBase64;
 
     /** Storage instance code (preferred). Required with bucket unless storageId is set. */
+    @NotBlank(message = "storageCode is required")
     @Schema(description = "存储实例 code（优先；与 storageId 二选一必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String storageCode;
 
@@ -95,6 +100,7 @@ public class AiImageRequestVo011 {
     private String storageId;
 
     /** Bucket code within the instance (preferred). Required with storage unless bucketId is set. */
+    @NotBlank(message = "bucketCode is required")
     @Schema(description = "桶 code（优先；与 bucketId 二选一必传；缺参 400，不走默认桶）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String bucketCode;
 

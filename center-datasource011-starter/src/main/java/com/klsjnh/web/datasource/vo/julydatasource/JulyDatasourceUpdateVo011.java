@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for a datasource entry (dsCode immutable).
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyDatasourceUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Datasource name, max 100. */
+    @NotBlank(message = "dsName is required")
     @Schema(description = "数据源名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dsName;
 
@@ -38,11 +42,13 @@ public class JulyDatasourceUpdateVo011 {
     private Integer sortOrder;
 
     /** Database type code. */
+    @NotBlank(message = "dbType is required")
     @Schema(description = "数据库类型（mysql/oracle/sqlserver/postgresql）",
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String dbType;
 
     /** JDBC url, max 500, must start with jdbc:. */
+    @NotBlank(message = "jdbcUrl is required")
     @Schema(description = "JDBC URL（须以 jdbc: 开头，最长 500）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String jdbcUrl;
 
@@ -54,8 +60,8 @@ public class JulyDatasourceUpdateVo011 {
     @Schema(description = "用户名（最长 100）")
     private String username;
 
-    /** Login password, max 300; BLANK keeps the stored one (never echoed back). */
-    @Schema(description = "密码（最长 300；留空表示保持原密码不变，出参不回显）")
+    /** Login password, max 300 plaintext; BLANK keeps the stored one (never echoed back; stored as enc:v1:). */
+    @Schema(description = "密码（明文最长 300；留空保持原值，落库密文；出参不回显）")
     private String password;
 
     /** JDBC driver class, max 200; blank uses the database type default. */

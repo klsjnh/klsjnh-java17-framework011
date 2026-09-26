@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Profile update request VO for a user (account and password excluded).
  */
@@ -26,10 +28,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyUserUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** User name, max 60. */
+    @NotBlank(message = "userName is required")
     @Schema(description = "用户姓名（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String userName;
 

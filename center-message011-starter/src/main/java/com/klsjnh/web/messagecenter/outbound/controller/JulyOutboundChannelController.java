@@ -49,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyOutboundChannel HTTP adapter: channel configuration CRUD.
@@ -90,7 +91,7 @@ public class JulyOutboundChannelController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_MESSAGE_OUTBOUND_CHANNEL)
     @PostMapping("/insert")
     @Operation(summary = "新增渠道（channelCode 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyOutboundChannelInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyOutboundChannelInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -108,7 +109,7 @@ public class JulyOutboundChannelController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_MESSAGE_OUTBOUND_CHANNEL)
     @PostMapping("/update")
     @Operation(summary = "修改渠道（channelCode 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyOutboundChannelUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyOutboundChannelUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -126,7 +127,7 @@ public class JulyOutboundChannelController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_OUTBOUND_CHANNEL)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除渠道（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -143,7 +144,7 @@ public class JulyOutboundChannelController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_OUTBOUND_CHANNEL)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除渠道（批量，全有或全无）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "batch logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -176,7 +177,7 @@ public class JulyOutboundChannelController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称/提供商模糊 + 状态过滤）")
     public Response011<PageResult011<JulyOutboundChannelVo011>> selectListByPage(
-            @RequestBody JulyOutboundChannelQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyOutboundChannelQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 

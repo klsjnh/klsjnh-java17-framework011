@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Insert request VO for a role (custom roles only; built-in roles are seeded
  * separately).
@@ -27,10 +29,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyRoleInsertVo011 {
 
     /** Role code, unique, max 30, immutable after create. */
+    @NotBlank(message = "roleCode is required")
     @Schema(description = "角色编码（唯一，最长 30，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String roleCode;
 
     /** Role name, max 60. */
+    @NotBlank(message = "roleName is required")
     @Schema(description = "角色名称（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String roleName;
 

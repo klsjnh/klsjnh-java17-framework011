@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Update request VO for an organization node (code immutable; parent move
  * allowed with cycle guard and subtree re-level).
@@ -27,10 +29,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyOrganizationUpdateVo011 {
 
     /** Primary key. */
+    @NotBlank(message = "id is required")
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     /** Organization name, max 60. */
+    @NotBlank(message = "orgName is required")
     @Schema(description = "组织名称（最长 60）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String orgName;
 

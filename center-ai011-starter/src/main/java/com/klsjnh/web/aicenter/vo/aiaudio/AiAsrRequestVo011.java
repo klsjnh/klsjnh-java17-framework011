@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Speech recognition request: provider / key may be an id or a code; the audio
  * is supplied as base64 or a url.
@@ -43,6 +45,7 @@ public class AiAsrRequestVo011 {
     private String apiId;
 
     /** Model name, required. */
+    @NotBlank(message = "model is required")
     @Schema(description = "模型名（必传）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String model;
 

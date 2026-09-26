@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -115,7 +116,7 @@ public class JulyRoleController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_ROLE)
     @PostMapping("/insert")
     @Operation(summary = "新增角色")
-    public Response011<IdVo011> insert(@RequestBody JulyRoleInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyRoleInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -133,7 +134,7 @@ public class JulyRoleController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_ROLE)
     @PostMapping("/update")
     @Operation(summary = "修改角色（编码不可改，状态可改）")
-    public Response011<IdVo011> update(@RequestBody JulyRoleUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyRoleUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -152,7 +153,7 @@ public class JulyRoleController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_ROLE)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除（内置角色拒绝）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -171,7 +172,7 @@ public class JulyRoleController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_ROLE)
     @PostMapping("/assignMenus")
     @Operation(summary = "角色授权菜单（整存替换）")
-    public Response011<IdVo011> assignMenus(@RequestBody JulyRoleAssignMenusVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> assignMenus(@Valid @RequestBody JulyRoleAssignMenusVo011 vo, HttpServletRequest request) {
         String funcName = "assign menus";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -190,7 +191,7 @@ public class JulyRoleController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_ROLE)
     @PostMapping("/assignObjectActions")
     @Operation(summary = "角色按对象授权动作（对象内整存替换，直授码）")
-    public Response011<IdVo011> assignObjectActions(@RequestBody JulyRoleAssignObjectActionsVo011 vo,
+    public Response011<IdVo011> assignObjectActions(@Valid @RequestBody JulyRoleAssignObjectActionsVo011 vo,
             HttpServletRequest request) {
         String funcName = "assign object actions";
         Operator011 operator = Operator011Resolver.resolve(request);
@@ -277,7 +278,7 @@ public class JulyRoleController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（编码/名称模糊过滤）")
-    public Response011<PageResult011<JulyRoleVo011>> selectListByPage(@RequestBody JulyRoleQueryVo011 query,
+    public Response011<PageResult011<JulyRoleVo011>> selectListByPage(@Valid @RequestBody JulyRoleQueryVo011 query,
             HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);

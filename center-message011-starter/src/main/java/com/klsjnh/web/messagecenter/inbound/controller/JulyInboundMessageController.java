@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyInboundMessage HTTP adapter: the unified receive, the received record
@@ -117,7 +118,7 @@ public class JulyInboundMessageController {
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询接收记录（渠道/状态过滤 + 关键字）")
     public Response011<PageResult011<JulyInboundMessageVo011>> selectListByPage(
-            @RequestBody JulyInboundMessageQueryVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody JulyInboundMessageQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -138,7 +139,7 @@ public class JulyInboundMessageController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除接收记录（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -155,7 +156,7 @@ public class JulyInboundMessageController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_INBOUND)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除接收记录（批量，全有或全无）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "batch logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 

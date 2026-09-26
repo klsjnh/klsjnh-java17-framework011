@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Insert request VO for a provider (providerCode required and immutable).
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class AiModelProviderInsertVo011 {
 
     /** Provider code, unique, immutable, max 60. */
+    @NotBlank(message = "providerCode is required")
     @Schema(description = "提供商编码（唯一，最长 60，创建后不可修改）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String providerCode;
 
@@ -34,10 +37,12 @@ public class AiModelProviderInsertVo011 {
     private Integer sortOrder;
 
     /** Provider display name, max 100. */
+    @NotBlank(message = "providerName is required")
     @Schema(description = "提供商名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String providerName;
 
     /** Base url, max 300. */
+    @NotBlank(message = "baseUrl is required")
     @Schema(description = "接口 Base URL（最长 300）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String baseUrl;
 

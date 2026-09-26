@@ -14,6 +14,7 @@ package com.klsjnh.application.system011.dictionary;
  *      2026.09.22  import workbook (xlsx upsert + replace children)
  *      2026.09.26  explicit permission checks (julyDictionary auth)
  *      2026.09.26  @Lazy ImportUseCase — break ImportProviderRegistry cycle
+ *      2026.09.26  workbook import extracted to JulyDictionaryImportSupport
  *
  */
 
@@ -23,7 +24,6 @@ import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageQuery011;
 import com.klsjnh.common.page.PageResult011;
-import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.platform011.export.ExportUseCase;
 import com.klsjnh.application.platform011.importdata.ImportUseCase;
@@ -31,7 +31,6 @@ import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.domain.platform011.importdata.ImportBundle;
 import com.klsjnh.domain.platform011.importdata.ImportResult;
-import com.klsjnh.domain.platform011.importdata.ImportSheet;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 import com.klsjnh.domain.system011.dictionary.JulyDictionary;
@@ -46,12 +45,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * JulyDictionary use cases: dictionary and item CRUD, plus the program read
@@ -88,6 +82,11 @@ public class JulyDictionaryUseCase {
     private final ImportUseCase importUseCase;
 
     /**
+     * Workbook import support (xlsx upsert + replace children).
+     */
+    private final JulyDictionaryImportSupport importSupport;
+
+    /**
      * Create the use case.
      *
      * @param repository          dictionary repository
@@ -95,14 +94,17 @@ public class JulyDictionaryUseCase {
      * @param authorizationPort   authorization port
      * @param exportUseCase       export use case
      * @param importUseCase       import use case
+     * @param importSupport       workbook import support
      */
     public JulyDictionaryUseCase(JulyDictionaryRepository repository, JulyDictionaryItemRepository itemRepository,
-            AuthorizationPort authorizationPort, ExportUseCase exportUseCase, @Lazy ImportUseCase importUseCase) {
+            AuthorizationPort authorizationPort, ExportUseCase exportUseCase, @Lazy ImportUseCase importUseCase,
+            JulyDictionaryImportSupport importSupport) {
         this.repository = repository;
         this.itemRepository = itemRepository;
         this.authorizationPort = authorizationPort;
         this.exportUseCase = exportUseCase;
         this.importUseCase = importUseCase;
+        this.importSupport = importSupport;
     }
 
     /**
@@ -410,17 +412,6 @@ public class JulyDictionaryUseCase {
     }
 
     /**
-     * Require an authenticated operator.
-     *
-     * @param operator operator
-     */
-    private void requireOperator(Operator011 operator) {
-        if (operator == null || !operator.authenticated()) {
-            throw BusinessException.unauthorized("not authenticated");
-        }
-    }
-
-    /**
      * Import a workbook bundle: upsert masters by dictionaryCode; for every
      * code that appears on the master sheet, Replace that master's items from
      * the children sheet (other dictionaries untouched).
@@ -430,176 +421,17 @@ public class JulyDictionaryUseCase {
      */
     @Transactional
     public ImportResult importWorkbook(ImportBundle bundle) {
-        String funcName = "import workbook";
-
-        ImportSheet masterSheet = bundle.sheet("master")
-                .orElseThrow(() -> BusinessException.badRequest(funcName + ": missing master sheet"));
-        ImportSheet childSheet = bundle.sheet("children").orElse(new ImportSheet("children", List.of()));
-
-        int mastersInserted = 0;
-        int mastersUpdated = 0;
-        int childrenWritten = 0;
-
-        Map<String, List<Map<String, Object>>> childrenByCode = new HashMap<>();
-
-        for (int i = 0; i < childSheet.rows().size(); i++) {
-            Map<String, Object> row = childSheet.rows().get(i);
-            String dictionaryCode = stringVal(row.get("dictionaryCode"));
-
-            if (StringUtil011.isBlank(dictionaryCode)) {
-                throw BusinessException.badRequest(funcName + ": children row " + (i + 2) + " missing dictionaryCode");
-            }
-
-            childrenByCode.computeIfAbsent(dictionaryCode, key -> new ArrayList<>()).add(row);
-        }
-
-        Set<String> seenCodes = new HashSet<>();
-
-        for (int i = 0; i < masterSheet.rows().size(); i++) {
-            Map<String, Object> row = masterSheet.rows().get(i);
-            int excelRow = i + 2;
-            String dictionaryCode = stringVal(row.get("dictionaryCode"));
-            String dictionaryName = stringVal(row.get("dictionaryName"));
-            Integer sortOrder = intVal(row.get("sortOrder"));
-            String status = blankToNull(stringVal(row.get("status")));
-            String remark = blankToNull(stringVal(row.get("remark")));
-
-            if (StringUtil011.isBlank(dictionaryCode)) {
-                throw BusinessException.badRequest(funcName + ": master row " + excelRow + " missing dictionaryCode");
-            }
-
-            if (StringUtil011.isBlank(dictionaryName)) {
-                throw BusinessException.badRequest(funcName + ": master row " + excelRow + " missing dictionaryName");
-            }
-
-            if (!seenCodes.add(dictionaryCode)) {
-                throw BusinessException.badRequest(funcName + ": duplicate dictionaryCode on master: " + dictionaryCode);
-            }
-
-            requireStatus(status);
-
-            JulyDictionary existing = repository.findByCode(dictionaryCode);
-            String dictionaryId;
-
-            if (existing == null) {
-                JulyDictionary created = newDictionary(dictionaryCode, sortOrder, dictionaryName, status, remark);
-                repository.insert(created);
-                dictionaryId = created.id().value();
-                mastersInserted++;
-            } else {
-                applyUpdate(existing, dictionaryName, sortOrder, status, remark);
-                repository.update(existing);
-                dictionaryId = existing.id().value();
-                mastersUpdated++;
-            }
-
-            List<Map<String, Object>> childRows = childrenByCode.getOrDefault(dictionaryCode, List.of());
-            childrenWritten += replaceItems(dictionaryId, childRows, excelRow);
-        }
-
-        for (String code : childrenByCode.keySet()) {
-            if (!seenCodes.contains(code)) {
-                throw BusinessException.badRequest(
-                        funcName + ": children reference dictionaryCode not on master sheet: " + code);
-            }
-        }
-
-        return new ImportResult("julyDictionary", mastersInserted, mastersUpdated, childrenWritten);
+        return importSupport.importWorkbook(bundle);
     }
 
     /**
-     * Replace all items under a dictionary with the given rows.
+     * Require an authenticated operator.
      *
-     * @param dictionaryId dictionary id
-     * @param childRows    child rows
-     * @param masterExcelRow master excel row for error context
-     * @return number of items written
+     * @param operator operator
      */
-    private int replaceItems(String dictionaryId, List<Map<String, Object>> childRows, int masterExcelRow) {
-        for (JulyDictionaryItem old : itemRepository.findAllByMaster(dictionaryId, null)) {
-            itemRepository.logicDeleteById(old.id().value());
-        }
-
-        Set<String> itemCodes = new HashSet<>();
-        int written = 0;
-
-        for (int i = 0; i < childRows.size(); i++) {
-            Map<String, Object> row = childRows.get(i);
-            String itemCode = stringVal(row.get("itemCode"));
-            String itemLabel = stringVal(row.get("itemLabel"));
-            Integer sortOrder = intVal(row.get("sortOrder"));
-            String status = blankToNull(stringVal(row.get("status")));
-            String remark = blankToNull(stringVal(row.get("remark")));
-
-            if (StringUtil011.isBlank(itemCode)) {
-                throw BusinessException.badRequest(
-                        "import workbook: children under master row " + masterExcelRow + " missing itemCode");
-            }
-
-            if (StringUtil011.isBlank(itemLabel)) {
-                throw BusinessException.badRequest(
-                        "import workbook: children itemCode " + itemCode + " missing itemLabel");
-            }
-
-            if (!itemCodes.add(itemCode)) {
-                throw BusinessException.badRequest(
-                        "import workbook: duplicate itemCode " + itemCode + " under dictionary");
-            }
-
-            requireStatus(status);
-            JulyDictionaryItem item = newItem(dictionaryId, sortOrder, itemCode, itemLabel, status, remark);
-            itemRepository.insert(item);
-            written++;
-        }
-
-        return written;
-    }
-
-    /**
-     * Coerce a cell value to string.
-     *
-     * @param value raw value
-     * @return string, never null
-     */
-    private static String stringVal(Object value) {
-        return value == null ? "" : String.valueOf(value).trim();
-    }
-
-    /**
-     * Blank string to null.
-     *
-     * @param value string
-     * @return null when blank
-     */
-    private static String blankToNull(String value) {
-        return StringUtil011.isBlank(value) ? null : value;
-    }
-
-    /**
-     * Parse an integer cell.
-     *
-     * @param value raw value
-     * @return integer or null
-     */
-    private static Integer intVal(Object value) {
-        if (value == null) {
-            return null;
-        }
-
-        String text = String.valueOf(value).trim();
-
-        if (text.isEmpty()) {
-            return null;
-        }
-
-        try {
-            if (text.contains(".")) {
-                return (int) Double.parseDouble(text);
-            }
-
-            return Integer.parseInt(text);
-        } catch (NumberFormatException ex) {
-            throw BusinessException.badRequest("import workbook: invalid integer " + text);
+    private void requireOperator(Operator011 operator) {
+        if (operator == null || !operator.authenticated()) {
+            throw BusinessException.unauthorized("not authenticated");
         }
     }
 

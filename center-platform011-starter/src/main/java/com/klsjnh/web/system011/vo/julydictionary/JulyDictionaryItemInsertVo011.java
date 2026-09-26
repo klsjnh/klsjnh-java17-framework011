@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * Insert request VO for a dictionary item (dictionaryCode locates the master).
  */
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JulyDictionaryItemInsertVo011 {
 
     /** Dictionary code locating the master. */
+    @NotBlank(message = "dictionaryCode is required")
     @Schema(description = "字典编码（定位主表）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictionaryCode;
 
@@ -34,11 +37,13 @@ public class JulyDictionaryItemInsertVo011 {
     private Integer sortOrder;
 
     /** Item code, unique within the dictionary, max 60. */
+    @NotBlank(message = "itemCode is required")
     @Schema(description = "字典项编码（字典内唯一，最长 60，创建后不可修改）",
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String itemCode;
 
     /** Item display name, max 100. */
+    @NotBlank(message = "itemLabel is required")
     @Schema(description = "字典项名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String itemLabel;
 

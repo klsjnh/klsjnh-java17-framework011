@@ -18,6 +18,9 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +50,7 @@ public class AiModelProviderSaveWholeVo011 {
     private Integer sortOrder;
 
     /** Provider name, max 100. */
+    @NotBlank(message = "providerName is required")
     @Schema(description = "提供商名称（最长 100）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String providerName;
 
@@ -67,6 +71,7 @@ public class AiModelProviderSaveWholeVo011 {
     private String status;
 
     /** Api key rows replacing the old children; blank means none. */
+    @Valid
     @Schema(description = "密钥列表（整存替换：旧子表逻辑删 + 新列表插入）")
     private List<AiModelProviderApiInsertVo011> apis = new ArrayList<>();
 }

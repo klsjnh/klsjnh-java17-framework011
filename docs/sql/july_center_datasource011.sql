@@ -9,7 +9,7 @@
 -- 方案：docs/requirement013/026.topic-datasource.md
 --       docs/requirement013/031.topic-datasource-center.md
 -- 边界：krt.ci011（yaml）为引导数据源；同一 dsCode 只允许一个家；
---       july_datasource 表为运行时唯一真源
+--       july_datasource 表为运行时唯一真源；password 库内 SecretCipher（enc:v1:），列宽 VARCHAR(512)
 -- 组成：数据源（连接注册）+ 同步规则（主）+ 同步列对照（子）
 -- 表顺序：无库级 FK；按逻辑依赖排列（数据源 → 同步主表 → 同步子表）。
 -- ============================================================
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS july_datasource (
     jdbc_url      VARCHAR(500) NOT NULL                COMMENT 'JDBC URL（须以 jdbc: 开头）',
     schema_name   VARCHAR(60)  NULL                    COMMENT '库名或 Schema',
     username      VARCHAR(100) NULL                    COMMENT '用户名',
-    password      VARCHAR(300) NULL                    COMMENT '密码（出参不回显，由 Converter 收口剔除）',
+    password      VARCHAR(512) NULL                    COMMENT '密码（SecretCipher enc:v1:；出参不回显；明文域上限 300）',
     driver_class  VARCHAR(200) NULL                    COMMENT '驱动类名（为空时按 db_type 取 DatabaseTypes011 默认值）',
     pool_config   VARCHAR(500) NULL                    COMMENT '连接池 JSON（本期预留，不解析，走代码默认值）',
     remark        VARCHAR(300) NULL                    COMMENT '备注',

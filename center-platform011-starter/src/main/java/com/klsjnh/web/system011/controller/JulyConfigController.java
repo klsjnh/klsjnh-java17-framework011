@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyConfig HTTP adapter: admin CRUD over runtime key-value parameters.
@@ -92,7 +93,7 @@ public class JulyConfigController {
     @AuditLog(type = AuditType011.INSERT, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/insert")
     @Operation(summary = "新增配置（code 查重）")
-    public Response011<IdVo011> insert(@RequestBody JulyConfigInsertVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> insert(@Valid @RequestBody JulyConfigInsertVo011 vo, HttpServletRequest request) {
         String funcName = "insert";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -110,7 +111,7 @@ public class JulyConfigController {
     @AuditLog(type = AuditType011.UPDATE, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/update")
     @Operation(summary = "修改配置值（code 不可变）")
-    public Response011<IdVo011> update(@RequestBody JulyConfigUpdateVo011 vo, HttpServletRequest request) {
+    public Response011<IdVo011> update(@Valid @RequestBody JulyConfigUpdateVo011 vo, HttpServletRequest request) {
         String funcName = "update";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -129,7 +130,7 @@ public class JulyConfigController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_CONFIG)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -164,7 +165,7 @@ public class JulyConfigController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询（code/data 模糊过滤）")
-    public Response011<PageResult011<JulyConfigVo011>> selectListByPage(@RequestBody JulyConfigQueryVo011 vo,
+    public Response011<PageResult011<JulyConfigVo011>> selectListByPage(@Valid @RequestBody JulyConfigQueryVo011 vo,
             HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);

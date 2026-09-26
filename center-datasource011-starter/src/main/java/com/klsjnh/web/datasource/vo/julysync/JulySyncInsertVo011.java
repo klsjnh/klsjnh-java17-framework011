@@ -18,6 +18,10 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -28,14 +32,17 @@ import java.util.List;
 public class JulySyncInsertVo011 {
 
     /** Sync code. */
+    @NotBlank(message = "syncCode is required")
     @Schema(description = "同步编码（全局唯一，不可变）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String syncCode;
 
     /** Sync name. */
+    @NotBlank(message = "syncName is required")
     @Schema(description = "同步名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String syncName;
 
     /** Source datasource code. */
+    @NotBlank(message = "sourceDsCode is required")
     @Schema(description = "源头数据源编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String sourceDsCode;
 
@@ -44,10 +51,12 @@ public class JulySyncInsertVo011 {
     private String sourceKind;
 
     /** Source data. */
+    @NotBlank(message = "sourceData is required")
     @Schema(description = "源数据（SQL 文本 / 表名 / 对象名）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String sourceData;
 
     /** Target datasource code. */
+    @NotBlank(message = "targetDsCode is required")
     @Schema(description = "目标数据源编码", requiredMode = Schema.RequiredMode.REQUIRED)
     private String targetDsCode;
 
@@ -56,6 +65,7 @@ public class JulySyncInsertVo011 {
     private String targetKind;
 
     /** Target data. */
+    @NotBlank(message = "targetData is required")
     @Schema(description = "目标数据（表名 / 对象名）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String targetData;
 
@@ -64,6 +74,7 @@ public class JulySyncInsertVo011 {
     private String mode;
 
     /** Business key columns. */
+    @NotBlank(message = "syncKey is required")
     @Schema(description = "业务键（判重键，目标侧列名 CSV）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String syncKey;
 
@@ -80,6 +91,8 @@ public class JulySyncInsertVo011 {
     private String remark;
 
     /** Column mapping. */
+    @NotNull(message = "columns is required")
+    @Valid
     @Schema(description = "列对照（源列/源类型 → 目标列/目标类型）", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<JulySyncColumnVo011> columns;
 }

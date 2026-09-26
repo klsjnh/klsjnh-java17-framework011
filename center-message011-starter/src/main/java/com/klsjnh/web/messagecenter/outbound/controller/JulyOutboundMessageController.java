@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * JulyOutboundMessage HTTP adapter: the unified send, the send record page query, the
@@ -88,7 +89,7 @@ public class JulyOutboundMessageController {
      */
     @PostMapping("/send")
     @Operation(summary = "发送消息（解析渠道 → 渲染模板 → 经渠道注册表发送 → 落发送记录）")
-    public Response011<JulyOutboundMessageSendResultVo011> send(@RequestBody JulyOutboundMessageSendVo011 vo, HttpServletRequest request) {
+    public Response011<JulyOutboundMessageSendResultVo011> send(@Valid @RequestBody JulyOutboundMessageSendVo011 vo, HttpServletRequest request) {
         String funcName = "send";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -107,7 +108,7 @@ public class JulyOutboundMessageController {
      */
     @PostMapping("/selectListByPage")
     @Operation(summary = "分页查询发送记录（渠道/状态过滤 + 关键字）")
-    public Response011<PageResult011<JulyOutboundMessageVo011>> selectListByPage(@RequestBody JulyOutboundMessageQueryVo011 vo, HttpServletRequest request) {
+    public Response011<PageResult011<JulyOutboundMessageVo011>> selectListByPage(@Valid @RequestBody JulyOutboundMessageQueryVo011 vo, HttpServletRequest request) {
         String funcName = "select list by page";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -127,7 +128,7 @@ public class JulyOutboundMessageController {
      */
     @PostMapping("/resend")
     @Operation(summary = "重发（失败重试，重试次数 +1）")
-    public Response011<JulyOutboundMessageSendResultVo011> resend(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<JulyOutboundMessageSendResultVo011> resend(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "resend";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -144,7 +145,7 @@ public class JulyOutboundMessageController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_OUTBOUND)
     @PostMapping("/logicDelete")
     @Operation(summary = "逻辑删除发送记录（单个）")
-    public Response011<IdVo011> logicDelete(@RequestBody IdVo011 idVo, HttpServletRequest request) {
+    public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo, HttpServletRequest request) {
         String funcName = "logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
@@ -161,7 +162,7 @@ public class JulyOutboundMessageController {
     @AuditLog(type = AuditType011.DELETE, objectCode = AuditObjectCodes011.JULY_MESSAGE_OUTBOUND)
     @PostMapping("/logicDeleteBatch")
     @Operation(summary = "逻辑删除发送记录（批量，全有或全无）")
-    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@RequestBody IdsVo011 idsVo, HttpServletRequest request) {
+    public Response011<BatchDeleteResultVo011> logicDeleteBatch(@Valid @RequestBody IdsVo011 idsVo, HttpServletRequest request) {
         String funcName = "batch logic delete";
         Operator011 operator = Operator011Resolver.resolve(request);
 
