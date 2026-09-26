@@ -35,6 +35,10 @@ tmp/
 .tmp-*/
 _tmp*
 _tmp_*.sh
+tmp_*
+_fix.py
+_scan_*.sh
+_purge*
 
 # ---- runtime pid / tool state ----
 *.pid
