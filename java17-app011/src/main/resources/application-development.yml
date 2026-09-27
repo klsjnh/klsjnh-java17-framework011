@@ -17,11 +17,16 @@ spring:
         # starter 在 allow 未配置时默认只放行 127.0.0.1（LAN 访问必被拦）——显式放行本机 + 局域网段
         allow: 127.0.0.1,192.168.3.0/24
 
-# 开发运行态：debug 不拒绝请求（免密登录可用），并注入 dev 用 JWT secret
-# 生产必须改为 production + 真实 secret（见 application-production.yml）
-# 启动时会打醒目 WARN：debug 下认证/鉴权均为开发便利，禁止当生产契约。
+# 开发运行态：默认 development（需 token；assertHas 仍 no-op）。需要全放行时显式 KRT_STATUS=debug。
+# 生产必须改为 production + 真实 secret（compose / 部署机自建 production yml）
+# 启动时 debug 会打醒目 WARN。allow-insecure-status 必须显式 true，否则非 production 启动失败。
 krt:
-  status: ${KRT_STATUS:debug}
+  status: ${KRT_STATUS:development}
+  allow-insecure-status: true
+  outbound:
+    # 本地测 webhook / 内网 AI；production 启动卫兵拒绝 allow-private=true
+    allow-http: true
+    allow-private: true
   jwt:
     secret: ${KRT_JWT_SECRET:dev-secret-klsjnh-framework011-20260912-change-me-in-production-0123456789}
     expire-minutes: ${KRT_JWT_EXPIRE_MINUTES:480}

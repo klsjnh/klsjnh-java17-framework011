@@ -12,6 +12,10 @@ services:
     environment:
       - JAVA_OPTS=-Xmx512m -Xms256m -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
       - LOGGING_FILE_PATH=/klsjnh/volume/logs
+      - SPRING_PROFILES_ACTIVE=production
+      - KRT_STATUS=production
+      - KRT_JWT_SECRET=${KRT_JWT_SECRET:?must set KRT_JWT_SECRET}
+      - KRT_CRYPTO_MASTER_KEY=${KRT_CRYPTO_MASTER_KEY:?must set KRT_CRYPTO_MASTER_KEY}
     entrypoint: ["sh", "-c", "exec java $$JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.additional-location=/klsjnh/volume/config/"]
     volumes:
       - ./java011/klsjnh-java17-framework011/config:/klsjnh/volume/config

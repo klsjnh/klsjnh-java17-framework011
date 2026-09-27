@@ -5,13 +5,14 @@ package com.klsjnh.common.util;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  jdk http client helper
  *      2026.09.19  add binary GET and multipart upload
+ *      2026.09.26  outbound url guard + response size cap + no redirects
  *
  */
 
@@ -38,7 +39,9 @@ import java.util.Map;
  * <p>Timeout and client are shared statics; transport failures surface as
  * {@link IOException}, an interrupted call re-sets the interrupt flag and throws
  * {@link InterruptedException}. Download / upload use a longer media timeout by
- * default.</p>
+ * default. Every request URL is checked by {@link OutboundUrlGuard011}; the client
+ * never follows redirects; byte downloads are capped by the active outbound
+ * policy.</p>
  */
 
 public final class HttpUtil011 {
@@ -59,10 +62,11 @@ public final class HttpUtil011 {
     private static final Duration MEDIA_TIMEOUT = Duration.ofSeconds(30);
 
     /**
-     * Shared http client.
+     * Shared http client (never follow redirects — blocks open-redirect SSRF).
      */
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(CONNECT_TIMEOUT)
+            .followRedirects(HttpClient.Redirect.NEVER)
             .build();
 
     /**
@@ -80,7 +84,7 @@ public final class HttpUtil011 {
      * @throws InterruptedException when the call is interrupted
      */
     public static HttpResponse011 get(String url) throws IOException, InterruptedException {
-        return send(HttpRequest.newBuilder(URI.create(url)).timeout(REQUEST_TIMEOUT).GET().build());
+        return get(url, null);
     }
 
     /**
@@ -135,10 +139,12 @@ public final class HttpUtil011 {
      */
     public static HttpResponseBytes011 getBytes(String url, Map<String, String> headers, Duration timeout)
             throws IOException, InterruptedException {
-        HttpResponse<byte[]> response = HTTP_CLIENT.send(builder(url, headers, timeout).GET().build(),
-                HttpResponse.BodyHandlers.ofByteArray());
+        HttpResponse<InputStream> response = HTTP_CLIENT.send(builder(url, headers, timeout).GET().build(),
+                HttpResponse.BodyHandlers.ofInputStream());
 
-        return new HttpResponseBytes011(response.statusCode(), response.body());
+        try (InputStream body = response.body()) {
+            return new HttpResponseBytes011(response.statusCode(), readLimited(body));
+        }
     }
 
     /**
@@ -206,9 +212,11 @@ public final class HttpUtil011 {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json == null ? "" : json, StandardCharsets.UTF_8));
 
-        HttpResponse<byte[]> response = HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
+        HttpResponse<InputStream> response = HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream());
 
-        return new HttpResponseBytes011(response.statusCode(), response.body());
+        try (InputStream body = response.body()) {
+            return new HttpResponseBytes011(response.statusCode(), readLimited(body));
+        }
     }
 
     /**
@@ -328,6 +336,7 @@ public final class HttpUtil011 {
      * @return request builder
      */
     private static HttpRequest.Builder builder(String url, Map<String, String> headers, Duration timeout) {
+        OutboundUrlGuard011.assertSafe(url);
         HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url)).timeout(timeout);
 
         if (headers != null) {
@@ -337,6 +346,27 @@ public final class HttpUtil011 {
         }
 
         return builder;
+    }
+
+    /**
+     * Read at most the configured outbound max response bytes.
+     *
+     * @param in response body stream
+     * @return body bytes
+     * @throws IOException when the body exceeds the cap or read fails
+     */
+    private static byte[] readLimited(InputStream in) throws IOException {
+        int max = OutboundUrlGuard011.policy().maxResponseBytes();
+        if (max <= 0) {
+            max = OutboundUrlGuard011.Policy.defaults().maxResponseBytes();
+        }
+
+        byte[] chunk = in.readNBytes(max + 1);
+        if (chunk.length > max) {
+            throw new IOException("outbound response exceeds max bytes: " + max);
+        }
+
+        return chunk;
     }
 
     /**

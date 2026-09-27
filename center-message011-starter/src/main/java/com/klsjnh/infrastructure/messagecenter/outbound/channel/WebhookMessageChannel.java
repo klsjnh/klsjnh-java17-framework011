@@ -5,13 +5,14 @@ package com.klsjnh.infrastructure.messagecenter.outbound.channel;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate 2026.09.21
+ *      @modifydate 2026.09.26
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  built-in webhook message channel
  *      2026.09.21  replace hand-written json escaping with jackson
+ *      2026.09.26  hide outbound exception detail from callers
  *
  */
 
@@ -84,8 +85,10 @@ public class WebhookMessageChannel implements MessageChannelPort {
             Thread.currentThread().interrupt();
 
             return MessageResult.failure("webhook interrupted");
+        } catch (IllegalArgumentException ex) {
+            return MessageResult.failure("webhook endpoint rejected");
         } catch (Exception ex) {
-            return MessageResult.failure(ex.getClass().getSimpleName() + ": " + ex.getMessage());
+            return MessageResult.failure("webhook delivery failed");
         }
     }
 
