@@ -22,7 +22,7 @@ java17-app011 → center-platform011-starter（参考应用默认挂上）
 
 详见 [013.topic-project-structure.md](../013.topic-project-structure.md)。
 
-## 099.怎么接入（注解式 · 2026-09-28）
+## 099.怎么接入（注解式）
 
 > **本中心默认关**：jar 在 classpath 上不会自动生效 —— 必须由业务项目**显式开启**（bean 与 mapper 都随注解注册）。
 

@@ -41,10 +41,10 @@ import org.springframework.stereotype.Component;
 /**
  * Idempotent seed for the IAM permission catalog blueprint (codes must match
  * UseCase assertHas constants). julyConfig / julyDictionary rows are seeded by
- * {@code JulyPlatformPermCatalogSeed011} when the platform starter is present
- * ({@code @ConditionalOnBean(JulyPermObjectRepository)}); julyScheduler by the
+ * {@code JulyPlatformPermCatalogSeed011} when the platform center is enabled
+ * (wired by {@code JulyPlatformPermCatalogSeedConfig011}); julyScheduler by the
  * quartz starter seed; datasource / sync / sql by
- * {@code DatasourcePermCatalogSeed011} when the datasource center is present.
+ * {@code DatasourcePermCatalogSeed011} when the datasource center is enabled.
  * Access only seeds IAM itself (user / role / menu / org / user-audit).
  */
 

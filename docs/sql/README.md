@@ -9,7 +9,7 @@
 - **中心级 DDL**（按中心归并多表）：统一 **`july_center_<center>011.sql`** → `access` · `platform` · `ai` · `message` · `storage` · `datasource`。
 - **核心用户纵切**：`july_core011.sql`（`july_user` / `july_user_audit`；属 `java17-core011`，不并入访问中心）。
 - **调度技术栈**（非中心）：`july_scheduler011.sql`（属 `java17-scheduler-quartz011-starter`；**勿**命名为 `july_center_*`）。
-- **已废文件名**（勿新建、勿引用）：`july_center_iam.sql`、`july_center_ai.sql` / `july_center_message.sql` / `july_center_storage.sql` / `july_center_datasource.sql`（无 `011` 后缀）、`july_config.sql`、`july_dictionary.sql`、`july_scheduler.sql`、以及更早的 `july_*_center.sql` / `july_iam.sql` / `july_perm.sql` / 分拆单表 SQL。
+- **禁用文件名**（勿新建、勿引用）：`july_center_iam.sql`、`july_center_ai.sql` / `july_center_message.sql` / `july_center_storage.sql` / `july_center_datasource.sql`（无 `011` 后缀）、`july_config.sql`、`july_dictionary.sql`、`july_scheduler.sql`、以及更早的 `july_*_center.sql` / `july_iam.sql` / `july_perm.sql` / 分拆单表 SQL。
 - **只改 SQL 文件名**；表名不变（如 `july_organization`、`july_perm_object`、`july_config`、`july_ai_model_provider`）。
 
 ## 新库初始化顺序
