@@ -11,6 +11,8 @@ package com.klsjnh.web.aicenter.vo.aimodelprovider;
  *          modify history
  *
  *      2026.09.22  ai model provider save whole vo 011 class
+ *      2026.09.28  api rows use the no-providerCode save VO (the standalone
+ *                  insert keeps its required providerCode)
  *
  */
 
@@ -28,9 +30,9 @@ import java.util.List;
  * Whole save request (provider + api keys): the provider is inserted when id is
  * blank and updated otherwise, then the api list replaces the old children.
  * <p>
- * Each api row reuses {@link AiModelProviderApiInsertVo011}; its
- * {@code providerCode} is ignored — the master link always comes from this
- * request.
+ * Each api row is an {@link AiModelProviderApiSaveVo011} — the master link
+ * always comes from this request, so no {@code providerCode} is needed on the
+ * children.
  * </p>
  */
 
@@ -73,5 +75,5 @@ public class AiModelProviderSaveWholeVo011 {
     /** Api key rows replacing the old children; blank means none. */
     @Valid
     @Schema(description = "密钥列表（整存替换：旧子表逻辑删 + 新列表插入）")
-    private List<AiModelProviderApiInsertVo011> apis = new ArrayList<>();
+    private List<AiModelProviderApiSaveVo011> apis = new ArrayList<>();
 }

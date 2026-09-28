@@ -15,6 +15,8 @@ package com.klsjnh.infrastructure.config;
  */
 
 import com.klsjnh.enabled.EnableMessage011Center;
+import com.klsjnh.enabled.MessageCenterAutoConfiguration011;
+import com.klsjnh.enabled.MessagePermCatalogSeedConfig011;
 
 import org.springframework.context.annotation.Import;
 
@@ -24,7 +26,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Assembly contract for the per-center enable annotation: applying
  * {@code @EnableXxx011Center} is what pulls a center in — the annotation must
- * import the center's auto configuration, and the center must not be listed in
+ * import the center's auto configuration (plus the access-gated permission seed
+ * config), and the center must not be listed in
  * {@code AutoConfiguration.imports} (nothing is auto-configured from the jar
  * alone). The enabled path itself is covered by the app's startup smoke.
  */
@@ -32,13 +35,16 @@ import org.junit.jupiter.api.Test;
 class MessageCenterAutoConfigurationTest011 {
 
     /**
-     * The enable annotation imports the center auto configuration.
+     * The enable annotation imports the center auto configuration and the
+     * access-gated permission seed config.
      */
     @Test
     void annotationImportsTheCenterAutoConfiguration() {
         Import imported = EnableMessage011Center.class.getAnnotation(Import.class);
 
         Assertions.assertNotNull(imported, "@EnableMessage011Center must carry @Import");
-        Assertions.assertArrayEquals(new Class<?>[] { MessageCenterAutoConfiguration011.class }, imported.value());
+        Assertions.assertArrayEquals(
+                new Class<?>[] { MessageCenterAutoConfiguration011.class, MessagePermCatalogSeedConfig011.class },
+                imported.value());
     }
 }

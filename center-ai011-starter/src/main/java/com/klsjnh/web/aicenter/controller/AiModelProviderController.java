@@ -34,6 +34,7 @@ import com.klsjnh.web.aicenter.converter.AiModelProviderConverter;
 
 import com.klsjnh.web.global.audit.AuditLog;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiInsertVo011;
+import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiSaveVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiQueryVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiUpdateVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiVo011;
@@ -307,7 +308,7 @@ public class AiModelProviderController {
 
         List<AiModelProviderApiCommand> apis = new ArrayList<>();
 
-        for (AiModelProviderApiInsertVo011 row : vo.getApis()) {
+        for (AiModelProviderApiSaveVo011 row : vo.getApis()) {
             apis.add(new AiModelProviderApiCommand(row.getApiCode(), row.getApiName(), row.getApiKey(),
                     row.getSortOrder(), row.getRemark()));
         }

@@ -24,17 +24,15 @@ import com.klsjnh.domain.iam.perm.JulyPermObjectRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
-
 /**
  * Idempotent seed for the julyScheduler permission catalog (including start /
- * stop / executeOnce). Registered only when the quartz scheduler starter is on
- * the classpath (codes must match {@code JulySchedulerPermissionCodes011}).
+ * stop / executeOnce). Registered by {@code JulySchedulerPermCatalogSeedConfig011}
+ * only when the optional access center (July permission repositories) is on the
+ * classpath — the class is never component-scanned, so a consumer without the
+ * access center never loads it (codes must match
+ * {@code JulySchedulerPermissionCodes011}).
  */
 
-@Component
-@ConditionalOnBean(JulyPermObjectRepository.class)
 public class JulySchedulerPermCatalogSeed011 {
 
     /**

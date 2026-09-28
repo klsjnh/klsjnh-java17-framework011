@@ -14,8 +14,6 @@ package com.klsjnh.enabled;
  *
  */
 
-import com.klsjnh.infrastructure.config.MessageCenterAutoConfiguration011;
-
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -27,7 +25,9 @@ import java.lang.annotation.Target;
 /**
  * Enable the message center on the annotated configuration class: imports
  * {@link MessageCenterAutoConfiguration011}, which scans the center's own
- * packages and registers its mappers.
+ * packages and registers its mappers, plus
+ * {@link MessagePermCatalogSeedConfig011}, which wires the permission catalog
+ * seed only when the optional access center is present.
  * <p>
  * Centers are off unless enabled: nothing is auto-configured from a center jar
  * alone, so a consumer only gets the centers it asks for.
@@ -37,6 +37,6 @@ import java.lang.annotation.Target;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import(MessageCenterAutoConfiguration011.class)
+@Import({ MessageCenterAutoConfiguration011.class, MessagePermCatalogSeedConfig011.class })
 public @interface EnableMessage011Center {
 }

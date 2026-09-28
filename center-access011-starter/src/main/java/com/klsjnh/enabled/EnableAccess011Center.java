@@ -14,8 +14,6 @@ package com.klsjnh.enabled;
  *
  */
 
-import com.klsjnh.infrastructure.config.AccessCenterAutoConfiguration011;
-
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;

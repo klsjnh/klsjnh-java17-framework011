@@ -14,8 +14,6 @@ package com.klsjnh.enabled;
  *
  */
 
-import com.klsjnh.infrastructure.config.PlatformCenterAutoConfiguration011;
-
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -27,7 +25,9 @@ import java.lang.annotation.Target;
 /**
  * Enable the platform center on the annotated configuration class: imports
  * {@link PlatformCenterAutoConfiguration011}, which scans the center's own
- * packages and registers its mappers.
+ * packages and registers its mappers, plus
+ * {@link JulyPlatformPermCatalogSeedConfig011}, which wires the permission
+ * catalog seed only when the optional access center is present.
  * <p>
  * Centers are off unless enabled: nothing is auto-configured from a center jar
  * alone, so a consumer only gets the centers it asks for.
@@ -37,6 +37,6 @@ import java.lang.annotation.Target;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import(PlatformCenterAutoConfiguration011.class)
+@Import({ PlatformCenterAutoConfiguration011.class, JulyPlatformPermCatalogSeedConfig011.class })
 public @interface EnablePlatform011Center {
 }

@@ -24,19 +24,24 @@ import org.springframework.context.annotation.ComponentScan;
  * through a scoped component scan of the core packages only.
  * <p>
  * Centers are no longer swept from here: every center ships its own
- * {@code *CenterAutoConfiguration011} (own scan, own {@code @MapperScan}, own
- * {@code krt.center.xxx.enabled} switch), so the base does not have to know
- * center package names and a consumer can exclude a center by leaving its
- * starter jar out. The scan below deliberately keeps the {@code iam} packages
- * (they are shared by core, the security starter and the access center under
- * one package name, so they cannot be split by scanning).
+ * {@code *CenterAutoConfiguration011} (own scan, own {@code @MapperScan}) in its
+ * own {@code com.klsjnh.enabled} package, pulled in only by its
+ * {@code @EnableXxx011Center} — so the base does not have to know center
+ * package names and a consumer can exclude a center by leaving its starter jar
+ * out. The scan below keeps only the core-owned half of the {@code iam} tree
+ * ({@code application.iam.user}, {@code infrastructure.iam.{user,auth}},
+ * {@code web.iam.{controller,converter,vo.julyuser,vo.julyuseraudit}}); the
+ * access center owns the sibling {@code iam.access} subpackages, so the two are
+ * separable by scanning.
  * </p>
  */
 
 @AutoConfiguration
-@ComponentScan(basePackages = { "com.klsjnh.common", "com.klsjnh.application.iam", "com.klsjnh.application.platform011",
-        "com.klsjnh.infrastructure.config", "com.klsjnh.infrastructure.crypto", "com.klsjnh.infrastructure.iam",
+@ComponentScan(basePackages = { "com.klsjnh.common", "com.klsjnh.application.iam.user",
+        "com.klsjnh.application.platform011", "com.klsjnh.infrastructure.config", "com.klsjnh.infrastructure.crypto",
+        "com.klsjnh.infrastructure.iam.auth", "com.klsjnh.infrastructure.iam.user",
         "com.klsjnh.infrastructure.persistence", "com.klsjnh.infrastructure.platform011", "com.klsjnh.web.config",
-        "com.klsjnh.web.global", "com.klsjnh.web.iam", "com.klsjnh.web.util" })
+        "com.klsjnh.web.global", "com.klsjnh.web.iam.controller", "com.klsjnh.web.iam.converter",
+        "com.klsjnh.web.iam.vo.julyuser", "com.klsjnh.web.iam.vo.julyuseraudit", "com.klsjnh.web.util" })
 public class CoreAutoConfiguration011 {
 }

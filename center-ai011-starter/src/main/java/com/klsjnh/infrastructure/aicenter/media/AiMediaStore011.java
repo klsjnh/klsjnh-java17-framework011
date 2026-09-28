@@ -30,7 +30,7 @@ import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucket;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderBucketRepository;
 import com.klsjnh.domain.storagecenter.storage.JulyStorageProviderRepository;
 
-import com.klsjnh.infrastructure.config.KrtAiConfig011;
+import com.klsjnh.infrastructure.aicenter.config.KrtAiConfig011;
 
 import org.springframework.stereotype.Component;
 

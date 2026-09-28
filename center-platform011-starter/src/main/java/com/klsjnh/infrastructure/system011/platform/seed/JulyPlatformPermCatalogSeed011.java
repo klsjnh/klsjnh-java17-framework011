@@ -25,17 +25,15 @@ import com.klsjnh.domain.iam.perm.JulyPermObjectRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
-
 /**
  * Idempotent seed for the platform center permission catalog (julyConfig /
- * julyDictionary). Registered only when {@code center-platform011-starter} is
- * on the classpath (codes must match the platform UseCase assertHas constants).
+ * julyDictionary). Registered by {@code JulyPlatformPermCatalogSeedConfig011}
+ * only when the optional access center (July permission repositories) is on the
+ * classpath — the class is never component-scanned, so a consumer without the
+ * access center never loads it (codes must match the platform UseCase
+ * assertHas constants).
  */
 
-@Component
-@ConditionalOnBean(JulyPermObjectRepository.class)
 public class JulyPlatformPermCatalogSeed011 {
 
     /**

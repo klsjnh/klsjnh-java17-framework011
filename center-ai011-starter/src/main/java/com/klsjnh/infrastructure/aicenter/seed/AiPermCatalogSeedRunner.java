@@ -19,18 +19,16 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 /**
  * Startup runner: seeds the AI center permission catalog when both the access
- * center and the ai center starter are present.
+ * center and the ai center starter are present. Registered by
+ * {@code AiPermCatalogSeedConfig011} (never component-scanned) so it only
+ * exists alongside the seed bean.
  */
 
-@Component
 @Order(AiPermCatalogSeedRunner.SEED_ORDER)
-@ConditionalOnBean(AiPermCatalogSeed011.class)
 public class AiPermCatalogSeedRunner implements ApplicationRunner {
 
     public static final int SEED_ORDER = 117;

@@ -43,7 +43,7 @@ import org.springframework.context.annotation.Bean;
  * </p>
  */
 
-@AutoConfiguration(afterName = "com.klsjnh.infrastructure.config.AccessCenterAutoConfiguration011")
+@AutoConfiguration(afterName = "com.klsjnh.enabled.AccessCenterAutoConfiguration011")
 @ConditionalOnProperty(name = "krt.security.permissive", havingValue = "true")
 public class AuthFallbackAutoConfiguration011 {
 

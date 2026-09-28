@@ -14,8 +14,6 @@ package com.klsjnh.enabled;
  *
  */
 
-import com.klsjnh.infrastructure.config.AiCenterAutoConfiguration011;
-
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -27,7 +25,9 @@ import java.lang.annotation.Target;
 /**
  * Enable the AI center on the annotated configuration class: imports
  * {@link AiCenterAutoConfiguration011}, which scans the center's own packages
- * and registers its mappers.
+ * and registers its mappers, plus {@link AiPermCatalogSeedConfig011}, which
+ * wires the permission catalog seed only when the optional access center is
+ * present.
  * <p>
  * The AI center <b>depends on</b> the storage center (prompt bodies are stored
  * through it), so this annotation also enables
@@ -44,6 +44,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @EnableStorage011Center
-@Import(AiCenterAutoConfiguration011.class)
+@Import({ AiCenterAutoConfiguration011.class, AiPermCatalogSeedConfig011.class })
 public @interface EnableAi011Center {
 }

@@ -19,18 +19,16 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 /**
  * Startup runner: seeds the message center permission catalog when both the
- * access center and the message center starter are present.
+ * access center and the message center starter are present. Registered by
+ * {@code MessagePermCatalogSeedConfig011} (never component-scanned) so it only
+ * exists alongside the seed bean.
  */
 
-@Component
 @Order(MessagePermCatalogSeedRunner.SEED_ORDER)
-@ConditionalOnBean(MessagePermCatalogSeed011.class)
 public class MessagePermCatalogSeedRunner implements ApplicationRunner {
 
     public static final int SEED_ORDER = 118;

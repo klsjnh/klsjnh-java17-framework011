@@ -26,7 +26,7 @@ import com.klsjnh.domain.aicenter.inference.AiInferenceCommand;
 import com.klsjnh.domain.aicenter.inference.AiInferencePort;
 import com.klsjnh.domain.aicenter.inference.AiInferenceResult;
 
-import com.klsjnh.infrastructure.config.KrtAiConfig011;
+import com.klsjnh.infrastructure.aicenter.config.KrtAiConfig011;
 
 import org.springframework.stereotype.Component;
 

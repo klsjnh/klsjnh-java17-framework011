@@ -19,19 +19,17 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 /**
  * Startup runner: seeds the julyScheduler permission catalog when both the
  * access center and the quartz scheduler starter are present. Failures are
- * logged and do not abort startup.
+ * logged and do not abort startup. Registered by
+ * {@code JulySchedulerPermCatalogSeedConfig011} (never component-scanned) so it
+ * only exists alongside the seed bean.
  */
 
-@Component
 @Order(JulySchedulerPermCatalogSeedRunner.SEED_ORDER)
-@ConditionalOnBean(JulySchedulerPermCatalogSeed011.class)
 public class JulySchedulerPermCatalogSeedRunner implements ApplicationRunner {
 
     /**

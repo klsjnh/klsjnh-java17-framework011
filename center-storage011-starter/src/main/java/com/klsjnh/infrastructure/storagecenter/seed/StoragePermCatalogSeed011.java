@@ -24,15 +24,13 @@ import com.klsjnh.domain.iam.perm.JulyPermObjectRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
-
 /**
- * Idempotent seed for the storage center permission catalog.
+ * Idempotent seed for the storage center permission catalog. Registered by
+ * {@code StoragePermCatalogSeedConfig011} only when the optional access center
+ * (July permission repositories) is on the classpath — the class is never
+ * component-scanned, so a consumer without the access center never loads it.
  */
 
-@Component
-@ConditionalOnBean(JulyPermObjectRepository.class)
 public class StoragePermCatalogSeed011 {
 
     private static final Logger logger = LoggerFactory.getLogger(StoragePermCatalogSeed011.class);
