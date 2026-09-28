@@ -20,15 +20,18 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.mybatis.spring.annotation.MapperScan;
 
 /**
- * MyBatis auto configuration of the framework: registers the framework mapper
- * packages so consumers only declare {@code @MapperScan} for their own
- * business mapper packages. Component-style beans still arrive through the
- * conventional host scan of {@code com.klsjnh}.
+ * MyBatis auto configuration of the framework: registers the framework-owned
+ * mapper packages that do not belong to a single center — the shared
+ * persistence base ({@code CommonMapper}) and the IAM mappers (the {@code iam}
+ * package is shared by core, the security starter and the access center).
+ * <p>
+ * Center mappers are registered by the centers' own auto configurations
+ * ({@code @MapperScan} on {@code *CenterAutoConfiguration011}), so leaving a
+ * center jar out also drops its mappers.
+ * </p>
  */
 
 @AutoConfiguration
-@MapperScan({ "com.klsjnh.infrastructure.iam", "com.klsjnh.infrastructure.persistence.mapper", "com.klsjnh.infrastructure.system011",
-        "com.klsjnh.infrastructure.datasource", "com.klsjnh.infrastructure.aicenter",
-        "com.klsjnh.infrastructure.storagecenter", "com.klsjnh.infrastructure.messagecenter" })
+@MapperScan({ "com.klsjnh.infrastructure.iam", "com.klsjnh.infrastructure.persistence.mapper" })
 public class DataMybatisAutoConfiguration011 {
 }

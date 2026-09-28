@@ -21,3 +21,12 @@ java17-app011 → center-platform011-starter（参考应用默认挂上）
 ```
 
 详见 [013.topic-project-structure.md](../013.topic-project-structure.md)。
+
+## 099.怎么接入（注解式 · 2026-09-28）
+
+> **本中心默认关**：jar 在 classpath 上不会自动生效 —— 必须由业务项目**显式开启**（bean 与 mapper 都随注解注册）。
+
+- **依赖**：`center-platform011-starter`
+- **开启**：启动类加 `@EnablePlatform011Center`
+- **不开启**：本中心的 HTTP 全部 404、bean 与 mapper 都不注册（详见 [013 模块清单与怎么用](../013.topic-project-structure.md) §025）
+- **注解式而非配置开关**：开关写在代码里（一眼看出装了哪些中心），且"默认关"才是真隔离
