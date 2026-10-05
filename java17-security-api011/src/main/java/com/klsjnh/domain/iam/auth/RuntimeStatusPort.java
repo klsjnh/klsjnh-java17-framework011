@@ -5,12 +5,13 @@ package com.klsjnh.domain.iam.auth;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  runtime status port interface
+ *      2026.10.05  add isProduction gate
  *
  */
 
@@ -37,6 +38,13 @@ public interface RuntimeStatusPort {
      * @return true for {@code debug}
      */
     boolean isDebug();
+
+    /**
+     * Whether the current runtime mode is production.
+     *
+     * @return true for {@code production}
+     */
+    boolean isProduction();
 
     /**
      * Whether permission PEP is active (production whitelist): unchecked

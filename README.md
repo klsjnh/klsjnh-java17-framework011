@@ -13,7 +13,7 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | MyBatis-Plus | 3.5.9（spring-boot3-starter） |
 | 数据库 | MySQL 8 / Oracle（ojdbc8）/ SQL Server（mssql-jdbc）· Druid 1.2.23；分页方言 SPI 另含 postgresql（**无预置 PG 驱动**） |
 | 调度 | Quartz（spring-boot-starter-quartz，内存模式） |
-| 对象存储 | MinIO SDK 8.5.7（local011 / minio011 / s3011 适配器，provider 注册表内置） |
+| 对象存储 | MinIO SDK 8.5.7（local011 / minio011 内置适配器 + 工厂型 provider 注册表；s3011 等预留，SPI 扩展） |
 | 消息中心 | 内置 `inapp` / `webhook` 渠道 + `MessageChannelPort` SPI（厂商渠道由使用者插件提供） |
 | 鉴权 | JJWT 0.12.6 |
 | AOP | spring-boot-starter-aop（controller IUD 审计） |
@@ -46,15 +46,15 @@ web ──► application ──► domain ◄── infrastructure
 | center-storage011-starter | 存储 | **完整存储中心**：管理面（provider 实例 / 桶 / 对象 / 在线编辑）+ local011 + minio011 适配器（运行时按 `krt.storage-center.default-type` 选择；厂商走 SPI）；**object 端口契约留 core** |
 | center-access011-starter | **访问中心** | 组织 / 角色 / 菜单 / 权限目录 / `AuthorizationPort` 实现 / 生产写白名单门闸标记；**用户 CRUD + 登录留 core** |
 | center-platform011-starter | **平台中心** | 字典 julyDictionary + 系统配置 julyConfig 管理面；**不引则无字典/配置 API**；导出导入备份内核仍在 core |
-| java17-scheduler-quartz011-starter | 调度（**非「调度中心」**） | **完整 julyScheduler** 主子表：管理面 CRUD/启停 + 执行审计 `july_scheduler_audit`（链接列 **`pk_mt`**）+ Quartz（RAMJobStore）+ Handler 注册表 + 启动重注册；不引则无 start |
+| java17-scheduler-quartz011-starter | 调度（**非「调度中心」**） | **完整 julyScheduler** 主子表：管理面 CRUD/启停 + 执行审计 `july_scheduler_audit`（链接列 **`pk_mt`**）+ Quartz（RAMJobStore）+ Handler 注册表 + 启动重注册；不引则无 start；**无独立开启注解，随 `@EnablePlatform011Center` 的 system011 扫描装配**（只引 jar 不启 platform 中心则调度不装配） |
 | center-message011-starter | 消息 | **完整消息中心**：出入两套（渠道 / 模板 / 消息）管理面 + 内置渠道 inapp / webhook（厂商渠道 SPI 扩展） |
 | center-ai011-starter | AI | **完整 AI 中心**：管理面（模型接入主子表、提示词业务域）+ 能力引擎（推理 / 图片 / 语音适配器 + agnes / sensenova）+ 媒体落盘 · krt.ai-center 绑定；依赖 center-storage |
 | java17-observability011-starter | 可观测性 | actuator + Prometheus · traceId MDC 过滤器（白名单路径也有 traceId）· 健康指示器（动态数据源池 / 存储默认行 / Quartz 引擎） |
 | java17-app011 | 参考应用 | 唯一 main + 配置 + demo11 样板 + 演示账号播种（demo 内容已移出框架） |
 
-> **装配单轨**：宿主主类**不扫描任何框架包**——core 与 starter 通过 `META-INF/spring/...AutoConfiguration.imports` 自注册（core 定向扫描自己的 application/web/infrastructure 三层包），框架 Mapper 由 data-starter 自动装配；`AuthChainPresenceCheck011` 熔断兜底：web 应用若缺安全链（未引 security-starter）**直接拒绝启动**。业务项目主类只扫自己的包。
+> **装配双轨**：宿主主类**不扫描任何框架包**——core 与技术 starter（security / data-mybatis / observability）通过 `META-INF/spring/...AutoConfiguration.imports` 自注册（core 定向扫描自己的 application/web/infrastructure 三层包），框架 Mapper 由 data-starter 自动装配；6 个中心 starter 走 `@EnableXxx011Center` 注解 opt-in 显式开启（quickstart §4）；**调度 starter 无独立注解，随 `@EnablePlatform011Center` 的 system011 扫描装配**。`AuthChainPresenceCheck011` 熔断兜底：web 应用若缺安全链（未引 security-starter）**直接拒绝启动**。业务项目主类只扫自己的包。
 > **命名口径**：中心类 starter 无 `java17-` 前缀，统一 `center-<名>011-starter`（center-ai011 / center-message011 / center-storage011 / **center-access011** / **center-platform011** / **center-datasource011**）；框架内部模块保持 `java17-*`。
-> 原 KrtConfig011 已解散为三个绑定类：`KrtSecurityConfig011`（krt.status/jwt/web）· `KrtDatasourceConfig011`（krt.ci011，core）· `KrtAiConfig011`（krt.ai-center，ai-starter）。
+> 原 KrtConfig011 已解散为绑定类族：`KrtSecurityConfig011`（krt.status/jwt/web/crypto/outbound）· `KrtDatasourceConfig011`（krt.ci011，core）· `KrtAiConfig011`（krt.ai-center，ai-starter）· `StorageProperties`（krt.storage-center，storage-starter）· `SpringDocConfig011.Properties`（krt.springdoc，core）。
 
 ## 平台能力中心
 
@@ -62,7 +62,7 @@ web ──► application ──► domain ◄── infrastructure
 
 | 中心 | 一句话 | 架构底册 · **starter 体系文档**（设计 / 架构 / 使用 / 二开） |
 |------|--------|----------|
-| **存储中心** | 对象存储统一端口：local011 / minio011 / s3011 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/archive011/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | **现行** [027 starter](docs/infrastructure011/015.storage-center/011.topic-design.md) · 历史底册 [011.storage-center](docs/archive011/infrastructure011/011.storage-center/011.topic-design.md)（已归档） |
+| **存储中心** | 对象存储统一端口：local011 / minio011 内置 + s3011 等预留（SPI 扩展）+ **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/archive011/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | **现行** [027 starter](docs/infrastructure011/015.storage-center/011.topic-design.md) · 历史底册 [011.storage-center](docs/archive011/infrastructure011/011.storage-center/011.topic-design.md)（已归档） |
 | **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | **现行** [026 starter](docs/infrastructure011/016.message-center/011.topic-design.md) · 历史 [013.message-center](docs/archive011/013.message-center/011.topic-design.md)（已归档） |
 | **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | **现行** [025 starter](docs/infrastructure011/017.ai-center/011.topic-design.md) · 历史 [015.ai-center](docs/archive011/015.ai-center/011.topic-design.md)（已归档） |
 | **数据源中心** | 多数据源管理 + **参数化只读分页查询** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [018.datasource-center](docs/infrastructure011/018.datasource-center/011.topic-design.md) · **starter：`center-datasource011-starter`**（kernel 端口留 core；执行器在 data-mybatis） |
@@ -73,7 +73,7 @@ web ──► application ──► domain ◄── infrastructure
 
 ## 业务项目接入（消费方）
 
-四个 starter 起步（BOM 管版本，宿主**零框架扫描**）：
+两个 starter 起步（BOM 管版本，宿主**零框架扫描**；其余中心按需 opt-in）：
 
 ```xml
 <dependency>
@@ -88,7 +88,7 @@ web ──► application ──► domain ◄── infrastructure
      java17-scheduler-quartz011-starter / java17-observability011-starter -->
 ```
 
-不引的 starter 整个中心不存在（端点 404、代码不在 classpath）；缺安全链拒绝启动。**不引 `center-access011-starter` 时**：无组织/角色/菜单/权限目录管理面，用户登录仍可用，生产写白名单门闸不生效。**不引 `center-platform011-starter` 时**：无字典/系统配置管理面。**不引 `center-datasource011-starter` 时**：无 `/klsjnh/datasource/**` 管理面 / Sql HTTP / Sync；kernel（`SqlRoutingPort` 等）仍可由 `java17-data-mybatis011-starter` 提供。完整四步 + 必选/可选表 + demo 照抄入口：**[docs/020.business-project-quickstart.md](docs/020.business-project-quickstart.md)**；活示例：最小登录 + `july_demo011` CRUD **`java17-demo011-app011`**（库 `july_demo011core`，11161）+ 全量 CRUD/调度 **`java17-demo013-app013`**（见 020 §3.5）。
+不引的 starter 整个中心不存在（端点 404、代码不在 classpath）；缺安全链拒绝启动。**不引 `center-access011-starter` 时**：无组织/角色/菜单/权限目录管理面，且 `AuthorizationPort` 缺失——须显式 `krt.security.permissive=true`（**仅 debug 态可用**）否则容器拒绝启动。**不引 `center-platform011-starter` 时**：无字典/系统配置管理面（调度 starter 也随之不装配）。**不引 `center-datasource011-starter` 时**：无 `/klsjnh/datasource/**` 管理面 / Sql HTTP / Sync；kernel（`SqlRoutingPort` 等）仍可由 `java17-data-mybatis011-starter` 提供。完整四步 + 必选/可选表 + demo 照抄入口：**[docs/020.business-project-quickstart.md](docs/020.business-project-quickstart.md)**；活示例（兄弟工程，仓库外）：最小登录 + `july_demo011` CRUD **`java17-demo011-app011`**（库 `july_demo011core`，11161）+ 全量 CRUD/调度 **`java17-demo013-app013`**（见 020 §3.5）。
 
 ## 快速开始
 
@@ -102,7 +102,7 @@ mvn -o clean package -DskipTests          # 离线构建，产出 java17-app011 
 
 > **结构性改动后**（模块边界 / 装配 / 契约）：按 [029 金标准协议](docs/infrastructure011/029.topic-golden-verification.md) 跑 G1–G8 全量回归，并建议 **G9a**（`tools/demo011-dual-mode-smoke.sh`：`MODE=dev` + `MODE=prod` 均 EXIT=0，jar :11161）与 **G9b**（demo013 调度 + `selectExecListByPage` 用 **`pkMt`/`pk_mt`**）。
 
-> 说明：`application.yml` 默认 `spring.profiles.active=development`；入库的 `application-development.yml` 显式 `krt.status: debug`（鉴权放行、PEP opt-in——**勿当生产契约**）。数据源与 dev 用 krt 落 development yml；本机差异走忽略的 `application-local.yml`（**fat jar 已 excludes local/production**，见 [015.topic-config](docs/infrastructure011/015.topic-config.md)）。
+> 说明：`application.yml` 默认 `spring.profiles.active=development`；入库的 `application-development.yml` 默认 `krt.status: development`（需 token；`KRT_STATUS=debug` 才全放行——**勿当生产契约**）。数据源与 dev 用 krt 落 development yml；本机差异走忽略的 `application-local.yml`（**fat jar 已 excludes local/production**，见 [015.topic-config](docs/infrastructure011/015.topic-config.md)）。
 
 ## 部署（Docker）
 
@@ -149,7 +149,7 @@ bash docs/deploy/deploy.sh                # 默认 mount → 备 runtime + 打�
 | ✅ | 装配单轨（宿主零框架扫描 + starter imports 自注册 + 缺安全链熔断）· 中心 starter 命名 `center-<名>011-starter` · 金标准协议 029 |
 | ✅ | **中心整体剥离**（0925b）：AI / 消息 / 存储的 domain+application+infrastructure+web 全部迁入 `center-ai011-starter` / `center-message011-starter` / `center-storage011-starter`；core 仅保留端口契约（storagecenter.object）与备份软依赖；金标准协议 [029](docs/infrastructure011/029.topic-golden-verification.md) |
 | ✅ | **数据源中心剥离**：management / Sql HTTP / Sync 迁入 `center-datasource011-starter`；`domain.datasource.kernel` 端口与 `KrtDatasourceConfig011` 留 core；池/路由/方言执行器留 `java17-data-mybatis011-starter` |
-| ✅ | messagecenter：消息中心（021，**出入两套**：出站 `MessageChannelPort` + 入站 `MessageInboundPort`/监听 + 6 表 + send/接收回调/去重/分发 + 内置出站 inapp/webhook，2026-09-19） |
+| ✅ | messagecenter：消息中心（[016.message-center](docs/infrastructure011/016.message-center/011.topic-design.md)，**出入两套**：出站 `MessageChannelPort` + 入站 `MessageInboundPort`/监听 + 6 表 + send/接收回调/去重/分发 + 内置出站 inapp/webhook，2026-09-19） |
 | ✅ | 审计：AuditType011 枚举 + controller IUD 切面 + 平台事件（EXPORT / IMPORT / BACKUP 在 use case 写，独立事务）；`objectCode` 统一 `AuditObjectCodes011` |
 | ✅ | 逻辑删除 + 唯一键根治（生成列 `alive_*`，墓碑不挡重插）；批量删除**全有或全无**（原子） |
 | ✅ | 扩展点开放化：存储 provider / 分页方言 / 消息渠道 = 开放字符串 + 注册表（禁封闭枚举做路由键） |

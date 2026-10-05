@@ -175,7 +175,7 @@ APP_LOG="$PROJECT_ROOT/logs/app011.log"
 PID_FILE="$PROJECT_ROOT/.app011.pid"
 APP_PORT=11160
 
-# debug mode: development profile + krt.status=debug (application.yml defaults to debug)
+# development profile: krt.status defaults to development (token required); set KRT_STATUS=debug for full bypass
 PROFILE="development"
 
 is_running() {
@@ -228,7 +228,7 @@ do_start() {
   fi
 
   mkdir -p "$PROJECT_ROOT/logs"
-  echo "starting app011 (profile=$PROFILE, krt.status=debug) ..."
+  echo "starting app011 (profile=$PROFILE, krt.status defaults to development) ..."
   nohup "$JAVA_BIN" -jar "$APP_JAR" --spring.profiles.active="$PROFILE" > "$APP_LOG" 2>&1 &
   echo $! > "$PID_FILE"
 

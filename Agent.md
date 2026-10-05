@@ -20,6 +20,7 @@ docs/
 ├── 017.tech-debt-redlines.md  # Tech-debt redlines (reference impl audit)
 ├── 019.backend-api-review.md  # Backend API quality review (contract-level)
 ├── 020.business-project-quickstart.md  # Consumer quickstart (scaffold business projects on this framework)
+├── README.md                  # docs 目录导读（0XX 编号文档索引）
 ├── deploy/                    # Container deploy artifacts (scripts / Dockerfile / compose; mechanism → infrastructure011/020)
 ├── infrastructure011/         # Architecture topics (架构类需求承载地: design / architecture / usage)
 ├── requirement011/            # Raw requirements (普通需求 — business perspective)

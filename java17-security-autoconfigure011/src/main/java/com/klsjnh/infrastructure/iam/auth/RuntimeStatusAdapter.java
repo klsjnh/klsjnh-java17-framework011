@@ -5,13 +5,14 @@ package com.klsjnh.infrastructure.iam.auth;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.12
- *      @modifydate
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.12  runtime status adapter class
  *      2026.09.26  whitelist mode requires access center marker
+ *      2026.10.05  expose isProduction gate
  *
  */
 
@@ -72,6 +73,16 @@ public class RuntimeStatusAdapter implements RuntimeStatusPort {
     @Override
     public boolean isDebug() {
         return krtConfig.getStatus().isDebug();
+    }
+
+    /**
+     * Whether the current runtime mode is production.
+     *
+     * @return true for {@code production}
+     */
+    @Override
+    public boolean isProduction() {
+        return krtConfig.getStatus().isProduction();
     }
 
     /**

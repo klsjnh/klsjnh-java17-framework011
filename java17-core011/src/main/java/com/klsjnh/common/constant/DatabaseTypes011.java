@@ -5,12 +5,13 @@ package com.klsjnh.common.constant;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.19
- *      @modifydate
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.19  database type codes (open string vocabulary)
+ *      2026.10.05  jdbc url scheme prefix per built-in type
  *
  */
 
@@ -74,6 +75,30 @@ public final class DatabaseTypes011 {
             case ORACLE -> "oracle.jdbc.OracleDriver";
             case SQLSERVER -> "com.microsoft.sqlserver.jdbc.SQLServerDriver";
             case POSTGRESQL -> "org.postgresql.Driver";
+            default -> null;
+        };
+    }
+
+    /**
+     * The required JDBC URL scheme prefix of a built-in database type.
+     *
+     * @param value raw db type
+     * @return scheme prefix like {@code jdbc:mysql:}, null when the type has
+     *         no built-in scheme (custom dialect types keep the bare
+     *         {@code jdbc:} rule)
+     */
+    public static String jdbcUrlPrefix(String value) {
+        String type = normalize(value);
+
+        if (type == null) {
+            return null;
+        }
+
+        return switch (type) {
+            case MYSQL -> "jdbc:mysql:";
+            case ORACLE -> "jdbc:oracle:";
+            case SQLSERVER -> "jdbc:sqlserver:";
+            case POSTGRESQL -> "jdbc:postgresql:";
             default -> null;
         };
     }

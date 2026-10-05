@@ -5,7 +5,7 @@ package com.klsjnh.web.global;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.13
- *      @modifydate 2026.09.26
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
@@ -13,6 +13,7 @@ package com.klsjnh.web.global;
  *      2026.09.13  global auth filter class
  *      2026.09.26  production permission whitelist (unchecked write → 403)
  *      2026.09.26  merge krt.web.auth-whitelist-paths / prefixes
+ *      2026.10.05  api docs blocked in production (404)
  *
  */
 
@@ -71,7 +72,9 @@ import java.util.UUID;
  * Built-in JWT whitelist (login / docs / open / health) can be extended via
  * {@code krt.web.auth-whitelist-paths} and {@code krt.web.auth-whitelist-prefixes}
  * without inventing a parallel auth stack — same {@code shouldNotFilter} path
- * permit used for login.
+ * permit used for login. In production the API docs prefixes (springdoc /
+ * knife4j) are removed from the bypass and answered with a 404 envelope
+ * instead — the API map is never served there, even with a valid token.
  * </p>
  */
 
@@ -96,11 +99,18 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
             WebPaths011.IAM_USER + "/loginByUserName");
 
     /**
-     * Path prefixes that never require a token (API docs, error page, LB probe).
+     * Path prefixes of the API documentation (springdoc / knife4j): anonymous
+     * in debug / development, hard-blocked with a 404 in production — the API
+     * map never leaves the building there, whatever the JWT whitelist says.
+     */
+    private static final List<String> DOCS_WHITELIST_PREFIXES = List.of(
+            "/doc.html", "/webjars/", "/v3/api-docs", "/swagger-ui", "/swagger-resources");
+
+    /**
+     * Path prefixes that never require a token (error page, LB probe).
      */
     private static final List<String> WHITELIST_PREFIXES = List.of(
-            "/doc.html", "/webjars/", "/v3/api-docs", "/swagger-ui", "/swagger-resources", "/favicon.ico", "/error",
-            "/klsjnh/open/", "/actuator/health");
+            "/favicon.ico", "/error", "/klsjnh/open/", "/actuator/health");
 
     /**
      * Token port (verify only; issuing stays in the login flow).
@@ -161,7 +171,7 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
             return false;
         }
 
-        return isJwtWhitelisted(uri);
+        return isJwtWhitelisted(uri) && !isDocsBlocked(uri);
     }
 
     /**
@@ -172,7 +182,8 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
      * @return true when no token is required
      */
     boolean isJwtWhitelisted(String uri) {
-        if (WHITELIST_PATHS.contains(uri) || WHITELIST_PREFIXES.stream().anyMatch(uri::startsWith)) {
+        if (WHITELIST_PATHS.contains(uri) || WHITELIST_PREFIXES.stream().anyMatch(uri::startsWith)
+                || DOCS_WHITELIST_PREFIXES.stream().anyMatch(uri::startsWith)) {
             return true;
         }
 
@@ -232,6 +243,13 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
         }
 
         try {
+            String uri = normalizeUri(request);
+
+            if (uri != null && isDocsBlocked(uri)) {
+                writeNotFound(request, response);
+                return;
+            }
+
             if (identity == null && !runtimeStatusPort.isDebug()) {
                 writeUnauthorized(request, response);
                 return;
@@ -243,6 +261,17 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
             PermissionCheckContext011.clear();
             MDC.remove(FrameConst011.TRACE_ID);
         }
+    }
+
+    /**
+     * Whether the API docs endpoints are hard-blocked: production never serves
+     * the API map, regardless of the JWT whitelist or a valid token.
+     *
+     * @param uri normalized request path
+     * @return true when the request must be rejected as not found
+     */
+    private boolean isDocsBlocked(String uri) {
+        return runtimeStatusPort.isProduction() && DOCS_WHITELIST_PREFIXES.stream().anyMatch(uri::startsWith);
     }
 
     /**
@@ -348,6 +377,24 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         Response011<Void> body = Response011.unauthorized();
+        body.setTraceId(MDC.get(FrameConst011.TRACE_ID));
+        objectMapper.writeValue(response.getWriter(), body);
+    }
+
+    /**
+     * Write the 404 envelope for a blocked path (API docs in production).
+     *
+     * @param request  http request
+     * @param response http response
+     * @throws IOException write failure
+     */
+    private void writeNotFound(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        logger.info("auth filter blocked api docs path {} ...", request.getRequestURI());
+        response.resetBuffer();
+        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        Response011<Void> body = Response011.of(HttpCodeEnum011.NOT_FOUND, "not found");
         body.setTraceId(MDC.get(FrameConst011.TRACE_ID));
         objectMapper.writeValue(response.getWriter(), body);
     }

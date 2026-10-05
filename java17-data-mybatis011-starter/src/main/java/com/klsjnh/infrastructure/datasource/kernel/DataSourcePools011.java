@@ -5,18 +5,20 @@ package com.klsjnh.infrastructure.datasource.kernel;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.13
- *      @modifydate 2026.09.15
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.13  data source pools 011 class
  *      2026.09.15  add schema / driver override to probe pool
+ *      2026.10.05  guard jdbc url + lock driver override to custom types
  *
  */
 
 import com.klsjnh.common.constant.DatabaseTypes011;
 import com.klsjnh.common.exception.BusinessException;
+import com.klsjnh.common.util.JdbcUrlGuard011;
 import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
@@ -108,18 +110,24 @@ public class DataSourcePools011 {
 
     /**
      * Build a Druid pool from connection info (no wall filter — the routing
-     * port is read-write by design).
+     * port is read-write by design). The JDBC URL guard and the driver lock
+     * run before the pool object exists, so a rejected config never allocates
+     * anything.
      *
      * @param info connection info
      * @return configured pool
      */
     private DruidDataSource build(ConnectionInfo info) {
+        JdbcUrlGuard011.assertAllowed(info.dsType(), info.dsUrl());
+
+        String driverClassName = resolveDriverClass(info);
+
         DruidDataSource pool = new DruidDataSource();
         pool.setName(info.dsCode());
         pool.setUrl(info.dsUrl());
         pool.setUsername(info.username());
         pool.setPassword(info.password());
-        pool.setDriverClassName(resolveDriverClass(info));
+        pool.setDriverClassName(driverClassName);
         pool.setInitialSize(0);
         pool.setMinIdle(0);
         pool.setMaxActive(100);
@@ -136,15 +144,22 @@ public class DataSourcePools011 {
     }
 
     /**
-     * Resolve the JDBC driver class: an explicit driverClass wins, otherwise
-     * the database type default is used; an unknown type without an explicit
-     * driver is a configuration error.
+     * Resolve the JDBC driver class: an explicit driverClass wins for CUSTOM
+     * database types only (the consumer's own dialect plug-in driver) — a
+     * built-in type is locked to its default driver, so an arbitrary class
+     * name can never reach the pool's driver loading; an unknown type without
+     * an explicit driver is a configuration error.
      *
      * @param info connection info
      * @return driver class name
      */
     private String resolveDriverClass(ConnectionInfo info) {
         if (!StringUtil011.isBlank(info.driverClass())) {
+            String defaultDriver = DatabaseTypes011.driverClass(info.dsType());
+            if (defaultDriver != null && !defaultDriver.equals(info.driverClass())) {
+                throw BusinessException.badRequest(
+                        "driverClass override is only allowed for custom database types: " + info.dsType());
+            }
             return info.driverClass();
         }
 

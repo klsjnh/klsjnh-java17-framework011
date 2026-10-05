@@ -5,16 +5,18 @@ package com.klsjnh.domain.datasource.management;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.15
- *      @modifydate
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.15  july datasource class
+ *      2026.10.05  save-time jdbc url guard (scheme whitelist + forbidden params)
  *
  */
 
 import com.klsjnh.common.enums.Status011;
+import com.klsjnh.common.util.JdbcUrlGuard011;
 import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.domain.shared.AuditInfo;
@@ -249,6 +251,8 @@ public class JulyDatasource {
         if (!jdbcUrl.startsWith("jdbc:")) {
             throw new IllegalArgumentException("jdbc url must start with jdbc:");
         }
+
+        JdbcUrlGuard011.assertAllowed(dbType, jdbcUrl);
 
         StringUtil011.requireMax(schemaName, "schema name", 60);
 

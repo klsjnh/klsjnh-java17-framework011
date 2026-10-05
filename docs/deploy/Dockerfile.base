@@ -26,9 +26,9 @@ RUN groupadd -r klsjnh && useradd -r -g klsjnh -d /klsjnh -m klsjnh \
 
 WORKDIR /klsjnh/app
 VOLUME ["/klsjnh/volume"]
-EXPOSE 8080
+EXPOSE 11160
 
 USER klsjnh
 
 ENV JAVA_OPTS="-XX:+UseG1GC -XX:+UseContainerSupport -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai"
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.location=/klsjnh/volume/config/application.yml"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /klsjnh/app/app.jar --spring.config.additional-location=file:/klsjnh/volume/config/"]

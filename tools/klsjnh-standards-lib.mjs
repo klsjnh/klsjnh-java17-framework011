@@ -325,17 +325,17 @@ export function testNestedControlBlankLines(path, content, violations) {
 }
 
 /**
- * Import group for a line (015 §9, canonical order):
+ * Import group for a line (016 §9, canonical order):
  *   1 org.slf4j        (logging, highest priority)
  *   2 lombok
  *   3 com.klsjnh.common
  *   4 com.klsjnh.domain + com.klsjnh.application
  *   5 com.klsjnh.web.*.converter
- *   6 com.klsjnh.web.*.vo
+ *   6 com.klsjnh.web.*.vo (+ any other com.klsjnh.*)
  *   7 io.swagger
  *   8 org.springframework
- *   9 jakarta / javax / java
- *  10 other third-party (com.baomidou / cn.hutool / ...)
+ *   9 other third-party (com.baomidou / cn.hutool / jakarta.* / org.junit ...)
+ *  10 java.* / javax.*  (JDK, must come last)
  * A file only needs the groups it actually uses; group numbers must be
  * non-decreasing across the import block.
  */
@@ -416,7 +416,7 @@ export function testImportOrder(path, content, violations) {
         line: cur.line + 1,
         rule: 'import-order',
         detail: `import group out of order (group ${prev.group} -> ${cur.group})`,
-        fix: 'regroup imports: org.slf4j, lombok, com.klsjnh.common, com.klsjnh.domain/application, com.klsjnh.web.converter, com.klsjnh.web.vo, third-party, java/javax (015 §9)',
+        fix: 'regroup imports: org.slf4j, lombok, com.klsjnh.common, com.klsjnh.domain/application, com.klsjnh.web.converter, com.klsjnh.web.vo, third-party, java/javax (016 §9)',
       });
     } else if (cur.group === prev.group && gap > 1) {
       violations.push({
@@ -545,7 +545,7 @@ export function testFileHeader(path, content, violations) {
       line: 1,
       rule: 'file-header',
       detail: `missing @author ${AUTHOR}`,
-      fix: 'add the klsjnh file header block after the package statement (015 §1)',
+      fix: 'add the klsjnh file header block after the package statement (016 §1)',
     });
     return;
   }
@@ -622,7 +622,7 @@ export function testClassJavadoc(path, content, violations) {
     line: lineOf(content, decl.index),
     rule: 'class-javadoc',
     detail: 'missing class/interface/record Javadoc before type declaration',
-    fix: 'add an English class Javadoc followed by a blank line before the type declaration (015 §2.1)',
+    fix: 'add an English class Javadoc followed by a blank line before the type declaration (016 §2.1)',
   });
 }
 

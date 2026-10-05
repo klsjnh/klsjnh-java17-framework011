@@ -5,13 +5,14 @@ package com.klsjnh.infrastructure.datasource.kernel;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.13
- *      @modifydate 2026.09.15
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.13  dynamic data source registry impl class
  *      2026.09.15  table-driven reloadAll with pool retention
+ *      2026.10.05  testConnection closes the throwaway probe pool
  *
  */
 
@@ -27,6 +28,9 @@ import com.klsjnh.infrastructure.config.KrtDatasourceConfig011;
 
 import org.springframework.stereotype.Component;
 
+import com.alibaba.druid.pool.DruidDataSource;
+
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,19 +203,49 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
     }
 
     /**
-     * Probe a connection without caching a pool.
+     * Probe a connection without caching a pool. The throwaway probe pool is
+     * always closed in a finally block (Druid pools hold real sockets).
      *
      * @param info connection info
      * @return true when a connection could be established
      */
     @Override
     public boolean testConnection(ConnectionInfo info) {
-        try (var ignored = pools.buildForProbe(info).getConnection()) {
-            return true;
+        String funcName = "test connection";
+
+        DruidDataSource pool = null;
+
+        try {
+            pool = pools.buildForProbe(info);
+
+            try (Connection ignored = pool.getConnection()) {
+                return true;
+            }
         } catch (Exception ex) {
-            log.warn("test connection {} failed {} ...", info.dsCode(), ex.getMessage());
+            log.warn("{} {} failed {} ...", funcName, info.dsCode(), ex.getMessage());
 
             return false;
+        } finally {
+            closeQuietly(pool, info.dsCode(), funcName);
+        }
+    }
+
+    /**
+     * Close the throwaway probe pool, logging but never rethrowing a failure.
+     *
+     * @param pool     probe pool, nullable
+     * @param dsCode   datasource code
+     * @param funcName operation name for the log
+     */
+    private void closeQuietly(DruidDataSource pool, String dsCode, String funcName) {
+        if (pool == null) {
+            return;
+        }
+
+        try {
+            pool.close();
+        } catch (Exception ex) {
+            log.warn("{} {} close probe pool failed {} ...", funcName, dsCode, ex.getMessage());
         }
     }
 

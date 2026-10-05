@@ -207,7 +207,7 @@ export async function createAstChecker() {
   }
 
   /**
-   * Naming rules (015 §8): package → required name suffix. Top-level types
+   * Naming rules (016 §8): package → required name suffix. Top-level types
    * only — nested classes inherit the outer class name scope.
    */
   const NAMING_RULES = [
@@ -289,7 +289,7 @@ export async function createAstChecker() {
   }
 
   /**
-   * pk_mt rule (015 §7): inside persistence.entity POs the master link field
+   * pk_mt rule (016 §7): inside persistence.entity POs the master link field
    * is always pkMt (MasterLinked contract) — no other *Id style fields.
    * Whitelist: id (PK), pkMt (master link), parentId (tree link).
    */
@@ -374,7 +374,7 @@ export async function createAstChecker() {
             file,
             line: inv.startPosition.row + 1,
             rule: 'log-funcname',
-            detail: 'log first placeholder must be funcName (015 §4)',
+            detail: 'log first placeholder must be funcName (016 §4)',
             fix: 'pass funcName as the first placeholder argument',
           });
         }

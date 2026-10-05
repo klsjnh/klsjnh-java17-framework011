@@ -52,7 +52,8 @@ if [ "$MODE" = "bake" ]; then
     echo "=== 4. 构建项目镜像（bake）==="
     mkdir -p "$DEPLOY_DIR/runtime" && cp "$APP_JAR" "$DEPLOY_DIR/runtime/app.jar"
     $DOCKER build -t "${PROJECT}:v${VER}" -f "$DEPLOY_DIR/Dockerfile.project" "$DEPLOY_DIR/runtime"
-    echo "镜像: ${PROJECT}:v${VER}"
+    export APP_IMAGE="${PROJECT}:v${VER}"
+    echo "镜像: ${PROJECT}:v${VER}（已 export APP_IMAGE，compose.bake 直接可用）"
 else
     echo "=== 4. 轻量挂载（mount，不建项目镜像）==="
 fi

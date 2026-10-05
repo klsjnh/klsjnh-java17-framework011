@@ -5,12 +5,13 @@ package com.klsjnh.common.util;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.20
- *      @modifydate
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.20  read-only sql guard
+ *      2026.10.05  forbid server-file access (INTO OUTFILE / DUMPFILE / LOAD_FILE)
  *
  */
 
@@ -21,8 +22,8 @@ import java.util.regex.Pattern;
 /**
  * SQL guard for the data source center's read endpoint: enforce a strict
  * read-only statement — must start with {@code SELECT}, no {@code ;} and no
- * DDL / DML keyword. Non-SELECT statements will move to a separate, separately
- * authorized endpoint (see {@code 017.datasource-center}).
+ * DDL / DML keyword or server-file access form. Non-SELECT statements will
+ * move to a separate, separately authorized endpoint (see {@code 017.datasource-center}).
  */
 
 public final class SqlGuard011 {
@@ -37,6 +38,15 @@ public final class SqlGuard011 {
      */
     private static final Pattern FORBIDDEN = Pattern.compile(
             "\\b(insert|update|delete|drop|alter|truncate|create|grant|revoke|merge|replace|call|exec|execute)\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Forbidden server-file access forms: {@code SELECT ... INTO OUTFILE /
+     * DUMPFILE} writes and {@code LOAD_FILE()} reads database-server files
+     * when the DB account holds the FILE privilege.
+     */
+    private static final Pattern FORBIDDEN_FILE = Pattern.compile(
+            "\\binto\\s+(outfile|dumpfile)\\b|\\bload_file\\s*\\(",
             Pattern.CASE_INSENSITIVE);
 
     private SqlGuard011() {
@@ -64,6 +74,10 @@ public final class SqlGuard011 {
 
         if (FORBIDDEN.matcher(trimmed).find()) {
             throw BusinessException.badRequest("sql contains a forbidden keyword");
+        }
+
+        if (FORBIDDEN_FILE.matcher(trimmed).find()) {
+            throw BusinessException.badRequest("sql contains a forbidden file-access form");
         }
     }
 }

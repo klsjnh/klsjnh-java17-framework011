@@ -28,9 +28,9 @@ desktop.ini
 *.log
 *.log.err
 *.err.log
-logs/
+/logs/
 target-logs/
-tmp/
+/tmp/
 *.tmp
 .tmp-*/
 _tmp*
