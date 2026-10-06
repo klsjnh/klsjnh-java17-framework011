@@ -17,6 +17,7 @@ package com.klsjnh.infrastructure.datasource.kernel;
 import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
+import com.klsjnh.domain.datasource.kernel.ReloadResult;
 
 import com.klsjnh.infrastructure.config.KrtDatasourceConfig011;
 
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -119,6 +121,22 @@ class DynamicDataSourceRegistryImplTest {
     }
 
     /**
+     * reloadAll swaps the whole declared set: removed codes vanish, new codes
+     * land — readers never observe a half-updated set.
+     */
+    @Test
+    void reloadAllReplacesDeclaredSet() {
+        registry.register(info());
+
+        ReloadResult result = registry.reloadAll(List.of(other()));
+
+        assertFalse(registry.isRegistered("dsA"));
+        assertTrue(registry.isRegistered("dsB"));
+        assertEquals("jdbc:mysql://127.0.0.1:3306/other", registry.getConfig("dsB").dsUrl());
+        assertEquals(1, result.registered());
+    }
+
+    /**
      * Sample connection info.
      *
      * @return connection info
@@ -126,5 +144,15 @@ class DynamicDataSourceRegistryImplTest {
     private ConnectionInfo info() {
         return new ConnectionInfo("dsA", "Data source A", "mysql", "jdbc:mysql://127.0.0.1:3306/db", "u", "p", null,
                 null, null);
+    }
+
+    /**
+     * Another sample connection info (different code and url).
+     *
+     * @return connection info
+     */
+    private ConnectionInfo other() {
+        return new ConnectionInfo("dsB", "Data source B", "mysql", "jdbc:mysql://127.0.0.1:3306/other", "u", "p",
+                null, null, null);
     }
 }

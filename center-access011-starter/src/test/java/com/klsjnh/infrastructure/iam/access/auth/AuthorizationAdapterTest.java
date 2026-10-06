@@ -5,13 +5,14 @@ package com.klsjnh.infrastructure.iam.access.auth;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.24
- *      @modifydate 2026.09.26
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.24  unit test for authorization adapter
  *      2026.09.26  production-only checks; debug no-op
+ *      2026.10.05  development runs real checks too (only debug is permissive)
  *
  */
 
@@ -46,9 +47,9 @@ import java.util.List;
 
 /**
  * Unit tests for {@link AuthorizationAdapter} covering role shapes (builtin
- * bypass, backup-only, select-only) and debug no-op, using julyUser codes as
- * sample permission strings (platform julyConfig codes live in the platform
- * starter).
+ * bypass, backup-only, select-only), the development real-check posture and
+ * the debug no-op, using julyUser codes as sample permission strings
+ * (platform julyConfig codes live in the platform starter).
  */
 
 @ExtendWith(MockitoExtension.class)
@@ -91,7 +92,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void builtinRoleBypassesAllCodes() {
-        when(runtimeStatusPort.isPermissionWhitelistMode()).thenReturn(true);
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
         when(userRoleRepository.findRoleIds("u-super")).thenReturn(List.of("r-builtin"));
         when(roleRepository.findById("r-builtin")).thenReturn(
                 JulyRole.createBuiltin(EntityId.of("r-builtin"), "role_super_admin", "超管", null, AuditInfo.empty()));
@@ -106,7 +107,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void backupOnlyCannotSelect() {
-        when(runtimeStatusPort.isPermissionWhitelistMode()).thenReturn(true);
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
         when(userRoleRepository.findRoleIds("u-backup")).thenReturn(List.of("r-backup"));
         when(roleRepository.findById("r-backup")).thenReturn(
                 JulyRole.create(EntityId.of("r-backup"), "role_backup_admin", "备份", null, AuditInfo.empty()));
@@ -125,7 +126,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void selectOnlyCannotDelete() {
-        when(runtimeStatusPort.isPermissionWhitelistMode()).thenReturn(true);
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
         when(userRoleRepository.findRoleIds("u-user")).thenReturn(List.of("r-user"));
         when(roleRepository.findById("r-user")).thenReturn(
                 JulyRole.create(EntityId.of("r-user"), "role_user", "普通", null, AuditInfo.empty()));
@@ -137,11 +138,11 @@ class AuthorizationAdapterTest {
     }
 
     /**
-     * A blank operator id is rejected as unauthorized (401) in production.
+     * A blank operator id is rejected as unauthorized (401) outside debug.
      */
     @Test
     void blankOperatorUnauthorized() {
-        when(runtimeStatusPort.isPermissionWhitelistMode()).thenReturn(true);
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> adapter.assertHas("", JulyUserPermissionCodes011.SELECT));
         assertEquals(401, ex.getCode());
@@ -152,7 +153,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void assertHasMarksPermissionCheckContext() {
-        when(runtimeStatusPort.isPermissionWhitelistMode()).thenReturn(true);
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
         assertFalse(PermissionCheckContext011.wasChecked());
         when(userRoleRepository.findRoleIds("u-super")).thenReturn(List.of("r-builtin"));
         when(roleRepository.findById("r-builtin")).thenReturn(
@@ -163,11 +164,25 @@ class AuthorizationAdapterTest {
     }
 
     /**
-     * Debug / development: assertHas is a no-op (marks only, no catalog lookup).
+     * Development (non-debug) runs the real catalog check: a roleless operator
+     * is denied (403) instead of silently allowed.
+     */
+    @Test
+    void developmentAssertHasDeniesRolelessOperator() {
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(userRoleRepository.findRoleIds("u-norole")).thenReturn(List.of());
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> adapter.assertHas("u-norole", JulyUserPermissionCodes011.SELECT));
+        assertEquals(403, ex.getCode());
+    }
+
+    /**
+     * Debug: assertHas is a no-op (marks only, no catalog lookup).
      */
     @Test
     void debugAssertHasIsNoOp() {
-        when(runtimeStatusPort.isPermissionWhitelistMode()).thenReturn(false);
+        when(runtimeStatusPort.isDebug()).thenReturn(true);
 
         assertDoesNotThrow(() -> adapter.assertHas("", JulyUserPermissionCodes011.SELECT));
         assertTrue(adapter.has("anyone", JulyUserPermissionCodes011.LOGIC_DELETE));

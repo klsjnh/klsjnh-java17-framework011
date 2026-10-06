@@ -48,6 +48,10 @@ public class JulySchedulerUpdateVo011 {
     @Schema(description = "cron 表达式（最长 30，保存时校验合法性）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String schedulerCron;
 
+    /** Task payload (JSON text), max 500, optional. */
+    @Schema(description = "任务参数（JSON 文本，透传给 JobHandler 的 payload，最长 500）")
+    private String taskParam;
+
     /** Runtime status: 0 stopped / 1 running; changes resync the engine. */
     @Schema(description = "运行态（0 停止 / 1 运行）；状态或 cron/handler 变更会触发调度引擎联动")
     private String status;

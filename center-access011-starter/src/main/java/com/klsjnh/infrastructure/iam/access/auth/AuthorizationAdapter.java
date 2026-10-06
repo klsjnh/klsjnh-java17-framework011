@@ -5,13 +5,14 @@ package com.klsjnh.infrastructure.iam.access.auth;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.24
- *      @modifydate 2026.09.26
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.24  authorization adapter (user roles to permission codes)
  *      2026.09.26  assertHas / has no-op when not production whitelist
+ *      2026.10.05  real checks in development too (only debug stays permissive)
  *
  */
 
@@ -38,10 +39,10 @@ import java.util.Set;
 
 /**
  * Authorization adapter: user → roles → permission codes, with built-in role
- * full bypass (same rule as getUserMenuTree). When not in production whitelist
- * mode ({@code krt.status} debug / development), {@link #has} / {@link #assertHas}
- * succeed without consulting the catalog so management call sites can stay
- * hung for production while local integration testing is unblocked.
+ * full bypass (same rule as getUserMenuTree). DEBUG keeps {@link #has} /
+ * {@link #assertHas} permissive so local integration testing is unblocked;
+ * DEVELOPMENT and PRODUCTION run the real catalog check — an unseeded operator
+ * (no roles) is denied, so permission bugs surface before production.
  */
 
 @Component
@@ -137,7 +138,7 @@ public class AuthorizationAdapter implements AuthorizationPort {
      */
     @Override
     public boolean has(String operatorId, String permissionCode) {
-        if (!runtimeStatusPort.isPermissionWhitelistMode()) {
+        if (runtimeStatusPort.isDebug()) {
             return true;
         }
 
@@ -159,7 +160,7 @@ public class AuthorizationAdapter implements AuthorizationPort {
 
         PermissionCheckContext011.markChecked();
 
-        if (!runtimeStatusPort.isPermissionWhitelistMode()) {
+        if (runtimeStatusPort.isDebug()) {
             return;
         }
 

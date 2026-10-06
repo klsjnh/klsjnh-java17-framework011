@@ -58,6 +58,11 @@ public class JulyScheduler {
     private String schedulerCron;
 
     /**
+     * Task payload (JSON text) handed to the handler, nullable.
+     */
+    private String taskParam;
+
+    /**
      * Execute times, incremented on every trigger.
      */
     private Integer executeTimes;
@@ -91,12 +96,14 @@ public class JulyScheduler {
      * @param audit            audit info
      */
     public JulyScheduler(EntityId id, String schedulerCode, String schedulerName, String schedulerHandler,
-            String schedulerCron, Integer executeTimes, String status, String remark, AuditInfo audit) {
+            String schedulerCron, String taskParam, Integer executeTimes, String status, String remark,
+            AuditInfo audit) {
         this.id = id;
         this.schedulerCode = schedulerCode;
         this.schedulerName = schedulerName;
         this.schedulerHandler = schedulerHandler;
         this.schedulerCron = schedulerCron;
+        this.taskParam = taskParam;
         this.executeTimes = executeTimes == null ? 0 : executeTimes;
         this.status = status == null ? Status011.DISABLED.getCode() : status;
         this.remark = remark;
@@ -116,10 +123,10 @@ public class JulyScheduler {
      * @return new aggregate in stopped state
      */
     public static JulyScheduler create(EntityId id, String schedulerCode, String schedulerName,
-            String schedulerHandler, String schedulerCron, String remark, AuditInfo audit) {
-        validateBasics(schedulerCode, schedulerName, schedulerHandler, schedulerCron, remark);
+            String schedulerHandler, String schedulerCron, String taskParam, String remark, AuditInfo audit) {
+        validateBasics(schedulerCode, schedulerName, schedulerHandler, schedulerCron, taskParam, remark);
 
-        return new JulyScheduler(id, schedulerCode, schedulerName, schedulerHandler, schedulerCron, 0,
+        return new JulyScheduler(id, schedulerCode, schedulerName, schedulerHandler, schedulerCron, taskParam, 0,
                 Status011.DISABLED.getCode(), remark, audit);
     }
 
@@ -131,11 +138,13 @@ public class JulyScheduler {
      * @param schedulerCron    cron expression, max 30
      * @param remark           remark, optional, max 300
      */
-    public void updateBasics(String schedulerName, String schedulerHandler, String schedulerCron, String remark) {
-        validateBasics(this.schedulerCode, schedulerName, schedulerHandler, schedulerCron, remark);
+    public void updateBasics(String schedulerName, String schedulerHandler, String schedulerCron, String taskParam,
+            String remark) {
+        validateBasics(this.schedulerCode, schedulerName, schedulerHandler, schedulerCron, taskParam, remark);
         this.schedulerName = schedulerName;
         this.schedulerHandler = schedulerHandler;
         this.schedulerCron = schedulerCron;
+        this.taskParam = taskParam;
         this.remark = remark;
     }
 
@@ -162,7 +171,8 @@ public class JulyScheduler {
      * @param cron    cron expression
      * @param remark  remark, optional
      */
-    private static void validateBasics(String code, String name, String handler, String cron, String remark) {
+    private static void validateBasics(String code, String name, String handler, String cron, String taskParam,
+            String remark) {
         StringUtil011.requirePresent(code, "scheduler code", 30);
 
         StringUtil011.requirePresent(name, "scheduler name", 60);
@@ -170,6 +180,8 @@ public class JulyScheduler {
         StringUtil011.requirePresent(handler, "scheduler handler", 300);
 
         StringUtil011.requirePresent(cron, "scheduler cron", 30);
+
+        StringUtil011.requireMax(taskParam, "task param", 500);
 
         StringUtil011.requireMax(remark, "remark", 300);
     }
@@ -235,6 +247,15 @@ public class JulyScheduler {
      */
     public String status() {
         return status;
+    }
+
+    /**
+     * Get the task payload (JSON text).
+     *
+     * @return task payload, nullable
+     */
+    public String taskParam() {
+        return taskParam;
     }
 
     /**

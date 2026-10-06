@@ -12,6 +12,7 @@ package com.klsjnh.web.global;
  *
  *      2026.09.26  unit tests for krt.web JWT whitelist merge
  *      2026.10.05  api docs blocked in production (404) unit tests
+ *      2026.10.05  debug anonymous write protection (H1) unit tests
  *
  */
 
@@ -49,6 +50,7 @@ class GlobalAuthFilterWhitelistTest {
     private GlobalAuthFilter filter;
     private KrtSecurityConfig011 securityConfig;
     private RuntimeStatusPort runtimeStatusPort;
+    private AuthTokenPort authTokenPort;
 
     /**
      * Builds a filter with an empty development security config.
@@ -59,8 +61,8 @@ class GlobalAuthFilterWhitelistTest {
         Mockito.when(environment.getActiveProfiles()).thenReturn(new String[] { "development" });
         securityConfig = new KrtSecurityConfig011(environment);
         runtimeStatusPort = Mockito.mock(RuntimeStatusPort.class);
-        filter = new GlobalAuthFilter(Mockito.mock(AuthTokenPort.class), runtimeStatusPort,
-                securityConfig, new ObjectMapper());
+        authTokenPort = Mockito.mock(AuthTokenPort.class);
+        filter = new GlobalAuthFilter(authTokenPort, runtimeStatusPort, securityConfig, new ObjectMapper());
     }
 
     /**
@@ -148,5 +150,111 @@ class GlobalAuthFilterWhitelistTest {
 
         assertEquals(200, response.getStatus());
         verify(chain).doFilter(request, response);
+    }
+
+    /**
+     * Debug: an anonymous read-class request on a protected path passes.
+     *
+     * @throws Exception servlet failure
+     */
+    @Test
+    void debugAnonymousReadPasses() throws Exception {
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
+        when(runtimeStatusPort.isDebug()).thenReturn(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/klsjnh/iam/julyUser/v1/getById?id=1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        verify(chain).doFilter(request, response);
+    }
+
+    /**
+     * Debug: an anonymous write-class request on a protected path is answered
+     * 401 (H1) — debug no longer opens writes to the world.
+     *
+     * @throws Exception servlet failure
+     */
+    @Test
+    void debugAnonymousWriteRequiresToken() throws Exception {
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
+        when(runtimeStatusPort.isDebug()).thenReturn(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/klsjnh/iam/julyUser/v1/insert");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(401, response.getStatus());
+        verify(chain, never()).doFilter(request, response);
+    }
+
+    /**
+     * Debug: a write-class request WITH a valid token passes (H1 only gates
+     * the anonymous path).
+     *
+     * @throws Exception servlet failure
+     */
+    @Test
+    void debugWriteWithTokenPasses() throws Exception {
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
+        when(runtimeStatusPort.isDebug()).thenReturn(true);
+        when(authTokenPort.verify("tok")).thenReturn(new AuthTokenPort.OperatorIdentity("u1", "admin"));
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/klsjnh/iam/julyUser/v1/insert");
+        request.addHeader("Authorization", "Bearer tok");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        verify(chain).doFilter(request, response);
+    }
+
+    /**
+     * Debug: an anonymous POST select-class action stays opt-in (same rule as
+     * the production whitelist).
+     *
+     * @throws Exception servlet failure
+     */
+    @Test
+    void debugAnonymousSelectPostPasses() throws Exception {
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
+        when(runtimeStatusPort.isDebug()).thenReturn(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/klsjnh/iam/julyUser/v1/selectListByPage");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        verify(chain).doFilter(request, response);
+    }
+
+    /**
+     * Development: an anonymous write-class request is answered 401 (regression
+     * — the non-debug token gate is unchanged).
+     *
+     * @throws Exception servlet failure
+     */
+    @Test
+    void developmentAnonymousWriteStill401() throws Exception {
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
+        when(runtimeStatusPort.isDebug()).thenReturn(false);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/klsjnh/iam/julyUser/v1/insert");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(401, response.getStatus());
+        verify(chain, never()).doFilter(request, response);
     }
 }

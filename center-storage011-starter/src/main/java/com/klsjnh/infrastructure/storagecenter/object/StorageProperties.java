@@ -21,7 +21,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Storage center properties bound to {@code krt.storage-center} (values use
- * the 011-suffix convention: local011 / minio011, cloud vendors reserved).
+ * the 011-suffix convention: local011 / minio011 / s3011 built in, other cloud
+ * vendors reserved).
  */
 
 @Data
@@ -30,8 +31,8 @@ import org.springframework.stereotype.Component;
 public class StorageProperties {
 
     /**
-     * Active adapter type: local011 / minio011 (cos011 / tos011 / oss011 /
-     * s3011 reserved).
+     * Active adapter type: local011 / minio011 / s3011 (S3-compatible, served
+     * by the MinIO client; cos011 / tos011 / oss011 reserved).
      */
     private String defaultType = "local011";
 

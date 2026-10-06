@@ -19,27 +19,28 @@ import java.util.Locale;
 /**
  * Runtime mode of the framework, bound to {@code krt.status}.
  * <p>
- * Gates the auth filter: {@code DEBUG} never rejects (a present token is still
- * parsed best-effort so the audit operator can be filled), {@code DEVELOPMENT}
- * additionally allows passwordless login, {@code PRODUCTION} requires a valid
- * token. A missing value resolves to {@code PRODUCTION} — a missing config must
- * never open the gate.
+ * Gates the auth filter: {@code DEBUG} accepts anonymous read-class requests
+ * (write-class requests still need a valid token), {@code DEVELOPMENT}
+ * requires a valid token and allows passwordless login, {@code PRODUCTION}
+ * requires a valid token. A missing value resolves to {@code PRODUCTION} — a
+ * missing config must never open the gate.
  * </p>
  * <p>
- * Also selects the permission PEP posture: {@code PRODUCTION} enables real
- * {@code assertHas}/{@code has} checks and the write whitelist gate;
- * {@code DEBUG} / {@code DEVELOPMENT} make those checks no-op (call sites stay
- * hung for production; local integration is not blocked). See IAM
- * dynamic-permission docs.
+ * Also selects the permission PEP posture: {@code DEVELOPMENT} and
+ * {@code PRODUCTION} run real {@code assertHas}/{@code has} checks
+ * (development mirrors production so permission bugs surface before
+ * shipping); {@code PRODUCTION} additionally enables the write whitelist
+ * gate. {@code DEBUG} keeps the checks no-op (local integration is not
+ * blocked). See IAM dynamic-permission docs.
  * </p>
  */
 
 public enum FrameworkStatus011 {
 
-    /** Never rejects; best-effort parses a token for the audit operator. */
+    /** Anonymous read-class requests pass; write-class requests need a token; best-effort parses a token for the audit operator. */
     DEBUG("debug"),
 
-    /** Token verified; login checks configured user list by username only. */
+    /** Token verified; real permission checks; login checks configured user list by username only. */
     DEVELOPMENT("development"),
 
     /** Token verified; login checks database with bcrypt. */
@@ -121,7 +122,8 @@ public enum FrameworkStatus011 {
     /**
      * Whether permission enforcement is whitelist (deny-by-default for
      * unchecked mutating requests on protected paths). Bound to production
-     * status only; debug / development make {@code assertHas} a no-op.
+     * status only; debug keeps {@code assertHas} a no-op, development runs
+     * real checks without the post-hoc whitelist gate.
      *
      * @return true for {@code PRODUCTION}
      */

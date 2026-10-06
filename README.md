@@ -13,7 +13,7 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | MyBatis-Plus | 3.5.9（spring-boot3-starter） |
 | 数据库 | MySQL 8 / Oracle（ojdbc8）/ SQL Server（mssql-jdbc）· Druid 1.2.23；分页方言 SPI 另含 postgresql（**无预置 PG 驱动**） |
 | 调度 | Quartz（spring-boot-starter-quartz，内存模式） |
-| 对象存储 | MinIO SDK 8.5.7（local011 / minio011 内置适配器 + 工厂型 provider 注册表；s3011 等预留，SPI 扩展） |
+| 对象存储 | MinIO SDK 8.5.7（local011 / minio011 / s3011 内置适配器——s3011 即 S3 兼容目标，共用 MinIO 客户端；cos011/oss011 等云厂商走 SPI 扩展） |
 | 消息中心 | 内置 `inapp` / `webhook` 渠道 + `MessageChannelPort` SPI（厂商渠道由使用者插件提供） |
 | 鉴权 | JJWT 0.12.6 |
 | AOP | spring-boot-starter-aop（controller IUD 审计） |
@@ -62,7 +62,7 @@ web ──► application ──► domain ◄── infrastructure
 
 | 中心 | 一句话 | 架构底册 · **starter 体系文档**（设计 / 架构 / 使用 / 二开） |
 |------|--------|----------|
-| **存储中心** | 对象存储统一端口：local011 / minio011 内置 + s3011 等预留（SPI 扩展）+ **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/archive011/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | **现行** [027 starter](docs/infrastructure011/015.storage-center/011.topic-design.md) · 历史底册 [011.storage-center](docs/archive011/infrastructure011/011.storage-center/011.topic-design.md)（已归档） |
+| **存储中心** | 对象存储统一端口：local011 / minio011 / s3011（S3 兼容，共用 MinIO 客户端）内置 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/archive011/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | **现行** [027 starter](docs/infrastructure011/015.storage-center/011.topic-design.md) · 历史底册 [011.storage-center](docs/archive011/infrastructure011/011.storage-center/011.topic-design.md)（已归档） |
 | **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | **现行** [026 starter](docs/infrastructure011/016.message-center/011.topic-design.md) · 历史 [013.message-center](docs/archive011/013.message-center/011.topic-design.md)（已归档） |
 | **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | **现行** [025 starter](docs/infrastructure011/017.ai-center/011.topic-design.md) · 历史 [015.ai-center](docs/archive011/015.ai-center/011.topic-design.md)（已归档） |
 | **数据源中心** | 多数据源管理 + **参数化只读分页查询** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [018.datasource-center](docs/infrastructure011/018.datasource-center/011.topic-design.md) · **starter：`center-datasource011-starter`**（kernel 端口留 core；执行器在 data-mybatis） |
@@ -102,7 +102,7 @@ mvn -o clean package -DskipTests          # 离线构建，产出 java17-app011 
 
 > **结构性改动后**（模块边界 / 装配 / 契约）：按 [029 金标准协议](docs/infrastructure011/029.topic-golden-verification.md) 跑 G1–G8 全量回归，并建议 **G9a**（`tools/demo011-dual-mode-smoke.sh`：`MODE=dev` + `MODE=prod` 均 EXIT=0，jar :11161）与 **G9b**（demo013 调度 + `selectExecListByPage` 用 **`pkMt`/`pk_mt`**）。
 
-> 说明：`application.yml` 默认 `spring.profiles.active=development`；入库的 `application-development.yml` 默认 `krt.status: development`（需 token；`KRT_STATUS=debug` 才全放行——**勿当生产契约**）。数据源与 dev 用 krt 落 development yml；本机差异走忽略的 `application-local.yml`（**fat jar 已 excludes local/production**，见 [015.topic-config](docs/infrastructure011/015.topic-config.md)）。
+> 说明：`application.yml` 默认 `spring.profiles.active=development`；入库的 `application-development.yml` 默认 `krt.status: development`（需 token + 真实权限校验；`KRT_STATUS=debug` 才放开读类，写类仍需 token——**勿当生产契约**）。数据源与 dev 用 krt 落 development yml；本机差异走忽略的 `application-local.yml`（**fat jar 已 excludes local/production**，见 [015.topic-config](docs/infrastructure011/015.topic-config.md)）。
 
 ## 部署（Docker）
 

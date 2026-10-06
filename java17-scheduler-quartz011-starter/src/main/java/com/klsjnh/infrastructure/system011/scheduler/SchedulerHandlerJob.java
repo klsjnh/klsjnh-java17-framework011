@@ -28,6 +28,7 @@ import com.klsjnh.infrastructure.system011.scheduler.mapper.JulySchedulerMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -50,6 +51,7 @@ import java.time.LocalDateTime;
  * </p>
  */
 
+@DisallowConcurrentExecution
 public class SchedulerHandlerJob implements Job {
 
     /**

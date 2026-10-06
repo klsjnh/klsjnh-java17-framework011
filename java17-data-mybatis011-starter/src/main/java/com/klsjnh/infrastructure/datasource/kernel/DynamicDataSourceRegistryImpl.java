@@ -13,6 +13,7 @@ package com.klsjnh.infrastructure.datasource.kernel;
  *      2026.09.13  dynamic data source registry impl class
  *      2026.09.15  table-driven reloadAll with pool retention
  *      2026.10.05  testConnection closes the throwaway probe pool
+ *      2026.10.05  atomic config set swap (volatile + copy-on-write)
  *
  */
 
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Component;
 import com.alibaba.druid.pool.DruidDataSource;
 
 import java.sql.Connection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,9 +47,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryPort {
 
     /**
-     * Declared configs by datasource code.
+     * Declared configs by datasource code. The reference is swapped atomically
+     * (volatile + copy-on-write) so a concurrent routing read never observes a
+     * half-updated or empty set.
      */
-    private final Map<String, ConnectionInfo> configs = new ConcurrentHashMap<>();
+    private volatile Map<String, ConnectionInfo> configs = new ConcurrentHashMap<>();
 
     /**
      * Pool builder with lazy cache.
@@ -81,7 +83,9 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
     public void register(ConnectionInfo info) {
         String funcName = "register";
 
-        configs.put(info.dsCode(), info);
+        Map<String, ConnectionInfo> next = new ConcurrentHashMap<>(configs);
+        next.put(info.dsCode(), info);
+        configs = next;
         log.info("{} {} declared ...", funcName, info.dsCode());
     }
 
@@ -107,7 +111,7 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
             throw BusinessException.badRequest(funcName + ": infos is required");
         }
 
-        Map<String, ConnectionInfo> next = new HashMap<>();
+        Map<String, ConnectionInfo> next = new ConcurrentHashMap<>();
 
         for (ConnectionInfo info : infos) {
             if (info == null || info.dsCode() == null || info.dsCode().isBlank()) {
@@ -165,10 +169,11 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
             }
         }
 
-        configs.clear();
-        configs.putAll(next);
+        // Atomic swap: readers either see the whole old set or the whole new
+        // set — never an empty window between clear and putAll.
+        configs = next;
 
-        ReloadResult result = new ReloadResult(next.size(), configs.size(), reused, closed, failed);
+        ReloadResult result = new ReloadResult(next.size(), next.size(), reused, closed, failed);
 
         log.info("{} enabled {} registered {} reused {} closed {} failed {} ...",
                 funcName, result.enabled(), result.registered(), reused, closed, failed);
@@ -185,7 +190,9 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
     public void unregister(String dsCode) {
         String funcName = "unregister";
 
-        configs.remove(dsCode);
+        Map<String, ConnectionInfo> next = new ConcurrentHashMap<>(configs);
+        next.remove(dsCode);
+        configs = next;
         DynamicDataSource011.remove(dsCode);
         pools.close(dsCode);
         log.info("{} {} done ...", funcName, dsCode);
@@ -200,6 +207,17 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
     @Override
     public boolean isRegistered(String dsCode) {
         return configs.containsKey(dsCode);
+    }
+
+    /**
+     * Read the declared config of a datasource.
+     *
+     * @param dsCode datasource code
+     * @return connection info, null when not declared
+     */
+    @Override
+    public ConnectionInfo configOf(String dsCode) {
+        return dsCode == null ? null : configs.get(dsCode);
     }
 
     /**

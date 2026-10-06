@@ -53,6 +53,24 @@ public final class SqlGuard011 {
     }
 
     /**
+     * Assert the statement is a single statement (no statement separator) —
+     * the guard for the D3 execute endpoint: authorization is the permission
+     * code, the guard only rules out multi-statement smuggling. Null or blank
+     * is rejected.
+     *
+     * @param sql developer-authored statement
+     */
+    public static void assertSingleStatement(String sql) {
+        if (sql == null || sql.isBlank()) {
+            throw BusinessException.badRequest("sql is required");
+        }
+
+        if (sql.contains(";")) {
+            throw BusinessException.badRequest("sql must not contain ';'");
+        }
+    }
+
+    /**
      * Assert the statement is a single read-only SELECT.
      *
      * @param sql developer-authored statement

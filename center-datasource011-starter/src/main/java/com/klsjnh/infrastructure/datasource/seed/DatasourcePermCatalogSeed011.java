@@ -73,6 +73,7 @@ public class DatasourcePermCatalogSeed011 {
 
         ensureObject("julySql", "SQL查询", "datasource", 22);
         ensureAction("julySql", "select", "查询", "datasource:julySql:select", 1);
+        ensureAction("julySql", "execute", "执行写语句", "datasource:julySql:execute", 2);
 
         logger.info("datasource center perm catalog seed ready");
     }

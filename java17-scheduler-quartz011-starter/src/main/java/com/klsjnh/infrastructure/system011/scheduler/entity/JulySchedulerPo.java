@@ -44,6 +44,9 @@ public class JulySchedulerPo extends BasePo {
     /** Cron expression. */
     private String schedulerCron;
 
+    /** Task payload (JSON text) handed to the handler, nullable. */
+    private String taskParam;
+
     /** Execute times, incremented on every trigger. */
     private Integer executeTimes;
 

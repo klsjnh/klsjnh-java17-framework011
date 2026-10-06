@@ -27,6 +27,14 @@ import java.util.Locale;
  * resolution, loopback / link-local / site-local / any-local / multicast /
  * IPv6 unique-local targets unless {@link Policy#allowPrivate()} is enabled
  * (development only).
+ * <p>
+ * TOCTOU note (accepted residual risk): the guard resolves the host, then
+ * {@code HttpClient} resolves it again when connecting. Both lookups share
+ * the JVM DNS cache (default positive TTL ≈ 30s), so a rebinding between the
+ * two lookups of one request requires a cache expiry landing exactly in that
+ * window; the JDK HttpClient offers no resolver hook to pin the validated
+ * address.
+ * </p>
  */
 
 public final class OutboundUrlGuard011 {

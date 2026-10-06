@@ -255,7 +255,8 @@ public class AuthPermissionDemoSeed011 {
 
         if (schedulerRepository.findByCode("demo.auth.scheduler") == null) {
             schedulerRepository.insert(JulyScheduler.create(EntityId.generate(), "demo.auth.scheduler",
-                    "权限演示任务", "demo011scheduler", "0 0 0 1 1 ?", "P3 dynamic auth probe", AuditInfo.empty()));
+                    "权限演示任务", "demo011scheduler", "0 0 0 1 1 ?", null, "P3 dynamic auth probe",
+                    AuditInfo.empty()));
         }
     }
 

@@ -19,8 +19,10 @@ import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 
+import com.klsjnh.application.datasource.kernel.SqlExecuteUseCase;
 import com.klsjnh.application.datasource.kernel.SqlQueryUseCase;
 
+import com.klsjnh.web.datasource.vo.julysql.SqlExecuteVo011;
 import com.klsjnh.web.datasource.vo.julysql.SqlQueryPageVo011;
 import com.klsjnh.web.util.Operator011Resolver;
 
@@ -54,12 +56,19 @@ public class JulySqlController {
     private final SqlQueryUseCase sqlQueryUseCase;
 
     /**
+     * Authorized execute use case (D3).
+     */
+    private final SqlExecuteUseCase sqlExecuteUseCase;
+
+    /**
      * Create the controller.
      *
-     * @param sqlQueryUseCase read-only query use case
+     * @param sqlQueryUseCase   read-only query use case
+     * @param sqlExecuteUseCase authorized execute use case
      */
-    public JulySqlController(SqlQueryUseCase sqlQueryUseCase) {
+    public JulySqlController(SqlQueryUseCase sqlQueryUseCase, SqlExecuteUseCase sqlExecuteUseCase) {
         this.sqlQueryUseCase = sqlQueryUseCase;
+        this.sqlExecuteUseCase = sqlExecuteUseCase;
     }
 
     /**
@@ -80,5 +89,23 @@ public class JulySqlController {
                 vo.getSql(), vo.getParams(), vo.getPageIndex(), vo.getPageSize());
 
         return Response011.success(funcName, page);
+    }
+
+    /**
+     * Execute one authorized single statement (D3 write access).
+     *
+     * @param vo      request
+     * @param request http request
+     * @return affected row count
+     */
+    @PostMapping("/execute")
+    @Operation(summary = "执行单条授权语句（DML/DDL；参数化；需 datasource:julySql:execute 权限）")
+    public Response011<Integer> execute(@Valid @RequestBody SqlExecuteVo011 vo, HttpServletRequest request) {
+        String funcName = "sql execute";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+        int affected = sqlExecuteUseCase.execute(operator.id(), vo.getDsCode(), vo.getSql(), vo.getParams());
+
+        return Response011.success(funcName, affected);
     }
 }

@@ -73,14 +73,14 @@ class MessageInboundUseCaseReceiveTest {
     void receiveFailsWhenNoListenerSupportsChannel() {
         when(inboundPort.channelCode()).thenReturn("feishu");
         when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
-        when(inboundPort.parse(any(), anyString())).thenReturn(sampleEvent());
+        when(inboundPort.parse(any(), any(), anyString())).thenReturn(sampleEvent());
 
         MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of());
         MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
                 authorizationPort);
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> useCase.receive(null, "feishu_demo", "{\"x\":1}"));
+                () -> useCase.receive(null, "feishu_demo", Map.of(), "{\"x\":1}"));
 
         assertTrue(ex.getMessage().contains("no inbound listener supports channel"));
         verify(messageRepository, never()).insert(any());
@@ -94,7 +94,7 @@ class MessageInboundUseCaseReceiveTest {
     void receiveSucceedsWithSupportingListenerAndAnonymousOperator() {
         when(inboundPort.channelCode()).thenReturn("feishu");
         when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
-        when(inboundPort.parse(any(), anyString())).thenReturn(sampleEvent());
+        when(inboundPort.parse(any(), any(), anyString())).thenReturn(sampleEvent());
 
         InboundMessageListener listener = new InboundMessageListener() {
             @Override
@@ -113,7 +113,7 @@ class MessageInboundUseCaseReceiveTest {
         MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
                 authorizationPort);
 
-        assertDoesNotThrow(() -> useCase.receive(null, "feishu_demo", "{\"x\":1}"));
+        assertDoesNotThrow(() -> useCase.receive(null, "feishu_demo", Map.of(), "{\"x\":1}"));
         verify(messageRepository).insert(any());
         verify(authorizationPort, never()).assertHas(isNull(), anyString());
         verify(authorizationPort, never()).assertHas(eq(""), anyString());
@@ -126,7 +126,7 @@ class MessageInboundUseCaseReceiveTest {
     void receiveWithOperatorAssertsPermission() {
         when(inboundPort.channelCode()).thenReturn("feishu");
         when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
-        when(inboundPort.parse(any(), anyString())).thenReturn(sampleEvent());
+        when(inboundPort.parse(any(), any(), anyString())).thenReturn(sampleEvent());
 
         InboundMessageListener listener = new InboundMessageListener() {
             @Override
@@ -145,7 +145,7 @@ class MessageInboundUseCaseReceiveTest {
         MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
                 authorizationPort);
 
-        assertDoesNotThrow(() -> useCase.receive("op-1", "feishu_demo", "{}"));
+        assertDoesNotThrow(() -> useCase.receive("op-1", "feishu_demo", Map.of(), "{}"));
         verify(authorizationPort).assertHas(eq("op-1"), anyString());
     }
 

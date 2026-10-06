@@ -100,11 +100,14 @@ public class MessageInboundUseCase {
      *
      * @param operatorId  operator id, nullable when anonymous
      * @param channelCode channel code
+     * @param headers     request headers (first value per name) for channel-side
+     *                    signature verification, never null
      * @param rawBody     raw request body, nullable
      * @return receive result, never null
      */
     @Transactional
-    public MessageInboundResult receive(String operatorId, String channelCode, String rawBody) {
+    public MessageInboundResult receive(String operatorId, String channelCode, Map<String, String> headers,
+            String rawBody) {
         if (!StringUtil011.isBlank(operatorId)) {
             authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.RECEIVE);
         }
@@ -125,7 +128,8 @@ public class MessageInboundUseCase {
             throw BusinessException.badRequest("no inbound port for provider type: " + channel.providerType());
         }
 
-        InboundMessage event = port.parse(parseConfig(channel.config()), rawBody);
+        InboundMessage event = port.parse(parseConfig(channel.config()), headers == null ? Map.of() : headers,
+                rawBody);
 
         if (event == null) {
             throw BusinessException.badRequest("inbound channel returned an empty message");

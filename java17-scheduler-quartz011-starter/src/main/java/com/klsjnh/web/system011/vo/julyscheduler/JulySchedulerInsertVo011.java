@@ -48,6 +48,10 @@ public class JulySchedulerInsertVo011 {
     @Schema(description = "cron 表达式（最长 30，保存时校验合法性）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String schedulerCron;
 
+    /** Task payload (JSON text, e.g. {"syncCode":"s1"}), max 500, optional. */
+    @Schema(description = "任务参数（JSON 文本，透传给 JobHandler 的 payload，最长 500）")
+    private String taskParam;
+
     /** Remark, max 300. */
     @Schema(description = "备注（最长 300）")
     private String remark;

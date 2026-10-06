@@ -14,6 +14,7 @@ package com.klsjnh.web.global;
  *      2026.09.26  production permission whitelist (unchecked write → 403)
  *      2026.09.26  merge krt.web.auth-whitelist-paths / prefixes
  *      2026.10.05  api docs blocked in production (404)
+ *      2026.10.05  debug anonymous writes require a token (H1)
  *
  */
 
@@ -56,9 +57,12 @@ import java.util.UUID;
  * attributes for the audit fill.
  * <p>
  * In debug mode a valid token is still parsed when present (so the audit works
- * locally) but a missing token never rejects. In every other mode a request
- * without a valid token is answered with a 401 envelope written here, because
- * filter failures happen before the controller advice can handle them.
+ * locally) and a missing token is accepted for read-class requests only —
+ * an anonymous write-class request on a protected path (same rule as the
+ * production permission whitelist: mutating method, non select/get action)
+ * is answered with a 401 envelope. In every other mode a request without a
+ * valid token is answered with a 401 envelope, because filter failures happen
+ * before the controller advice can handle them.
  * </p>
  * <p>
  * When {@code krt.status=production}, after the chain returns this filter also
@@ -250,9 +254,18 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
                 return;
             }
 
-            if (identity == null && !runtimeStatusPort.isDebug()) {
-                writeUnauthorized(request, response);
-                return;
+            if (identity == null) {
+                if (!runtimeStatusPort.isDebug()) {
+                    writeUnauthorized(request, response);
+                    return;
+                }
+                // Debug relaxes the token gate for reads only: an anonymous
+                // write-class request on a protected path still needs a valid
+                // token (same rule as the production permission whitelist).
+                if (PermissionWhitelistGate011.requiresCheckedPermission(request.getMethod(), uri)) {
+                    writeUnauthorized(request, response);
+                    return;
+                }
             }
 
             filterChain.doFilter(request, response);

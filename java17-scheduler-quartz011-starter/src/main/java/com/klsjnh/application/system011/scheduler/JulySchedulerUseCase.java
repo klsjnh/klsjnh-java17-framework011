@@ -81,12 +81,13 @@ public class JulySchedulerUseCase {
      * @param schedulerName    scheduler name
      * @param schedulerHandler handler content (Spring bean name)
      * @param schedulerCron    cron expression
+     * @param taskParam        task payload (JSON text), optional
      * @param remark           remark, optional
      * @return new task id
      */
     @Transactional
     public String insert(String operatorId, String schedulerCode, String schedulerName, String schedulerHandler,
-            String schedulerCron, String remark) {
+            String schedulerCron, String taskParam, String remark) {
         authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.INSERT);
 
         validateCron(schedulerCron);
@@ -96,7 +97,7 @@ public class JulySchedulerUseCase {
         }
 
         JulyScheduler scheduler = JulyScheduler.create(EntityId.generate(), schedulerCode, schedulerName,
-                schedulerHandler, schedulerCron, remark, AuditInfo.empty());
+                schedulerHandler, schedulerCron, taskParam, remark, AuditInfo.empty());
         repository.insert(scheduler);
 
         return scheduler.id().value();
@@ -111,13 +112,14 @@ public class JulySchedulerUseCase {
      * @param schedulerName    scheduler name
      * @param schedulerHandler handler content
      * @param schedulerCron    cron expression
+     * @param taskParam        task payload (JSON text), optional
      * @param status           runtime status ("1" running / "0" stopped)
      * @param remark           remark, optional
      * @return updated task id
      */
     @Transactional
     public String update(String operatorId, String id, String schedulerName, String schedulerHandler,
-            String schedulerCron, String status, String remark) {
+            String schedulerCron, String taskParam, String status, String remark) {
         authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.UPDATE);
 
         Status011 target = Status011.of(status);
@@ -129,7 +131,7 @@ public class JulySchedulerUseCase {
         validateCron(schedulerCron);
 
         JulyScheduler scheduler = require(id);
-        scheduler.updateBasics(schedulerName, schedulerHandler, schedulerCron, remark);
+        scheduler.updateBasics(schedulerName, schedulerHandler, schedulerCron, taskParam, remark);
 
         if (target == Status011.ENABLED) {
             scheduler.start();
@@ -253,7 +255,8 @@ public class JulySchedulerUseCase {
         JulyScheduler scheduler = require(id);
         scheduler.start();
         repository.update(scheduler);
-        schedulerPort.register(scheduler.id().value(), scheduler.schedulerHandler(), scheduler.schedulerCron());
+        schedulerPort.register(scheduler.id().value(), scheduler.schedulerHandler(), scheduler.schedulerCron(),
+                scheduler.taskParam());
 
         return scheduler.id().value();
     }
@@ -330,7 +333,8 @@ public class JulySchedulerUseCase {
         schedulerPort.remove(scheduler.id().value());
 
         if (Status011.ENABLED.getCode().equals(scheduler.status())) {
-            schedulerPort.register(scheduler.id().value(), scheduler.schedulerHandler(), scheduler.schedulerCron());
+            schedulerPort.register(scheduler.id().value(), scheduler.schedulerHandler(), scheduler.schedulerCron(),
+                scheduler.taskParam());
         }
     }
 }

@@ -25,11 +25,12 @@ public interface SchedulerPort {
     /**
      * Register (or replace) a running task driven by the cron expression.
      *
-     * @param id      task id
-     * @param handler handler content (Spring bean name implementing Runnable)
-     * @param cron    cron expression
+     * @param id        task id
+     * @param handler   handler content (Spring bean name implementing Runnable)
+     * @param cron      cron expression
+     * @param taskParam task payload (JSON text) handed to the handler, nullable
      */
-    void register(String id, String handler, String cron);
+    void register(String id, String handler, String cron, String taskParam);
 
     /**
      * Remove a task from the engine; missing jobs are ignored.

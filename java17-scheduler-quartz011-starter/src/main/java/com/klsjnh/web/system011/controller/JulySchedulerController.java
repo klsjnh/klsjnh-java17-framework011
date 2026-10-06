@@ -127,7 +127,7 @@ public class JulySchedulerController {
 
         return Response011.successId(funcName,
                 julySchedulerUseCase.insert(operator.id(), vo.getSchedulerCode(), vo.getSchedulerName(),
-                        vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getRemark()));
+                        vo.getSchedulerHandler(), vo.getSchedulerCron(), vo.getTaskParam(), vo.getRemark()));
     }
 
     /**
@@ -147,7 +147,7 @@ public class JulySchedulerController {
 
         return Response011.successId(funcName,
                 julySchedulerUseCase.update(operator.id(), vo.getId(), vo.getSchedulerName(), vo.getSchedulerHandler(),
-                        vo.getSchedulerCron(), vo.getStatus(), vo.getRemark()));
+                        vo.getSchedulerCron(), vo.getTaskParam(), vo.getStatus(), vo.getRemark()));
     }
 
     /**

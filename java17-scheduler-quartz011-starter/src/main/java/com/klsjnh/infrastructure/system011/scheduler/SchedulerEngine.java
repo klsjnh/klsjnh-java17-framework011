@@ -64,12 +64,13 @@ public class SchedulerEngine implements SchedulerPort {
     /**
      * Register (or replace) a running task driven by the cron expression.
      *
-     * @param id      task id
-     * @param handler handler content (Spring bean name implementing Runnable)
-     * @param cron    cron expression
+     * @param id        task id
+     * @param handler   handler content (Spring bean name implementing Runnable)
+     * @param cron      cron expression
+     * @param taskParam task payload (JSON text) handed to the handler, nullable
      */
     @Override
-    public void register(String id, String handler, String cron) {
+    public void register(String id, String handler, String cron, String taskParam) {
         try {
             JobKey key = jobKey(id);
 
@@ -81,6 +82,7 @@ public class SchedulerEngine implements SchedulerPort {
                     .withIdentity(key)
                     .usingJobData("id", id)
                     .usingJobData("handler", handler)
+                    .usingJobData("payload", taskParam == null ? "" : taskParam)
                     .build();
 
             CronTrigger trigger = TriggerBuilder.newTrigger()

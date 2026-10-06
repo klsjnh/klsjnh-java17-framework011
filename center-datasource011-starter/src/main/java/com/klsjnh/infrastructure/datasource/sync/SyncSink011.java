@@ -5,17 +5,23 @@ package com.klsjnh.infrastructure.datasource.sync;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.20
- *      @modifydate
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.20  sync sink (upsert into the local/primary table)
+ *      2026.10.05  statement building moved to WriterDialectPort (per dbType)
  *
  */
 
 import com.klsjnh.domain.datasource.sync.Endpoint;
 import com.klsjnh.domain.datasource.sync.SyncSinkPort;
+import com.klsjnh.domain.datasource.sync.WriterDialectPort;
+import com.klsjnh.domain.datasource.kernel.ConnectionInfo;
+import com.klsjnh.domain.datasource.kernel.DynamicDataSourceRegistryPort;
+
+import com.klsjnh.infrastructure.datasource.sync.writer.WriterDialectRegistry011;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -27,10 +33,12 @@ import java.util.Map;
 
 /**
  * Sync sink implementation: writes mapped rows into the LOCAL (primary) table.
- * Identifiers are validated (letters / digits / underscore) and quoted with
- * backticks (MySQL primary), so a table or column name can never inject SQL.
- * Upsert uses {@code INSERT ... ON DUPLICATE KEY UPDATE} on the business key's
- * unique index.
+ * Identifiers are validated (letters / digits / underscore); the statement
+ * shape (quoting + upsert clause) comes from the
+ * {@link WriterDialectPort writer dialect} resolved by the target datasource
+ * type — null / unknown falls back to MySQL (the S1 local-table convention).
+ * Upsert uses the dialect's native clause (ON DUPLICATE KEY / MERGE / ON
+ * CONFLICT) on the business key.
  */
 
 @Component
@@ -47,12 +55,27 @@ public class SyncSink011 implements SyncSinkPort {
     private final JdbcTemplate jdbcTemplate;
 
     /**
+     * Writer dialect registry (dbType -> statement builder).
+     */
+    private final WriterDialectRegistry011 writerDialects;
+
+    /**
+     * Dynamic datasource registry (resolves the target ds type, nullable-safe).
+     */
+    private final DynamicDataSourceRegistryPort registry;
+
+    /**
      * Create the sink.
      *
      * @param primaryDataSource the auto-configured primary datasource
+     * @param registry          dynamic datasource registry
+     * @param writerDialects    writer dialect registry
      */
-    public SyncSink011(DataSource primaryDataSource) {
+    public SyncSink011(DataSource primaryDataSource, DynamicDataSourceRegistryPort registry,
+            WriterDialectRegistry011 writerDialects) {
         this.jdbcTemplate = new JdbcTemplate(primaryDataSource);
+        this.registry = registry;
+        this.writerDialects = writerDialects;
     }
 
     /** {@inheritDoc} */
@@ -63,41 +86,22 @@ public class SyncSink011 implements SyncSinkPort {
             return 0;
         }
 
-        String table = quote(targetTable);
+        String table = validate(targetTable, "table");
+        WriterDialectPort dialect = writerDialects.resolve(resolveDbType(endpoint));
         int written = 0;
 
         for (Map<String, Object> row : rows) {
             List<String> columns = new ArrayList<>(row.keySet());
             List<Object> values = new ArrayList<>();
 
-            StringBuilder columnList = new StringBuilder();
-            StringBuilder placeholders = new StringBuilder();
-
             for (String column : columns) {
-                if (columnList.length() > 0) {
-                    columnList.append(", ");
-                    placeholders.append(", ");
-                }
-                columnList.append(quote(column));
-                placeholders.append("?");
+                validate(column, "column");
                 values.add(row.get(column));
             }
 
-            StringBuilder sql = new StringBuilder("INSERT INTO ").append(table).append(" (").append(columnList)
-                    .append(") VALUES (").append(placeholders).append(")");
+            String sql = dialect.buildInsert(table, columns, keyColumns, upsert);
 
-            if (upsert && keyColumns != null && !keyColumns.isEmpty()) {
-                sql.append(" ON DUPLICATE KEY UPDATE ");
-                for (int i = 0; i < columns.size(); i++) {
-                    if (i > 0) {
-                        sql.append(", ");
-                    }
-                    String column = quote(columns.get(i));
-                    sql.append(column).append(" = VALUES(").append(column).append(")");
-                }
-            }
-
-            jdbcTemplate.update(sql.toString(), values.toArray());
+            jdbcTemplate.update(sql, values.toArray());
             written++;
         }
 
@@ -105,16 +109,38 @@ public class SyncSink011 implements SyncSinkPort {
     }
 
     /**
-     * Validate and quote an identifier.
+     * Resolve the target database type from the endpoint: a declared dynamic
+     * datasource carries its own type, anything else (local / primary target)
+     * resolves to the registry's MySQL fallback.
      *
-     * @param name identifier
-     * @return quoted identifier
+     * @param endpoint target endpoint
+     * @return raw database type, nullable
      */
-    private String quote(String name) {
-        if (name == null || !name.matches(IDENTIFIER)) {
-            throw new IllegalStateException("illegal sql identifier: " + name);
+    private String resolveDbType(Endpoint endpoint) {
+        String dsCode = endpoint == null ? null : endpoint.dsCode();
+
+        if (dsCode == null || dsCode.isBlank() || "master".equals(dsCode)) {
+            return null;
         }
 
-        return "`" + name + "`";
+        ConnectionInfo info = registry.configOf(dsCode);
+
+        return info == null ? null : info.dsType();
+    }
+
+    /**
+     * Validate an identifier (letters / digits / underscore only) — the
+     * dialects quote or emit it verbatim, so nothing else can slip through.
+     *
+     * @param name identifier
+     * @param kind kind label for the error message
+     * @return the validated identifier
+     */
+    private String validate(String name, String kind) {
+        if (name == null || !name.matches(IDENTIFIER)) {
+            throw new IllegalStateException("illegal sql identifier (" + kind + "): " + name);
+        }
+
+        return name;
     }
 }

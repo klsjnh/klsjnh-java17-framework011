@@ -5,13 +5,14 @@ package com.klsjnh.domain.datasource.kernel;
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
  *      @createdate 2026.09.13
- *      @modifydate 2026.09.15
+ *      @modifydate 2026.10.05
  *
  *===========================================
  *          modify history
  *
  *      2026.09.13  dynamic data source registry port interface
  *      2026.09.15  add reloadAll for the table-driven source
+ *      2026.10.05  add configOf read access (writer dialect resolution)
  *
  */
 
@@ -68,6 +69,15 @@ public interface DynamicDataSourceRegistryPort {
      */
 
     boolean isRegistered(String dsCode);
+
+    /**
+     * Read the declared config of a datasource.
+     *
+     * @param dsCode datasource code
+     * @return connection info, null when not declared
+     */
+
+    ConnectionInfo configOf(String dsCode);
 
     /**
      * Probe a connection without caching a pool.

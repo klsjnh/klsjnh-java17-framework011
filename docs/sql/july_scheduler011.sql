@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS july_scheduler (
     scheduler_name     VARCHAR(60)  NOT NULL                COMMENT '任务名称',
     scheduler_handler  VARCHAR(300) NOT NULL                COMMENT '处理器内容（JobHandler Bean 名）',
     scheduler_cron     VARCHAR(30)  NOT NULL                COMMENT 'cron 表达式',
+    task_param         VARCHAR(500) NULL                    COMMENT '任务参数（JSON 文本，透传给 JobHandler 的 payload，如 {"syncCode":"s1"}）',
     execute_times      INT          NOT NULL DEFAULT 0      COMMENT '执行次数（触发即计）',
     status             VARCHAR(3)   NOT NULL DEFAULT '0'    COMMENT '运行态（0 停止 / 1 运行）——本表业务约定默认 0',
     remark             VARCHAR(300) NULL                    COMMENT '备注',

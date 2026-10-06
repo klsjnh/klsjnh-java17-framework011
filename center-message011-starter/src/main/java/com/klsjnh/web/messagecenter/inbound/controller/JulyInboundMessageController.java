@@ -52,6 +52,10 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * JulyInboundMessage HTTP adapter: the unified receive, the received record
  * page query and the record logic delete.
@@ -106,7 +110,29 @@ public class JulyInboundMessageController {
 
         return Response011.success(funcName,
                 julyInboundMessageConverter.toReceiveResultVo(
-                        messageInboundUseCase.receive(operatorId, channelCode, rawBody)));
+                        messageInboundUseCase.receive(operatorId, channelCode, collectHeaders(request), rawBody)));
+    }
+
+    /**
+     * Collect the request headers (first value per name) so the inbound port
+     * can verify vendor signatures.
+     *
+     * @param request http request
+     * @return header map, never null
+     */
+    private Map<String, String> collectHeaders(HttpServletRequest request) {
+        Map<String, String> headers = new LinkedHashMap<>();
+        Enumeration<String> names = request.getHeaderNames();
+
+        while (names != null && names.hasMoreElements()) {
+            String name = names.nextElement();
+
+            if (name != null && !headers.containsKey(name)) {
+                headers.put(name, request.getHeader(name));
+            }
+        }
+
+        return headers;
     }
 
     /**

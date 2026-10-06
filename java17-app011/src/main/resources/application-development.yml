@@ -17,6 +17,16 @@ spring:
         # starter 在 allow 未配置时默认只放行 127.0.0.1（LAN 访问必被拦）——显式放行本机 + 局域网段
         allow: 127.0.0.1,192.168.3.0/24
 
+  # Quartz JDBC JobStore（可选）：调度持久化 / 多实例集群。默认 RAMJobStore（内存）。
+  # 启用步骤：① 对开发库执行 docs/sql/july_quartz011.sql（一次性）；② 打开下方两行注释。
+  # 注意 initialize-schema 禁用——官方脚本含 DROP TABLE，自动初始化会清空运行中的调度。
+  # job-store-type: jdbc
+  # quartz:
+  #   properties:
+  #     org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+  #   jdbc:
+  #     initialize-schema: never
+
 # 开发运行态：默认 development（需 token；assertHas 仍 no-op）。需要全放行时显式 KRT_STATUS=debug。
 # 生产必须改为 production + 真实 secret（compose / 部署机自建 production yml）
 # 启动时 debug 会打醒目 WARN。allow-insecure-status 必须显式 true，否则非 production 启动失败。

@@ -78,7 +78,7 @@ public class SchedulerBootstrap {
 
         for (JulySchedulerPo po : running) {
             try {
-                engine.register(po.getId(), po.getSchedulerHandler(), po.getSchedulerCron());
+                engine.register(po.getId(), po.getSchedulerHandler(), po.getSchedulerCron(), po.getTaskParam());
             } catch (Exception ex) {
                 logger.error("{} id {} failed {} ...", funcName, po.getId(), ex.getMessage());
             }

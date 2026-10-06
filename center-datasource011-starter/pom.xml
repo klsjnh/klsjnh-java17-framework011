@@ -28,6 +28,13 @@
             <artifactId>center-access011-starter</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- optional: the syncRule scheduler handler registers only when the
+             scheduler starter is present (@ConditionalOnClass JobHandler) -->
+        <dependency>
+            <groupId>com.klsjnh</groupId>
+            <artifactId>java17-scheduler-quartz011-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
         <!-- Runtime needs java17-data-mybatis011-starter on the app classpath for
              DynamicDataSourceRegistryPort / SqlRoutingPort / probe impls;
              compile stays against core ports only (storage-shaped split). -->
