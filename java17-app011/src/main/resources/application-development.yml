@@ -27,7 +27,7 @@ spring:
   #   jdbc:
   #     initialize-schema: never
 
-# 开发运行态：默认 development（需 token；assertHas 仍 no-op）。需要全放行时显式 KRT_STATUS=debug。
+# 开发运行态：默认 development（需 token + 真实权限校验，与 production 同）。debug 才 no-op，且写类请求仍需 token。
 # 生产必须改为 production + 真实 secret（compose / 部署机自建 production yml）
 # 启动时 debug 会打醒目 WARN。allow-insecure-status 必须显式 true，否则非 production 启动失败。
 krt:

@@ -14,6 +14,7 @@ package com.klsjnh.application.datasource.kernel;
  *
  */
 
+import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.util.SqlGuard011;
 
 import com.klsjnh.domain.datasource.kernel.JulySqlPermissionCodes011;
@@ -68,8 +69,28 @@ public class SqlExecuteUseCase {
      */
     public int execute(String operatorId, String dsCode, String sql, List<Object> params) {
         authorizationPort.assertHas(operatorId, JulySqlPermissionCodes011.EXECUTE);
-        SqlGuard011.assertSingleStatement(sql);
+        SqlGuard011.assertExecutable(sql);
+        assertScalarParams(params);
 
         return sqlRoutingPort.execute(dsCode, sql, params);
+    }
+
+    /**
+     * Reject non-scalar parameters early (a JSON object / array element would
+     * fail deep inside the JDBC driver as a 500).
+     *
+     * @param params bound parameters, nullable
+     */
+    private void assertScalarParams(List<Object> params) {
+        if (params == null) {
+            return;
+        }
+
+        for (Object param : params) {
+            if (param != null && !(param instanceof String) && !(param instanceof Number)
+                    && !(param instanceof Boolean)) {
+                throw BusinessException.badRequest("sql execute: parameters must be scalars");
+            }
+        }
     }
 }

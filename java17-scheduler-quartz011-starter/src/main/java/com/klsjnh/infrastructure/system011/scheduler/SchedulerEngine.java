@@ -22,10 +22,12 @@ import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.JobBuilder;
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.TriggerKey;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 
@@ -65,7 +67,7 @@ public class SchedulerEngine implements SchedulerPort {
      * Register (or replace) a running task driven by the cron expression.
      *
      * @param id        task id
-     * @param handler   handler content (Spring bean name implementing Runnable)
+     * @param handler   handler name (JobHandler handlerName)
      * @param cron      cron expression
      * @param taskParam task payload (JSON text) handed to the handler, nullable
      */
@@ -73,10 +75,7 @@ public class SchedulerEngine implements SchedulerPort {
     public void register(String id, String handler, String cron, String taskParam) {
         try {
             JobKey key = jobKey(id);
-
-            if (scheduler.checkExists(key)) {
-                scheduler.deleteJob(key);
-            }
+            TriggerKey triggerKey = TriggerKey.triggerKey("trigger_" + id, JOB_GROUP);
 
             JobDetail job = JobBuilder.newJob(SchedulerHandlerJob.class)
                     .withIdentity(key)
@@ -86,11 +85,20 @@ public class SchedulerEngine implements SchedulerPort {
                     .build();
 
             CronTrigger trigger = TriggerBuilder.newTrigger()
-                    .withIdentity("trigger_" + id, JOB_GROUP)
+                    .withIdentity(triggerKey)
                     .withSchedule(CronScheduleBuilder.cronSchedule(cron))
                     .build();
 
-            scheduler.scheduleJob(job, Set.of(trigger), true);
+            if (scheduler.checkExists(key)) {
+                // Identity-preserving replace: addJob(reserve the JobKey) +
+                // rescheduleJob keeps the store's in-progress marker, so
+                // @DisallowConcurrentExecution stays effective for a task that
+                // is executing while its cron is updated.
+                scheduler.addJob(job, true, true);
+                scheduler.rescheduleJob(triggerKey, trigger);
+            } else {
+                scheduler.scheduleJob(job, Set.of(trigger), true);
+            }
         } catch (SchedulerException ex) {
             throw new IllegalStateException("scheduler register failed, id=" + id, ex);
         }
@@ -113,16 +121,19 @@ public class SchedulerEngine implements SchedulerPort {
     /**
      * Trigger the handler once immediately, regardless of the runtime status.
      *
-     * @param id      task id
-     * @param handler handler content (Spring bean name implementing Runnable)
+     * @param id        task id
+     * @param handler   handler name (JobHandler handlerName)
+     * @param taskParam task payload (JSON text) handed to the handler, nullable
      */
     @Override
-    public void triggerOnce(String id, String handler) {
+    public void triggerOnce(String id, String handler, String taskParam) {
         try {
             JobKey key = jobKey(id);
 
             if (scheduler.checkExists(key)) {
-                scheduler.triggerJob(key);
+                JobDataMap merge = new JobDataMap();
+                merge.put("payload", taskParam == null ? "" : taskParam);
+                scheduler.triggerJob(key, merge);
                 return;
             }
 
@@ -130,6 +141,7 @@ public class SchedulerEngine implements SchedulerPort {
                     .withIdentity(key)
                     .usingJobData("id", id)
                     .usingJobData("handler", handler)
+                    .usingJobData("payload", taskParam == null ? "" : taskParam)
                     .build();
 
             Trigger trigger = TriggerBuilder.newTrigger()

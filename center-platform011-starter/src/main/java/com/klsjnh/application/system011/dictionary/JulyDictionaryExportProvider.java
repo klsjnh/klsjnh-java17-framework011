@@ -91,6 +91,12 @@ public class JulyDictionaryExportProvider implements ExportProvider {
         return "julyDictionary";
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String moduleCode() {
+        return "system011";
+    }
+
     /**
      * Master columns (JSON/CSV path).
      *

@@ -110,8 +110,9 @@ public interface SqlRoutingPort {
     Map<String, Object> selectOne(String dsCode, String sql, List<Object> params);
 
     /**
-     * Parameterized update / insert / delete / DDL statement (internal use; not
-     * exposed over HTTP yet).
+     * Parameterized update / insert / delete / DDL statement (exposed over
+     * HTTP as the D3 execute endpoint, guarded by
+     * {@code datasource:julySql:execute}).
      *
      * @param dsCode datasource code
      * @param sql    developer-authored statement with {@code ?} placeholders

@@ -33,16 +33,22 @@ public final class JdbcUrlGuard011 {
      * Forbidden connection-parameter fragments (substring, case-insensitive):
      * MySQL local-file read ({@code allowLoadLocalInfile} /
      * {@code allowUrlInLocalInfile}), client deserialization
-     * ({@code autoDeserialize}) and interceptor injection
-     * ({@code queryInterceptors} / {@code statementInterceptors}).
+     * ({@code autoDeserialize}), interceptor injection
+     * ({@code queryInterceptors} / {@code statementInterceptors}),
+     * multi-statement tunneling ({@code allowMultiQueries}) and driver
+     * class-loading vectors ({@code socketFactory} /
+     * {@code detectCustomCollations}).
      */
     private static final Pattern FORBIDDEN_PARAM = Pattern.compile(
-            "allowloadlocalinfile|allowurlinlocalinfile|autodeserialize|queryinterceptors|statementinterceptors",
+            "allowloadlocalinfile|allowurlinlocalinfile|autodeserialize|queryinterceptors"
+                    + "|statementinterceptors|allowmultiqueries|socketfactory|detectcustomcollations",
             Pattern.CASE_INSENSITIVE);
 
+    /**
+     * Utility holder, no instances.
+     */
     private JdbcUrlGuard011() {
     }
-
     /**
      * Assert a JDBC URL is allowed for the database type: a built-in type must
      * use its own scheme prefix, and forbidden connection parameters are

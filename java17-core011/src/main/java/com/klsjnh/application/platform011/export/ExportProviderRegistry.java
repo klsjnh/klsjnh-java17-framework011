@@ -66,4 +66,16 @@ public class ExportProviderRegistry {
     public List<String> objectCodes() {
         return List.copyOf(providers.keySet());
     }
+
+    /**
+     * All registered providers, ordered by object code (generic export
+     * listing).
+     *
+     * @return provider list, never null
+     */
+    public List<ExportProvider> all() {
+        return providers.values().stream()
+                .sorted(java.util.Comparator.comparing(ExportProvider::objectCode))
+                .toList();
+    }
 }

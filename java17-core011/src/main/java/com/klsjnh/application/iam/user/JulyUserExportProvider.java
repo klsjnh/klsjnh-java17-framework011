@@ -71,6 +71,12 @@ public class JulyUserExportProvider implements ExportProvider {
         return "julyUser";
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String moduleCode() {
+        return "iam";
+    }
+
     /**
      * Get the ordered column definitions of julyUser.
      *

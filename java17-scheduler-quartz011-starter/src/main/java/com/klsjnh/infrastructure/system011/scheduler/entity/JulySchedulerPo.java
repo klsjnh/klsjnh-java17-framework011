@@ -38,7 +38,7 @@ public class JulySchedulerPo extends BasePo {
     /** Scheduler name. */
     private String schedulerName;
 
-    /** Handler content: Spring bean name implementing Runnable. */
+    /** Handler name: the handlerName() of a JobHandler bean. */
     private String schedulerHandler;
 
     /** Cron expression. */

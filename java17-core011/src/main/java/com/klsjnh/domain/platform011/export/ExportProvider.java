@@ -45,6 +45,16 @@ public interface ExportProvider {
     String objectCode();
 
     /**
+     * Get the permission module code of this object (the first segment of the
+     * per-object export permission code, e.g. {@code iam} for
+     * {@code iam:julyUser:export}). The generic export endpoint builds the
+     * assertion code from this.
+     *
+     * @return module code, never blank
+     */
+    String moduleCode();
+
+    /**
      * Get the ordered column definitions of this object.
      *
      * @return column definitions, ordered

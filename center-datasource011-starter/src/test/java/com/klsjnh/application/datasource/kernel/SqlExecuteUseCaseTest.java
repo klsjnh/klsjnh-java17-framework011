@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit tests for {@link SqlExecuteUseCase}: the EXECUTE permission is asserted,
@@ -102,6 +103,32 @@ class SqlExecuteUseCaseTest {
     @Test
     void blankStatementIsRejected() {
         assertThrows(BusinessException.class, () -> useCase.execute("op-1", "dsA", " ", null));
+
+        verify(sqlRoutingPort, never()).execute(anyString(), anyString(), any());
+    }
+
+    /**
+     * Server-file access forms are rejected on the write path too (executeUpdate
+     * can write server files when the DB account holds the FILE privilege).
+     */
+    @Test
+    void serverFileAccessIsRejected() {
+        assertThrows(BusinessException.class,
+                () -> useCase.execute("op-1", "dsA", "SELECT data INTO OUTFILE '/var/tmp/x' FROM t", null));
+
+        assertThrows(BusinessException.class,
+                () -> useCase.execute("op-1", "dsA", "SELECT LOAD_FILE('/etc/passwd')", null));
+
+        verify(sqlRoutingPort, never()).execute(anyString(), anyString(), any());
+    }
+
+    /**
+     * Non-scalar parameters are rejected early with 400 (not a deep 500).
+     */
+    @Test
+    void nonScalarParamsAreRejected() {
+        assertThrows(BusinessException.class,
+                () -> useCase.execute("op-1", "dsA", "UPDATE t SET a = 1 WHERE id = ?", List.of(Map.of("x", 1))));
 
         verify(sqlRoutingPort, never()).execute(anyString(), anyString(), any());
     }

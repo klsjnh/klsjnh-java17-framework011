@@ -66,7 +66,7 @@
 | # | 审计原文要点 | 代码现状（路径/证据） | 结论 | 备注 |
 |---|---|---|---|---|
 | OBS-1 | 无 Actuator/Micrometer/OTel；Trace 应对齐 W3C | 已有 `java17-observability011-starter`（actuator + prometheus）；`application.yml` exposure health/info/metrics/prometheus。Trace 仍为自定义 `X-Trace-Id`（`GlobalAuthFilter.resolveTraceId`），**无** charset/长度校验、**无** `traceparent`/OpenTelemetry | **部分** | 基线可观测已有；企业级追踪/告警/SLO 未齐 |
-| OBS-2 | Quartz RAM 不适合多实例 HA | README / requirement022：明确 **RAMJobStore**；启动按 status 重注册。无 JDBC JobStore/cluster | **仍成立** | |
+| OBS-2（部分解决） | Quartz RAM 不适合多实例 HA | README / requirement022：明确 **RAMJobStore**；启动按 status 重注册。现提供可选 JDBC JobStore（`july_quartz011.sql` + `spring.quartz.job-store-type: jdbc`，见 022 装配段；集群参数未开箱） | **部分解决** | |
 
 ---
 

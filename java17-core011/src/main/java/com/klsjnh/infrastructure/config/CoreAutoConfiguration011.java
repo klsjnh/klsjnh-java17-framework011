@@ -42,6 +42,7 @@ import org.springframework.context.annotation.ComponentScan;
         "com.klsjnh.infrastructure.iam.auth", "com.klsjnh.infrastructure.iam.user",
         "com.klsjnh.infrastructure.persistence", "com.klsjnh.infrastructure.platform011", "com.klsjnh.web.config",
         "com.klsjnh.web.global", "com.klsjnh.web.iam.controller", "com.klsjnh.web.iam.converter",
-        "com.klsjnh.web.iam.vo.julyuser", "com.klsjnh.web.iam.vo.julyuseraudit", "com.klsjnh.web.util" })
+        "com.klsjnh.web.iam.vo.julyuser", "com.klsjnh.web.iam.vo.julyuseraudit", "com.klsjnh.web.platform011.export",
+        "com.klsjnh.web.util" })
 public class CoreAutoConfiguration011 {
 }

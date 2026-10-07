@@ -67,6 +67,12 @@ public class WriterDialectRegistry011 {
             }
         }
 
-        return dialects.get(DatabaseTypes011.MYSQL);
+        WriterDialectPort fallback = dialects.get(DatabaseTypes011.MYSQL);
+
+        if (fallback == null) {
+            throw new IllegalStateException("no mysql writer dialect registered");
+        }
+
+        return fallback;
     }
 }

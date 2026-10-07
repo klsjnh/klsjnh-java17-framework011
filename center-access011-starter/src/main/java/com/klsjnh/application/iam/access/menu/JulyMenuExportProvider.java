@@ -72,6 +72,12 @@ public class JulyMenuExportProvider implements ExportProvider {
         return "julyMenu";
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String moduleCode() {
+        return "iam";
+    }
+
     /**
      * Get the ordered column definitions of julyMenu.
      *

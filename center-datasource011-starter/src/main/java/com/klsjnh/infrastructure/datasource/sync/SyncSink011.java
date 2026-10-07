@@ -15,6 +15,8 @@ package com.klsjnh.infrastructure.datasource.sync;
  *
  */
 
+import com.klsjnh.common.exception.BusinessException;
+
 import com.klsjnh.domain.datasource.sync.Endpoint;
 import com.klsjnh.domain.datasource.sync.SyncSinkPort;
 import com.klsjnh.domain.datasource.sync.WriterDialectPort;
@@ -87,6 +89,7 @@ public class SyncSink011 implements SyncSinkPort {
         }
 
         String table = validate(targetTable, "table");
+        List<String> keys = validateKeys(keyColumns, upsert);
         WriterDialectPort dialect = writerDialects.resolve(resolveDbType(endpoint));
         int written = 0;
 
@@ -99,13 +102,51 @@ public class SyncSink011 implements SyncSinkPort {
                 values.add(row.get(column));
             }
 
-            String sql = dialect.buildInsert(table, columns, keyColumns, upsert);
+            if (upsert) {
+                // Degenerate MERGE / ON CONFLICT shapes are configuration
+                // errors: fail fast here instead of at every dialect tick.
+                if (!columns.containsAll(keys)) {
+                    throw BusinessException.badRequest(
+                            "sync sink: syncKey " + keys + " is not mapped in the row columns " + columns);
+                }
+                if (columns.size() == keys.size()) {
+                    throw BusinessException.badRequest("sync sink: no non-key column to update on conflict");
+                }
+            }
+
+            String sql = dialect.buildInsert(table, columns, keys, upsert);
 
             jdbcTemplate.update(sql, values.toArray());
             written++;
         }
 
         return written;
+    }
+
+    /**
+     * Validate the business key columns: every key must be a whitelist
+     * identifier (dialects concatenate keys into ON / CONFLICT clauses), and
+     * upsert requires at least one key.
+     *
+     * @param keyColumns business key columns, nullable
+     * @param upsert     conflict strategy
+     * @return validated key list (empty for append)
+     */
+    private List<String> validateKeys(List<String> keyColumns, boolean upsert) {
+        if (keyColumns == null || keyColumns.isEmpty()) {
+            if (upsert) {
+                throw BusinessException.badRequest("sync sink: syncKey is required for upsert");
+            }
+            return List.of();
+        }
+
+        List<String> keys = new ArrayList<>();
+
+        for (String key : keyColumns) {
+            keys.add(validate(key, "syncKey"));
+        }
+
+        return keys;
     }
 
     /**
@@ -138,7 +179,7 @@ public class SyncSink011 implements SyncSinkPort {
      */
     private String validate(String name, String kind) {
         if (name == null || !name.matches(IDENTIFIER)) {
-            throw new IllegalStateException("illegal sql identifier (" + kind + "): " + name);
+            throw BusinessException.badRequest("illegal sql identifier (" + kind + "): " + name);
         }
 
         return name;

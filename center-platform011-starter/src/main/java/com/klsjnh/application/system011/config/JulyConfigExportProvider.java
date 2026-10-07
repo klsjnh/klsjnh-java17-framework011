@@ -66,6 +66,12 @@ public class JulyConfigExportProvider implements ExportProvider {
         return "julyConfig";
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String moduleCode() {
+        return "system011";
+    }
+
     /**
      * Get the ordered column definitions of julyConfig.
      *

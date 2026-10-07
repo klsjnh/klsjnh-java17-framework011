@@ -48,7 +48,7 @@ public class JulyScheduler {
     private String schedulerName;
 
     /**
-     * Handler content: Spring bean name implementing Runnable.
+     * Handler name: the handlerName() of a JobHandler bean.
      */
     private String schedulerHandler;
 

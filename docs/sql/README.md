@@ -34,7 +34,11 @@
 
 4. **Token 吊销列（已有库）**：`token-version-column.sql` —— 为 `july_user` 增加 `token_version INT NOT NULL DEFAULT 0`；**新库 CREATE 已含可跳过**。
 
-5. `base-entity-columns.sql` 仅**模板/说明**，不执行。
+5. **调度任务参数列（已有库）**：`july-scheduler-task-param.sql` —— 为 `july_scheduler` 增加 `task_param VARCHAR(500)`（JSON 透传给 JobHandler）；**新库 CREATE 已含可跳过**。
+
+6. **Quartz JDBC JobStore（可选，默认不执行）**：`july_quartz011.sql` —— Quartz 官方 11 张 `QRTZ_*` 表（MySQL/InnoDB），仅在启用 `spring.quartz.job-store-type=jdbc`（持久化/多实例）时执行一次；**脚本含 DROP TABLE，勿在生产重放**。
+
+7. `base-entity-columns.sql` 仅**模板/说明**，不执行。
 
 ## 不在本目录的表
 

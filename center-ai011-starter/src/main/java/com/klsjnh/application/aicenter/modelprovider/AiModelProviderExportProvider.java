@@ -73,6 +73,12 @@ public class AiModelProviderExportProvider implements ExportProvider {
         return "julyAiModelProvider";
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String moduleCode() {
+        return "aicenter";
+    }
+
     /**
      * Get the ordered column definitions of julyAiModelProvider.
      *

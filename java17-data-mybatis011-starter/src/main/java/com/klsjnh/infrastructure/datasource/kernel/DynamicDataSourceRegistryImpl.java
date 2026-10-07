@@ -75,12 +75,15 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
     }
 
     /**
-     * Declare a datasource config (no connection attempt).
+     * Declare a datasource config (no connection attempt). Synchronized with
+     * {@code reloadAll} / {@code unregister}: copy-on-write writers must not
+     * interleave, or one swap would overwrite another (lost update / a
+     * reloaded-away config resurrected).
      *
      * @param info connection info
      */
     @Override
-    public void register(ConnectionInfo info) {
+    public synchronized void register(ConnectionInfo info) {
         String funcName = "register";
 
         Map<String, ConnectionInfo> next = new ConcurrentHashMap<>(configs);
@@ -104,7 +107,7 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
      * @return reconciliation summary, never null
      */
     @Override
-    public ReloadResult reloadAll(List<ConnectionInfo> infos) {
+    public synchronized ReloadResult reloadAll(List<ConnectionInfo> infos) {
         String funcName = "reload all";
 
         if (infos == null) {
@@ -187,7 +190,7 @@ public class DynamicDataSourceRegistryImpl implements DynamicDataSourceRegistryP
      * @param dsCode datasource code
      */
     @Override
-    public void unregister(String dsCode) {
+    public synchronized void unregister(String dsCode) {
         String funcName = "unregister";
 
         Map<String, ConnectionInfo> next = new ConcurrentHashMap<>(configs);

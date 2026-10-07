@@ -291,7 +291,7 @@ public class JulySchedulerUseCase {
         authorizationPort.assertHas(operatorId, JulySchedulerPermissionCodes011.EXECUTE_ONCE);
 
         JulyScheduler scheduler = require(id);
-        schedulerPort.triggerOnce(scheduler.id().value(), scheduler.schedulerHandler());
+        schedulerPort.triggerOnce(scheduler.id().value(), scheduler.schedulerHandler(), scheduler.taskParam());
 
         return scheduler.id().value();
     }

@@ -26,7 +26,7 @@ public interface SchedulerPort {
      * Register (or replace) a running task driven by the cron expression.
      *
      * @param id        task id
-     * @param handler   handler content (Spring bean name implementing Runnable)
+     * @param handler   handler name (JobHandler handlerName)
      * @param cron      cron expression
      * @param taskParam task payload (JSON text) handed to the handler, nullable
      */
@@ -42,10 +42,11 @@ public interface SchedulerPort {
     /**
      * Trigger the handler once immediately, regardless of the runtime status.
      *
-     * @param id      task id
-     * @param handler handler content (Spring bean name implementing Runnable)
+     * @param id        task id
+     * @param handler   handler name (JobHandler handlerName)
+     * @param taskParam task payload (JSON text) handed to the handler, nullable
      */
-    void triggerOnce(String id, String handler);
+    void triggerOnce(String id, String handler, String taskParam);
 
     /**
      * Validate a cron expression.

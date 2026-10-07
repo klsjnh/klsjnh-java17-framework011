@@ -71,6 +71,23 @@ public final class SqlGuard011 {
     }
 
     /**
+     * Assert the statement is executable on the D3 write endpoint: a single
+     * statement that carries no server-file access form (INTO OUTFILE /
+     * DUMPFILE / LOAD_FILE work through executeUpdate too when the DB account
+     * holds the FILE privilege). Authorization itself is the execute
+     * permission code.
+     *
+     * @param sql developer-authored statement
+     */
+    public static void assertExecutable(String sql) {
+        assertSingleStatement(sql);
+
+        if (FORBIDDEN_FILE.matcher(sql.trim()).find()) {
+            throw BusinessException.badRequest("sql contains a forbidden file-access form");
+        }
+    }
+
+    /**
      * Assert the statement is a single read-only SELECT.
      *
      * @param sql developer-authored statement

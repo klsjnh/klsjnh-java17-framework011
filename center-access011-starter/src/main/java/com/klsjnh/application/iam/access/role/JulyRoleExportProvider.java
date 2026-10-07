@@ -69,6 +69,12 @@ public class JulyRoleExportProvider implements ExportProvider {
         return "julyRole";
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String moduleCode() {
+        return "iam";
+    }
+
     /**
      * Get the ordered column definitions of julyRole.
      *

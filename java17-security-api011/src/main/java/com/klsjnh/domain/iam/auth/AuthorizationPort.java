@@ -24,9 +24,10 @@ import java.util.Set;
  * everywhere. Enforcement depends on {@code krt.status}:
  * </p>
  * <ul>
- * <li><b>debug / development</b> — {@code assertHas} / {@code has} are no-op
- * (always allow); convenient for local integration while call sites stay
- * hung.</li>
+ * <li><b>debug</b> — {@code assertHas} / {@code has} are no-op (always
+ * allow); convenient for local integration while call sites stay hung.</li>
+ * <li><b>development</b> — real code check (missing → 403), same as
+ * production, so permission bugs surface before shipping.</li>
  * <li><b>production</b> — real code check (missing → 403). The web whitelist
  * gate also requires that a mutating protected request marked a check via
  * {@link PermissionCheckContext011}; otherwise the filter answers 403.</li>

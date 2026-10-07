@@ -22,20 +22,27 @@ import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.iam.user.UserAuditPort;
 import com.klsjnh.domain.platform011.export.ExportColumn;
 import com.klsjnh.domain.platform011.export.ExportProvider;
+import com.klsjnh.domain.platform011.export.ExportProviderInfo;
 import com.klsjnh.domain.platform011.export.ExportResult;
 import com.klsjnh.domain.platform011.export.ExportSheet;
 import com.klsjnh.domain.platform011.export.ExportSheetSpec;
+import com.klsjnh.domain.platform011.export.ExportStreamPort;
 import com.klsjnh.domain.platform011.export.ExportWorkbook;
+import com.klsjnh.domain.platform011.export.SheetRowSource;
 import com.klsjnh.domain.platform011.export.XlsxWorkbookPort;
 
 import org.springframework.stereotype.Service;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Platform data export use case: resolves the object's registered provider and
@@ -78,22 +85,36 @@ public class ExportUseCase {
     private final XlsxWorkbookPort xlsxWorkbookPort;
 
     /**
+     * Streaming codec port (csv / json / xlsx).
+     */
+    private final ExportStreamPort exportStreamPort;
+
+    /**
      * User audit port.
      */
     private final UserAuditPort userAuditPort;
+
+    /**
+     * Authorization port (generic export asserts the per-object export code).
+     */
+    private final AuthorizationPort authorizationPort;
 
     /**
      * Create the use case.
      *
      * @param registry         export provider registry
      * @param xlsxWorkbookPort xlsx port
+     * @param exportStreamPort streaming export port
      * @param userAuditPort    user audit port
+     * @param authorizationPort authorization port
      */
     public ExportUseCase(ExportProviderRegistry registry, XlsxWorkbookPort xlsxWorkbookPort,
-            UserAuditPort userAuditPort) {
+            ExportStreamPort exportStreamPort, UserAuditPort userAuditPort, AuthorizationPort authorizationPort) {
         this.registry = registry;
         this.xlsxWorkbookPort = xlsxWorkbookPort;
+        this.exportStreamPort = exportStreamPort;
         this.userAuditPort = userAuditPort;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -216,5 +237,80 @@ public class ExportUseCase {
         }
 
         return rows;
+    }
+
+    /**
+     * List the registered export providers (generic export discovery). Requires
+     * an authenticated operator; the listing itself carries no object data.
+     *
+     * @param operator current operator
+     * @return provider infos ordered by object code
+     */
+    public List<ExportProviderInfo> providers(Operator011 operator) {
+        if (operator == null || !operator.authenticated()) {
+            throw BusinessException.unauthorized("providers: not authenticated");
+        }
+
+        return registry.all().stream()
+                .map(provider -> new ExportProviderInfo(provider.objectCode(), provider.moduleCode(),
+                        provider.columns().size()))
+                .sorted(Comparator.comparing(ExportProviderInfo::objectCode))
+                .toList();
+    }
+
+    /**
+     * Stream one object's master sheet in {@code format} (csv / json / xlsx)
+     * straight to the target stream — memory stays bounded at one
+     * {@link #BATCH_SIZE} batch. The per-object export permission code
+     * ({@code module:objectCode:export}) is asserted before any byte is
+     * written; the EXPORT audit record is written after the stream completes
+     * (with the actual row count).
+     *
+     * @param format   csv / json / xlsx
+     * @param objectCode object code (registered provider)
+     * @param operator current operator
+     * @return stream consumer for the target output stream
+     */
+    public Consumer<OutputStream> stream(String format, String objectCode, Operator011 operator) {
+        String funcName = "export stream";
+
+        if (operator == null || !operator.authenticated()) {
+            throw BusinessException.unauthorized(funcName + ": not authenticated");
+        }
+
+        ExportProvider provider = registry.get(objectCode);
+
+        if (provider == null) {
+            throw BusinessException.badRequest(funcName + ": unknown export object " + objectCode);
+        }
+
+        authorizationPort.assertHas(operator.id(), exportCode(provider));
+
+        ExportSheetSpec spec = provider.sheetSpecs().get(0);
+        SheetRowSource source = provider::exportRows;
+
+        return out -> {
+            long rows = switch (format) {
+                case "csv" -> exportStreamPort.writeCsv(spec.name(), provider.columns(), source, BATCH_SIZE, out);
+                case "json" -> exportStreamPort.writeJson(objectCode, provider.columns(), source, BATCH_SIZE, out);
+                case "xlsx" -> exportStreamPort.writeXlsx(spec.name(), provider.columns(), source, BATCH_SIZE, out);
+                default -> throw BusinessException.badRequest("unknown export format " + format);
+            };
+
+            userAuditPort.record(operator.id(), operator.userAccount(), AuditType011.EXPORT, objectCode,
+                    "export " + format + " stream " + rows + " rows", operator.ip());
+
+            logger.info("{} {} {} streamed {} rows", funcName, objectCode, format, rows);
+        };
+    }
+
+    /**
+     * Build the per-object export permission code from the provider.
+     *
+     * @param provider export provider
+     * @return permission code, e.g. {@code iam:julyUser:export}
+     */
+    private String exportCode(ExportProvider provider) {
+        return provider.moduleCode() + ":" + provider.objectCode() + ":export";
     }
 }

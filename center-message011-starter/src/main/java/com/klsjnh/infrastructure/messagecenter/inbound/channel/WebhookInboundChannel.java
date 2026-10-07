@@ -30,6 +30,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -106,7 +107,7 @@ public class WebhookInboundChannel implements MessageInboundPort {
 
         String expected = hmacSha256Hex(secret, rawBody == null ? "" : rawBody);
 
-        if (!constantTimeEquals(expected, signature.trim())) {
+        if (!constantTimeEquals(expected, signature.trim().toLowerCase(Locale.ROOT))) {
             throw BusinessException.badRequest("webhook inbound: signature mismatch");
         }
 
@@ -179,8 +180,10 @@ public class WebhookInboundChannel implements MessageInboundPort {
             if (root.has("payload") && root.get("payload").isObject()) {
                 root.get("payload").fields().forEachRemaining(entry -> {
                     JsonNode value = entry.getValue();
-
-                    payload.put(entry.getKey(), value.isNull() ? null : value.asText());
+                    // nested objects / arrays keep their JSON text (asText
+                    // would silently flatten them to "")
+                    payload.put(entry.getKey(), value.isNull() ? null
+                            : value.isValueNode() ? value.asText() : value.toString());
                 });
             }
 
