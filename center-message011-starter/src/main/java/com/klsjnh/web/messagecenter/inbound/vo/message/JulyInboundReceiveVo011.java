@@ -18,6 +18,8 @@ import lombok.Data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.Size;
+
 /**
  * Receive request VO carrying the raw request body handed to the inbound
  * channel port; the channel code travels as a query parameter.
@@ -26,7 +28,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Data
 public class JulyInboundReceiveVo011 {
 
-    /** Raw request body, optional. */
-    @Schema(description = "原始请求体（由入站渠道端口解析）")
+    /** Raw request body, optional, capped at 1M characters (DoS guard). */
+    @Size(max = 1_000_000, message = "rawBody exceeds the 1,000,000 character limit")
+    @Schema(description = "原始请求体（由入站渠道端口解析，最长 1,000,000 字符）")
     private String rawBody;
 }

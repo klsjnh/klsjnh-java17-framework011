@@ -12,6 +12,7 @@ package com.klsjnh.infrastructure.platform011.export;
  *
  *      2026.10.06  streaming export codec (SXSSF xlsx / RFC 4180 csv / json
  *                  generator) — memory bounded at one batch
+ *      2026.10.11  csv formula-injection neutralization
  *
  */
 
@@ -35,6 +36,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Streaming export codec implementation. Every writer walks the
@@ -49,13 +51,21 @@ import java.util.Map;
 public class ExportStreamCodec011 implements ExportStreamPort {
 
     /**
+     * Plain negative number (kept as-is; only formula-shaped {@code -...} is
+     * neutralized).
+     */
+    private static final Pattern PLAIN_NEGATIVE = Pattern.compile("-\\d+(\\.\\d+)?");
+
+    /**
      * JSON factory (thread-safe, reused).
      */
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
     /**
      * CSV cell / value escaper: RFC 4180 — a value containing comma, quote, CR
-     * or LF is wrapped in quotes and inner quotes are doubled.
+     * or LF is wrapped in quotes and inner quotes are doubled; a formula-shaped
+     * value is neutralized first (leading single quote) so a spreadsheet app
+     * cannot evaluate it as a formula (CSV formula injection).
      *
      * @param value raw cell value, nullable
      * @return encoded cell
@@ -65,10 +75,36 @@ public class ExportStreamCodec011 implements ExportStreamPort {
             return "";
         }
 
-        String text = String.valueOf(value);
+        String text = guardFormula(String.valueOf(value));
 
         if (text.indexOf(',') >= 0 || text.indexOf('"') >= 0 || text.indexOf('\r') >= 0 || text.indexOf('\n') >= 0) {
             return '"' + text.replace("\"", "\"\"") + '"';
+        }
+
+        return text;
+    }
+
+    /**
+     * Neutralize a formula-shaped cell: a value starting with {@code = + @}
+     * or TAB (or a non-numeric {@code -}) gets a leading single quote, which
+     * spreadsheets treat as inert text.
+     *
+     * @param text raw cell text
+     * @return guarded text
+     */
+    private static String guardFormula(String text) {
+        if (text.isEmpty()) {
+            return text;
+        }
+
+        char first = text.charAt(0);
+
+        if (first == '=' || first == '+' || first == '@' || first == '\t') {
+            return "'" + text;
+        }
+
+        if (first == '-' && !PLAIN_NEGATIVE.matcher(text).matches()) {
+            return "'" + text;
         }
 
         return text;

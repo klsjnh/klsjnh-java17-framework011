@@ -66,6 +66,25 @@ class ExportStreamCodec011Test {
     }
 
     /**
+     * CSV neutralizes formula-shaped cells ({@code = + - @} / TAB) with a
+     * leading single quote; plain negative numbers and non-leading trigger
+     * characters stay untouched.
+     */
+    @Test
+    void csvNeutralizesFormulaCells() {
+        assertEquals("'=cmd", ExportStreamCodec011.csvCell("=cmd"));
+        assertEquals("'+1+1", ExportStreamCodec011.csvCell("+1+1"));
+        assertEquals("'@x", ExportStreamCodec011.csvCell("@x"));
+        assertEquals("'\tsum", ExportStreamCodec011.csvCell("\tsum"));
+        assertEquals("-1", ExportStreamCodec011.csvCell("-1"));
+        assertEquals("-1.5", ExportStreamCodec011.csvCell("-1.5"));
+        assertEquals("'-SUM(A1)", ExportStreamCodec011.csvCell("-SUM(A1)"));
+        assertEquals("a=b", ExportStreamCodec011.csvCell("a=b"));
+        assertEquals("", ExportStreamCodec011.csvCell(null));
+        assertEquals("", ExportStreamCodec011.csvCell(""));
+    }
+
+    /**
      * The batch loop walks multiple fetches until a short batch.
      */
     @Test

@@ -11,6 +11,7 @@ package com.klsjnh.infrastructure.messagecenter.inbound.channel;
  *          modify history
  *
  *      2026.10.05  webhook inbound channel unit test (HMAC fail-closed)
+ *      2026.10.11  timestamp replay-window tests
  *
  */
 
@@ -21,6 +22,7 @@ import com.klsjnh.domain.messagecenter.inbound.channel.InboundMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -72,14 +74,24 @@ class WebhookInboundChannelTest {
     }
 
     /**
-     * A valid signature + body maps into the event.
+     * Fresh epoch-seconds timestamp.
+     *
+     * @param offsetSeconds offset from now, negative for the past
+     * @return timestamp header value
+     */
+    private String epochSeconds(long offsetSeconds) {
+        return String.valueOf(System.currentTimeMillis() / 1000 + offsetSeconds);
+    }
+
+    /**
+     * A valid signature + timestamp + body maps into the event.
      */
     @Test
     void validSignatureParsesBody() {
         String body = "{\"fromId\":\"u1\",\"messageType\":\"event\",\"content\":\"hello\","
                 + "\"rawMessageId\":\"m1\",\"payload\":{\"k\":\"v\"}}";
         Map<String, String> config = Map.of("secret", SECRET);
-        Map<String, String> headers = Map.of("X-Signature", sign(body));
+        Map<String, String> headers = Map.of("X-Signature", sign(body), "X-Timestamp", epochSeconds(0));
 
         InboundMessage event = channel.parse(config, headers, body);
 
@@ -96,7 +108,7 @@ class WebhookInboundChannelTest {
     @Test
     void wrongSignatureIsRejected() {
         Map<String, String> config = Map.of("secret", SECRET);
-        Map<String, String> headers = Map.of("X-Signature", "deadbeef");
+        Map<String, String> headers = Map.of("X-Signature", "deadbeef", "X-Timestamp", epochSeconds(0));
 
         assertThrows(BusinessException.class, () -> channel.parse(config, headers, "{\"x\":1}"));
     }
@@ -107,8 +119,9 @@ class WebhookInboundChannelTest {
     @Test
     void missingSignatureIsRejected() {
         Map<String, String> config = Map.of("secret", SECRET);
+        Map<String, String> headers = Map.of("X-Timestamp", epochSeconds(0));
 
-        assertThrows(BusinessException.class, () -> channel.parse(config, Map.of(), "{\"x\":1}"));
+        assertThrows(BusinessException.class, () -> channel.parse(config, headers, "{\"x\":1}"));
     }
 
     /**
@@ -117,6 +130,82 @@ class WebhookInboundChannelTest {
     @Test
     void unconfiguredSecretIsRejected() {
         assertThrows(BusinessException.class, () -> channel.parse(Map.of(), Map.of(), "{\"x\":1}"));
+    }
+
+    /**
+     * A missing timestamp header is rejected (replay window is on by default).
+     */
+    @Test
+    void missingTimestampIsRejected() {
+        String body = "{\"x\":1}";
+        Map<String, String> config = Map.of("secret", SECRET);
+        Map<String, String> headers = Map.of("X-Signature", sign(body));
+
+        assertThrows(BusinessException.class, () -> channel.parse(config, headers, body));
+    }
+
+    /**
+     * A timestamp older than the window is rejected.
+     */
+    @Test
+    void staleTimestampIsRejected() {
+        String body = "{\"x\":1}";
+        Map<String, String> config = Map.of("secret", SECRET);
+        Map<String, String> headers = Map.of("X-Signature", sign(body), "X-Timestamp", epochSeconds(-3600));
+
+        assertThrows(BusinessException.class, () -> channel.parse(config, headers, body));
+    }
+
+    /**
+     * A timestamp too far in the future is rejected.
+     */
+    @Test
+    void futureTimestampIsRejected() {
+        String body = "{\"x\":1}";
+        Map<String, String> config = Map.of("secret", SECRET);
+        Map<String, String> headers = Map.of("X-Signature", sign(body), "X-Timestamp", epochSeconds(3600));
+
+        assertThrows(BusinessException.class, () -> channel.parse(config, headers, body));
+    }
+
+    /**
+     * A non-numeric timestamp is rejected.
+     */
+    @Test
+    void malformedTimestampIsRejected() {
+        String body = "{\"x\":1}";
+        Map<String, String> config = Map.of("secret", SECRET);
+        Map<String, String> headers = Map.of("X-Signature", sign(body), "X-Timestamp", "yesterday");
+
+        assertThrows(BusinessException.class, () -> channel.parse(config, headers, body));
+    }
+
+    /**
+     * Epoch-millis timestamps are accepted (fresh) and a wider configured
+     * window accepts an hour-old timestamp.
+     */
+    @Test
+    void timestampFormatsAndWindowAreHandled() {
+        String body = "{\"x\":1}";
+        Map<String, String> config = Map.of("secret", SECRET, "maxAgeSeconds", "7200");
+        Map<String, String> millisHeaders = Map.of("X-Signature", sign(body),
+                "X-Timestamp", String.valueOf(System.currentTimeMillis()));
+        Map<String, String> hourOldHeaders = Map.of("X-Signature", sign(body), "X-Timestamp", epochSeconds(-3600));
+
+        assertDoesNotThrow(() -> channel.parse(config, millisHeaders, body));
+        assertDoesNotThrow(() -> channel.parse(config, hourOldHeaders, body));
+    }
+
+    /**
+     * {@code requireTimestamp=false} opts out of the replay window.
+     */
+    @Test
+    void timestampCanBeOptedOut() {
+        String body = "{\"x\":1}";
+        Map<String, String> config = Map.of("secret", SECRET, "requireTimestamp", "false");
+        Map<String, String> headers = Map.of("X-Signature", sign(body));
+
+        assertDoesNotThrow(() -> channel.parse(config, headers, body));
     }
 
     /**

@@ -13,6 +13,7 @@ package com.klsjnh.infrastructure.datasource.kernel;
  *      2026.09.13  data source pools 011 class
  *      2026.09.15  add schema / driver override to probe pool
  *      2026.10.05  guard jdbc url + lock driver override to custom types
+ *      2026.10.11  socket read timeout on dynamic pools
  *
  */
 
@@ -43,6 +44,13 @@ public class DataSourcePools011 {
      * Probe pool connect timeout in milliseconds (10s, product decision).
      */
     private static final int PROBE_MAX_WAIT_MILLIS = 10_000;
+
+    /**
+     * Socket read timeout in milliseconds for dynamic pools (product decision):
+     * bounds a hung server-side statement at the socket level (the routing
+     * template's queryTimeout bounds it at the driver level).
+     */
+    private static final int SOCKET_TIMEOUT_MILLIS = 60_000;
 
     /**
      * Lazy pool cache by datasource code.
@@ -139,6 +147,7 @@ public class DataSourcePools011 {
         pool.setTestOnReturn(false);
         pool.setPoolPreparedStatements(true);
         pool.setMaxPoolPreparedStatementPerConnectionSize(20);
+        pool.setSocketTimeout(SOCKET_TIMEOUT_MILLIS);
 
         return pool;
     }

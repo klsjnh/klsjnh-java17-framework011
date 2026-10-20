@@ -51,6 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.Valid;
 
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
@@ -101,7 +102,7 @@ public class JulyInboundMessageController {
     @PostMapping("/receive")
     @Operation(summary = "接收消息（解析渠道 → 入站端口解析 → 去重 → 必选 Listener → 落库分发）")
     public Response011<JulyInboundReceiveResultVo011> receive(@RequestParam("channelCode") String channelCode,
-            @RequestBody(required = false) JulyInboundReceiveVo011 vo, HttpServletRequest request) {
+            @Valid @RequestBody(required = false) JulyInboundReceiveVo011 vo, HttpServletRequest request) {
         String funcName = "receive";
         Operator011 operator = Operator011Resolver.resolve(request);
         String operatorId = operator == null ? null : operator.id();

@@ -12,6 +12,7 @@ package com.klsjnh.common.util;
  *
  *      2026.09.20  read-only sql guard
  *      2026.10.05  forbid server-file access (INTO OUTFILE / DUMPFILE / LOAD_FILE)
+ *      2026.10.11  comment-tolerant file-form match + cross-DB server-access words
  *
  */
 
@@ -41,13 +42,38 @@ public final class SqlGuard011 {
             Pattern.CASE_INSENSITIVE);
 
     /**
+     * Separator run between SQL tokens: whitespace or a comment token (block /
+     * line). MySQL accepts a comment in place of whitespace, so {@code
+     * INTO&#47;**&#47;OUTFILE} must match the same way {@code INTO OUTFILE} does.
+     */
+    private static final String TOKEN_GAP = "(?:\\s|/\\*.*?\\*/|--[^\\r\\n]*|#[^\\r\\n]*)+";
+
+    /**
      * Forbidden server-file access forms: {@code SELECT ... INTO OUTFILE /
      * DUMPFILE} writes and {@code LOAD_FILE()} reads database-server files
-     * when the DB account holds the FILE privilege.
+     * when the DB account holds the FILE privilege. Comment tokens count as
+     * token separators (MySQL lexer).
      */
     private static final Pattern FORBIDDEN_FILE = Pattern.compile(
-            "\\binto\\s+(outfile|dumpfile)\\b|\\bload_file\\s*\\(",
+            "\\binto" + TOKEN_GAP + "(outfile|dumpfile)\\b|\\bload_file(?:" + TOKEN_GAP + ")?\\(",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    /**
+     * Cross-database server-file / host-command access words, checked on the
+     * execute endpoint and the read-only guard alike: PostgreSQL file
+     * functions and large objects, SQL Server shell / bulk-external access,
+     * Oracle PL/SQL file and JVM packages.
+     */
+    private static final Pattern FORBIDDEN_SERVER_ACCESS = Pattern.compile(
+            "\\b(pg_read_file|pg_read_binary_file|pg_ls_dir|pg_stat_file|lo_import|lo_export|bfilename"
+                    + "|xp_cmdshell|openrowset|openquery|opendatasource|utl_file|dbms_java)\\b",
             Pattern.CASE_INSENSITIVE);
+
+    /**
+     * PostgreSQL {@code COPY} as a statement-leading word ({@code COPY ... TO
+     * 'file' / PROGRAM} reads and writes server files).
+     */
+    private static final Pattern LEADING_COPY = Pattern.compile("^\\s*copy\\b", Pattern.CASE_INSENSITIVE);
 
     private SqlGuard011() {
     }
@@ -74,16 +100,27 @@ public final class SqlGuard011 {
      * Assert the statement is executable on the D3 write endpoint: a single
      * statement that carries no server-file access form (INTO OUTFILE /
      * DUMPFILE / LOAD_FILE work through executeUpdate too when the DB account
-     * holds the FILE privilege). Authorization itself is the execute
-     * permission code.
+     * holds the FILE privilege) and no cross-database server-access word
+     * (pg_read_file / xp_cmdshell / OPENROWSET / UTL_FILE / ...). Authorization
+     * itself is the execute permission code.
      *
      * @param sql developer-authored statement
      */
     public static void assertExecutable(String sql) {
         assertSingleStatement(sql);
 
-        if (FORBIDDEN_FILE.matcher(sql.trim()).find()) {
+        String trimmed = sql.trim();
+
+        if (FORBIDDEN_FILE.matcher(trimmed).find()) {
             throw BusinessException.badRequest("sql contains a forbidden file-access form");
+        }
+
+        if (FORBIDDEN_SERVER_ACCESS.matcher(trimmed).find()) {
+            throw BusinessException.badRequest("sql contains a forbidden server-access keyword");
+        }
+
+        if (LEADING_COPY.matcher(trimmed).find()) {
+            throw BusinessException.badRequest("sql must not be a COPY statement");
         }
     }
 
@@ -113,6 +150,10 @@ public final class SqlGuard011 {
 
         if (FORBIDDEN_FILE.matcher(trimmed).find()) {
             throw BusinessException.badRequest("sql contains a forbidden file-access form");
+        }
+
+        if (FORBIDDEN_SERVER_ACCESS.matcher(trimmed).find()) {
+            throw BusinessException.badRequest("sql contains a forbidden server-access keyword");
         }
     }
 }

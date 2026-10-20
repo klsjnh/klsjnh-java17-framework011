@@ -74,6 +74,55 @@ class SqlGuard011Test {
     }
 
     /**
+     * Comment-separated server-file forms are rejected too: MySQL accepts a
+     * comment in place of whitespace, so {@code INTO/**&#47;OUTFILE} and {@code
+     * LOAD_FILE/**&#47;(...)} are the same statements.
+     */
+    @Test
+    void commentSeparatedFileFormsAreRejected() {
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertReadOnly("SELECT data FROM t INTO/**/OUTFILE '/var/tmp/x'"));
+
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertReadOnly("SELECT LOAD_FILE/**/('/etc/passwd')"));
+
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertExecutable("UPDATE t SET a = 1 INTO/*x*/OUTFILE '/var/tmp/x'"));
+
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertExecutable("UPDATE t SET a = 1 INTO--c\nOUTFILE '/var/tmp/x'"));
+    }
+
+    /**
+     * Cross-database server-file / host-command words are rejected on both the
+     * read and the execute path.
+     */
+    @Test
+    void crossDbServerAccessIsRejected() {
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertReadOnly("SELECT pg_read_file('/etc/passwd')"));
+
+        assertThrows(BusinessException.class, () -> SqlGuard011.assertExecutable("EXEC xp_cmdshell 'dir'"));
+
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertExecutable("INSERT INTO t SELECT * FROM OPENROWSET('x', 'y', 'z')"));
+
+        assertThrows(BusinessException.class, () -> SqlGuard011.assertExecutable("COPY t TO '/var/tmp/x'"));
+    }
+
+    /**
+     * Plain DML / DDL still passes the execute guard.
+     */
+    @Test
+    void plainExecutePasses() {
+        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("UPDATE july_user SET name = 'n' WHERE id = 1"));
+
+        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("CREATE INDEX idx_name ON july_user (name)"));
+
+        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("insert into t (id) values (1)"));
+    }
+
+    /**
      * A keyword-like identifier stays allowed (whole-word matching).
      */
     @Test

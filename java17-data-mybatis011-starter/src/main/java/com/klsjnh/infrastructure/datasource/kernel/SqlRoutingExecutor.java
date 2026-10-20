@@ -11,6 +11,7 @@ package com.klsjnh.infrastructure.datasource.kernel;
  *          modify history
  *
  *      2026.09.13  sql routing executor class
+ *      2026.10.11  query timeout + max rows guard on the routed template
  *
  */
 
@@ -51,6 +52,18 @@ public class SqlRoutingExecutor implements SqlRoutingPort {
     private static final int PAGE_SIZE_MAX = 500;
 
     /**
+     * Query timeout in seconds for every routed statement (product decision):
+     * bounds a runaway or deliberate SLEEP-style statement at the driver level.
+     */
+    private static final int QUERY_TIMEOUT_SECONDS = 30;
+
+    /**
+     * ResultSet row cap, the last-resort DoS guard on unbounded reads (product
+     * decision); page queries stay far below it (page size clamped above).
+     */
+    private static final int MAX_ROWS = 100_000;
+
+    /**
      * Dialect helper column (row number), stripped from result rows.
      */
     private static final String HELPER_COLUMN = "klsjnh_rn";
@@ -83,6 +96,8 @@ public class SqlRoutingExecutor implements SqlRoutingPort {
         this.registry = registry;
         this.dialect = dialect;
         this.jdbcTemplate = new JdbcTemplate(new DynamicDataSource011(primaryDataSource));
+        this.jdbcTemplate.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
+        this.jdbcTemplate.setMaxRows(MAX_ROWS);
     }
 
     /**

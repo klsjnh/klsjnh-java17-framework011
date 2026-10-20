@@ -11,6 +11,7 @@ package com.klsjnh.infrastructure.messagecenter.inbound.channel;
  *          modify history
  *
  *      2026.10.05  built-in generic webhook inbound channel (HMAC-SHA256)
+ *      2026.10.11  timestamp replay window (X-Timestamp ± maxAgeSeconds)
  *
  */
 
@@ -36,14 +37,20 @@ import java.util.Map;
 /**
  * Built-in generic webhook inbound channel: verifies an HMAC-SHA256 signature
  * over the raw body (fail-closed — without a configured secret every request is
- * rejected) and parses a flat JSON body into the neutral inbound event.
+ * rejected) plus a timestamp replay window, and parses a flat JSON body into
+ * the neutral inbound event.
  * <p>
  * Channel config keys: {@code secret} (HMAC key, REQUIRED),
  * {@code signatureHeader} (default {@code X-Signature}, hex digest),
+ * {@code timestampHeader} (default {@code X-Timestamp}, epoch seconds or
+ * millis), {@code maxAgeSeconds} (replay window, default 300),
+ * {@code requireTimestamp} (default {@code true}; set {@code false} to accept
+ * requests without the timestamp header — not recommended),
  * {@code channelCode} (stamped on the event, optional). Body shape:
  * {@code {"fromId":…, "messageType":…, "content":…, "rawMessageId":…,
- * "payload":{…}}} — every field optional. A missing / mismatched signature is
- * a 400, never a silently accepted message.
+ * "payload":{…}}} — every field optional. A missing / mismatched signature or
+ * a timestamp outside the replay window is a 400, never a silently accepted
+ * message.
  * </p>
  */
 
@@ -56,6 +63,21 @@ public class WebhookInboundChannel implements MessageInboundPort {
     public static final String DEFAULT_SIGNATURE_HEADER = "X-Signature";
 
     /**
+     * Default timestamp header name (replay window).
+     */
+    public static final String DEFAULT_TIMESTAMP_HEADER = "X-Timestamp";
+
+    /**
+     * Epoch timestamps above this value are milliseconds (below: seconds).
+     */
+    private static final long MILLIS_THRESHOLD = 100_000_000_000L;
+
+    /**
+     * Default replay window in seconds.
+     */
+    private static final long DEFAULT_MAX_AGE_SECONDS = 300;
+
+    /**
      * Config key: HMAC key.
      */
     public static final String CONFIG_SECRET = "secret";
@@ -64,6 +86,21 @@ public class WebhookInboundChannel implements MessageInboundPort {
      * Config key: signature header name override.
      */
     public static final String CONFIG_SIGNATURE_HEADER = "signatureHeader";
+
+    /**
+     * Config key: timestamp header name override.
+     */
+    public static final String CONFIG_TIMESTAMP_HEADER = "timestampHeader";
+
+    /**
+     * Config key: replay window in seconds.
+     */
+    public static final String CONFIG_MAX_AGE_SECONDS = "maxAgeSeconds";
+
+    /**
+     * Config key: {@code false} accepts requests without the timestamp header.
+     */
+    public static final String CONFIG_REQUIRE_TIMESTAMP = "requireTimestamp";
 
     /**
      * JSON mapper for the vendor body (static: thread-safe).
@@ -111,6 +148,8 @@ public class WebhookInboundChannel implements MessageInboundPort {
             throw BusinessException.badRequest("webhook inbound: signature mismatch");
         }
 
+        verifyTimestamp(safeConfig, headers);
+
         return toEvent(safeConfig, rawBody);
     }
 
@@ -157,6 +196,65 @@ public class WebhookInboundChannel implements MessageInboundPort {
             return BODY_MAPPER.writeValueAsString(body);
         } catch (Exception ex) {
             throw new IllegalStateException("webhook inbound reply serialization failed", ex);
+        }
+    }
+
+    /**
+     * Replay-window check on the timestamp header: epoch seconds or millis,
+     * accepted within ±{@code maxAgeSeconds} of now. The header is required
+     * unless the config opts out ({@code requireTimestamp=false}).
+     *
+     * @param config  channel config
+     * @param headers request headers
+     */
+    private void verifyTimestamp(Map<String, String> config, Map<String, String> headers) {
+        boolean required = !"false".equalsIgnoreCase(config.get(CONFIG_REQUIRE_TIMESTAMP));
+        String headerName = config.getOrDefault(CONFIG_TIMESTAMP_HEADER, DEFAULT_TIMESTAMP_HEADER);
+        String raw = header(headers, headerName);
+
+        if (StringUtil011.isBlank(raw)) {
+            if (required) {
+                throw BusinessException.badRequest("webhook inbound: missing timestamp header " + headerName);
+            }
+            return;
+        }
+
+        long timestamp;
+
+        try {
+            timestamp = Long.parseLong(raw.trim());
+        } catch (NumberFormatException ex) {
+            throw BusinessException.badRequest("webhook inbound: timestamp is not a number");
+        }
+
+        long epochMillis = Math.abs(timestamp) > MILLIS_THRESHOLD ? timestamp : timestamp * 1000L;
+        long windowMillis = maxAgeSeconds(config) * 1000L;
+
+        if (Math.abs(System.currentTimeMillis() - epochMillis) > windowMillis) {
+            throw BusinessException.badRequest("webhook inbound: timestamp outside the replay window");
+        }
+    }
+
+    /**
+     * Resolve the replay window from config; an invalid or non-positive value
+     * falls back to the default.
+     *
+     * @param config channel config
+     * @return window seconds
+     */
+    private long maxAgeSeconds(Map<String, String> config) {
+        String raw = config.get(CONFIG_MAX_AGE_SECONDS);
+
+        if (raw == null || raw.isBlank()) {
+            return DEFAULT_MAX_AGE_SECONDS;
+        }
+
+        try {
+            long seconds = Long.parseLong(raw.trim());
+
+            return seconds > 0 ? seconds : DEFAULT_MAX_AGE_SECONDS;
+        } catch (NumberFormatException ex) {
+            return DEFAULT_MAX_AGE_SECONDS;
         }
     }
 

@@ -11,6 +11,8 @@ package com.klsjnh.infrastructure.datasource.sync;
  *          modify history
  *
  *      2026.09.20  sync engine (source -> map -> sink)
+ *      2026.10.11  clamp page size to the routing port's [10, 500] — an
+ *                  oversized rule pageSize used to stop the run after page 1
  *
  */
 
@@ -41,6 +43,20 @@ import java.util.Map;
 
 @Component
 public class SyncEngine011 implements SyncEnginePort {
+
+    /**
+     * Page size lower bound — must mirror SqlRoutingExecutor's clamp: the
+     * routing port clamps the page size again on every read, so the engine's
+     * {@code rows.size() < pageSize} termination test has to use the same
+     * effective size, or a rule configured with pageSize &gt; 500 stops after
+     * the first page (rows come back 500-wide, 500 &lt; requested).
+     */
+    private static final int PAGE_SIZE_MIN = 10;
+
+    /**
+     * Page size upper bound (see {@link #PAGE_SIZE_MIN}).
+     */
+    private static final int PAGE_SIZE_MAX = 500;
 
     /**
      * Column mapping repository.
@@ -81,7 +97,8 @@ public class SyncEngine011 implements SyncEnginePort {
 
         List<String> keyColumns = split(rule.syncKey());
         boolean upsert = !"append".equalsIgnoreCase(rule.conflict());
-        int pageSize = rule.pageSize() == null || rule.pageSize() <= 0 ? 500 : rule.pageSize();
+        int pageSize = rule.pageSize() == null || rule.pageSize() <= 0 ? PAGE_SIZE_MAX
+                : Math.max(PAGE_SIZE_MIN, Math.min(PAGE_SIZE_MAX, rule.pageSize()));
         Endpoint sourceEndpoint = rule.sourceEndpoint();
 
         long read = 0;
