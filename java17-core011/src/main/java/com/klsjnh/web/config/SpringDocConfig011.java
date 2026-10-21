@@ -24,6 +24,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -43,10 +44,20 @@ import java.util.List;
  * third-party business systems that embed the framework (their own group,
  * excluding the /klsjnh/** framework paths).
  * <p>
- * Path-based groups (system011 / iam / storagecenter / datasource / aicenter /
- * messagecenter / optional app) stay in core so center starters only add
- * controllers — empty groups are harmless when a starter is absent. Doc meta
- * is driven by {@code krt.springdoc}.
+ * Path-based groups live here but are <b>conditional on the owning center</b>:
+ * a group is registered only when the matching {@code @EnableXxx011Center}
+ * imported the center's auto configuration, so a center that is not enabled
+ * has no group at all (not an empty group) in the knife4j / swagger-config
+ * list. {@code iam} and the optional {@code app} group stay unconditional
+ * because core's own IAM endpoints are always present. Doc meta is driven by
+ * {@code krt.springdoc}.
+ * </p>
+ * <p>
+ * The conditions are evaluated while the auto configuration is parsed (this
+ * class is scanned from {@code CoreAutoConfiguration011}), i.e. after the
+ * {@code @EnableXxx011Center} imports carried by the host's configuration
+ * class — the marker beans are already registered by then, so matching by
+ * type name is stable.
  * </p>
  */
 
@@ -58,6 +69,32 @@ public class SpringDocConfig011 {
      * Framework path prefix, excluded from the app group.
      */
     private static final String FRAMEWORK_PATH_PREFIX = "/klsjnh/**";
+
+    /**
+     * Marker bean (type name) registered only by {@code @EnablePlatform011Center}
+     * — the system011 group follows that center.
+     */
+    private static final String PLATFORM_CENTER = "com.klsjnh.enabled.PlatformCenterAutoConfiguration011";
+
+    /**
+     * Marker bean (type name) registered only by {@code @EnableStorage011Center}.
+     */
+    private static final String STORAGE_CENTER = "com.klsjnh.enabled.StorageCenterAutoConfiguration011";
+
+    /**
+     * Marker bean (type name) registered only by {@code @EnableDatasource011Center}.
+     */
+    private static final String DATASOURCE_CENTER = "com.klsjnh.enabled.DatasourceCenterAutoConfiguration011";
+
+    /**
+     * Marker bean (type name) registered only by {@code @EnableAi011Center}.
+     */
+    private static final String AI_CENTER = "com.klsjnh.enabled.AiCenterAutoConfiguration011";
+
+    /**
+     * Marker bean (type name) registered only by {@code @EnableMessage011Center}.
+     */
+    private static final String MESSAGE_CENTER = "com.klsjnh.enabled.MessageCenterAutoConfiguration011";
 
     /**
      * OpenAPI meta info, driven by krt.springdoc (title / version /
@@ -84,13 +121,15 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * System management group (config / dictionary join when the platform
-     * starter is on the classpath; scheduler joins when the quartz starter
-     * is present).
+     * System management group (config / dictionary from the platform center;
+     * scheduler joins through the platform center scan when the quartz starter
+     * is present). Registered only when {@code @EnablePlatform011Center} is
+     * used.
      *
      * @return grouped open api
      */
     @Bean
+    @ConditionalOnBean(type = PLATFORM_CENTER)
     public GroupedOpenApi system011GroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("system011")
@@ -101,7 +140,9 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * IAM group (identity / access: organization, menu, user, role, audit, perm).
+     * IAM group. Unconditional: core always ships the user / audit endpoints
+     * (the access center, when enabled, adds its {@code iam.access} paths to
+     * the same group).
      *
      * @return grouped open api
      */
@@ -116,11 +157,14 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * Storage center group (endpoints land with the storage feature).
+     * Storage center group. Registered only when
+     * {@code @EnableStorage011Center} is used (directly or via
+     * {@code @EnableAi011Center}).
      *
      * @return grouped open api
      */
     @Bean
+    @ConditionalOnBean(type = STORAGE_CENTER)
     public GroupedOpenApi storagecenterGroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("storagecenter")
@@ -131,12 +175,13 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * Data service group (datasource management; sql / model land in phase
-     * two).
+     * Data service group (datasource management; sql / sync join it).
+     * Registered only when {@code @EnableDatasource011Center} is used.
      *
      * @return grouped open api
      */
     @Bean
+    @ConditionalOnBean(type = DATASOURCE_CENTER)
     public GroupedOpenApi datasourceGroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("datasource")
@@ -147,11 +192,13 @@ public class SpringDocConfig011 {
     }
 
     /**
-     * AI model access group (provider / api key management).
+     * AI model access group (provider / api key management). Registered only
+     * when {@code @EnableAi011Center} is used.
      *
      * @return grouped open api
      */
     @Bean
+    @ConditionalOnBean(type = AI_CENTER)
     public GroupedOpenApi aicenterGroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("aicenter")
@@ -163,10 +210,12 @@ public class SpringDocConfig011 {
 
     /**
      * Message center group (channel / template config plus the send records).
+     * Registered only when {@code @EnableMessage011Center} is used.
      *
      * @return grouped open api
      */
     @Bean
+    @ConditionalOnBean(type = MESSAGE_CENTER)
     public GroupedOpenApi messagecenterGroupedOpenApi() {
         return GroupedOpenApi.builder()
                 .group("messagecenter")
