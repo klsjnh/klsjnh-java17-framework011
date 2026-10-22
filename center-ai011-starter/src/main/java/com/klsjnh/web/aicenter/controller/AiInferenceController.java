@@ -16,15 +16,20 @@ package com.klsjnh.web.aicenter.controller;
  *
  */
 
+import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.aicenter.inference.AiInferenceOutcome;
 import com.klsjnh.application.aicenter.inference.AiInferenceUseCase;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
+import com.klsjnh.domain.aicenter.inference.AiChatContentPart;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
 import com.klsjnh.domain.aicenter.inference.AiInferenceChunk;
+import com.klsjnh.domain.aicenter.inference.AiInferenceOptions;
+import com.klsjnh.domain.aicenter.inference.AiReasoningEffort;
 
+import com.klsjnh.web.aicenter.vo.aichat.AiChatContentPartVo011;
 import com.klsjnh.web.aicenter.vo.aichat.AiChatMessageVo011;
 import com.klsjnh.web.aicenter.vo.aichat.AiChatRequestVo011;
 import com.klsjnh.web.aicenter.vo.aichat.AiChatResponseVo011;
@@ -95,7 +100,7 @@ public class AiInferenceController {
                 vo.getModel(), null);
 
         AiInferenceOutcome outcome = aiInferenceUseCase.chat(operator.id(), target, messages(vo), vo.getTemperature(),
-                vo.getMaxTokens());
+                vo.getMaxTokens(), options(vo));
 
         return Response011.success(funcName, toVo(outcome));
     }
@@ -114,8 +119,8 @@ public class AiInferenceController {
         AiInvokeTarget target = new AiInvokeTarget(vo.getProvider(), vo.getProviderId(), vo.getApi(), vo.getApiId(),
                 vo.getModel(), null);
 
-        Stream<AiInferenceChunk> stream = aiInferenceUseCase.stream(operator.id(), target, messages(vo), vo.getTemperature(),
-                vo.getMaxTokens());
+        Stream<AiInferenceChunk> stream = aiInferenceUseCase.stream(operator.id(), target, messages(vo),
+                vo.getTemperature(), vo.getMaxTokens(), options(vo));
 
         SseEmitter emitter = new SseEmitter(0L);
         CompletableFuture.runAsync(() -> emit(emitter, stream));
@@ -132,13 +137,62 @@ public class AiInferenceController {
     private List<AiChatMessage> messages(AiChatRequestVo011 vo) {
         List<AiChatMessage> messages = new ArrayList<>();
 
-        if (vo.getMessages() != null) {
-            for (AiChatMessageVo011 message : vo.getMessages()) {
-                messages.add(new AiChatMessage(message.getRole(), message.getContent()));
+        try {
+            if (vo.getMessages() != null) {
+                for (AiChatMessageVo011 message : vo.getMessages()) {
+                    if (message.getContentParts() != null && !message.getContentParts().isEmpty()) {
+                        messages.add(new AiChatMessage(message.getRole(), null, parts(message.getContentParts())));
+                    } else {
+                        messages.add(new AiChatMessage(message.getRole(), message.getContent()));
+                    }
+                }
             }
+        } catch (IllegalArgumentException ex) {
+            throw BusinessException.badRequest(ex.getMessage());
         }
 
         return messages;
+    }
+
+    /**
+     * Build the domain content parts from the request VO.
+     *
+     * @param voParts request parts
+     * @return domain parts
+     */
+    private List<AiChatContentPart> parts(List<AiChatContentPartVo011> voParts) {
+        List<AiChatContentPart> parts = new ArrayList<>();
+
+        for (AiChatContentPartVo011 part : voParts) {
+            if (AiChatContentPart.TYPE_TEXT.equals(part.getType())) {
+                parts.add(AiChatContentPart.text(part.getText()));
+            } else {
+                parts.add(AiChatContentPart.imageUrl(part.getImageUrl()));
+            }
+        }
+
+        return parts;
+    }
+
+    /**
+     * Build the optional controls from the request VO.
+     *
+     * @param vo request
+     * @return options, null when the request asks for nothing special
+     */
+    private AiInferenceOptions options(AiChatRequestVo011 vo) {
+        try {
+            AiReasoningEffort effort = AiReasoningEffort.from(vo.getReasoningEffort());
+            boolean jsonObject = Boolean.TRUE.equals(vo.getResponseFormatJson());
+
+            if (!jsonObject && effort == null) {
+                return null;
+            }
+
+            return new AiInferenceOptions(jsonObject, effort);
+        } catch (IllegalArgumentException ex) {
+            throw BusinessException.badRequest(ex.getMessage());
+        }
     }
 
     /**

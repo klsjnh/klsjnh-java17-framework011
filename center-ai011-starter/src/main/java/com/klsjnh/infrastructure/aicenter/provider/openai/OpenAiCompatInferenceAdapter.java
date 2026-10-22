@@ -20,9 +20,11 @@ import com.klsjnh.common.util.HttpResponse011;
 import com.klsjnh.common.util.HttpResponseStream011;
 import com.klsjnh.common.util.HttpUtil011;
 
+import com.klsjnh.domain.aicenter.inference.AiChatContentPart;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
 import com.klsjnh.domain.aicenter.inference.AiInferenceChunk;
 import com.klsjnh.domain.aicenter.inference.AiInferenceCommand;
+import com.klsjnh.domain.aicenter.inference.AiInferenceOptions;
 import com.klsjnh.domain.aicenter.inference.AiInferencePort;
 import com.klsjnh.domain.aicenter.inference.AiInferenceResult;
 
@@ -73,7 +75,7 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
      * @param krtConfig framework config (krt.ai-center.chat-timeout-seconds)
      */
     public OpenAiCompatInferenceAdapter(KrtAiConfig011 krtConfig) {
-        this.timeout = Duration.ofSeconds(krtConfig.getAiCenter().getChatTimeoutSeconds());
+        this.timeout = Duration.ofSeconds(krtConfig.getChatTimeoutSeconds());
     }
 
     /**
@@ -113,8 +115,7 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
             HttpResponse011 response = HttpUtil011.postJson(url, body(command, false), headers, timeout);
 
             if (!response.isSuccess()) {
-                throw new IllegalStateException("ai inference failed: HTTP " + response.status() + " "
-                        + abbreviate(response.body()));
+                throw new IllegalStateException(failure(response.status(), response.body()));
             }
 
             return parse(response.body());
@@ -144,8 +145,7 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
             HttpResponseStream011 response = HttpUtil011.postJsonStream(url, body(command, true), headers, timeout);
 
             if (!response.isSuccess()) {
-                throw new IllegalStateException("ai inference failed: HTTP " + response.status() + " "
-                        + snippet(response.body()));
+                throw new IllegalStateException(failure(response.status(), snippet(response.body())));
             }
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8));
@@ -182,7 +182,24 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
         for (AiChatMessage message : command.messages()) {
             ObjectNode node = messages.addObject();
             node.put("role", message.role());
-            node.put("content", message.content());
+
+            if (message.contentParts() == null || message.contentParts().isEmpty()) {
+                node.put("content", message.content());
+                continue;
+            }
+
+            ArrayNode parts = node.putArray("content");
+
+            for (AiChatContentPart part : message.contentParts()) {
+                ObjectNode item = parts.addObject();
+                item.put("type", part.type());
+
+                if (AiChatContentPart.TYPE_TEXT.equals(part.type())) {
+                    item.put("text", part.text());
+                } else {
+                    item.putObject("image_url").put("url", part.imageUrl());
+                }
+            }
         }
 
         if (command.temperature() != null) {
@@ -191,6 +208,17 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
 
         if (command.maxTokens() != null) {
             root.put("max_tokens", command.maxTokens());
+        }
+
+        AiInferenceOptions options = command.options();
+
+        if (options != null) {
+            if (options.jsonObject()) {
+                root.putObject("response_format").put("type", "json_object");
+            }
+            if (options.reasoningEffort() != null) {
+                root.put("reasoning_effort", options.reasoningEffort().getCode());
+            }
         }
 
         if (stream) {
@@ -299,6 +327,19 @@ public class OpenAiCompatInferenceAdapter implements AiInferencePort {
         }
 
         return value;
+    }
+
+    /**
+     * Build a stable, key-free failure message using the shared status
+     * classification, so callers can tell auth, payload size, throttling and
+     * upstream failures apart.
+     *
+     * @param status http status
+     * @param body   response body snippet
+     * @return failure message
+     */
+    private String failure(int status, String body) {
+        return "ai inference failed: " + HttpUtil011.describeStatus(status) + " " + abbreviate(body);
     }
 
     /**

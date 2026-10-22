@@ -62,4 +62,12 @@ public class AiChatRequestVo011 {
     /** Max output tokens, optional. */
     @Schema(description = "最大输出 token（可选）")
     private Integer maxTokens;
+
+    /** Ask for response_format json_object. */
+    @Schema(description = "结构化 JSON 输出（response_format=json_object；不可与 stream 同用）")
+    private Boolean responseFormatJson;
+
+    /** Controlled reasoning effort: none / low / medium / high. */
+    @Schema(description = "推理强度（none / low / medium / high；仅对 allow-list 内的 provider 生效）")
+    private String reasoningEffort;
 }

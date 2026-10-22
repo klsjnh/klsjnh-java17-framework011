@@ -411,6 +411,26 @@ public class AiModelProviderUseCase {
     }
 
     /**
+     * Probe one model over /chat/completions with the provider's default key.
+     *
+     * @param providerCode provider code
+     * @param model        model name
+     * @return probe result, never null
+     */
+    public AiModelProbePort.ProbeResult testChat(String operatorId, String providerCode, String model) {
+        authorizationPort.assertHas(operatorId, AiModelProviderPermissionCodes011.TEST_CONNECTION);
+
+        AiModelProvider provider = requireProviderByCode(providerCode);
+        List<AiModelProviderApi> apis = apiRepository.findByMaster(provider.id().value());
+
+        if (apis.isEmpty()) {
+            return new AiModelProbePort.ProbeResult(false, "no enabled api key", null);
+        }
+
+        return probePort.probeChat(provider.baseUrl(), apis.get(0).apiKey(), model);
+    }
+
+    /**
      * Export all provider rows (permission-gated; api keys are never exported).
      *
      * @param operator authenticated operator

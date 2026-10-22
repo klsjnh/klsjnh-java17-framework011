@@ -13,6 +13,7 @@ package com.klsjnh.common.util;
  *      2026.09.19  jdk http client helper
  *      2026.09.19  add binary GET and multipart upload
  *      2026.09.26  outbound url guard + response size cap + no redirects
+ *      2026.10.22  shared upstream status classification (auth / 413 / 429 / 5xx)
  *
  */
 
@@ -62,6 +63,56 @@ public final class HttpUtil011 {
     private static final Duration MEDIA_TIMEOUT = Duration.ofSeconds(30);
 
     /**
+     * Upstream status: missing / invalid credentials.
+     */
+    public static final int STATUS_UNAUTHORIZED = 401;
+
+    /**
+     * Upstream status: authenticated but not allowed.
+     */
+    public static final int STATUS_FORBIDDEN = 403;
+
+    /**
+     * Upstream status: request body over the provider limit.
+     */
+    public static final int STATUS_PAYLOAD_TOO_LARGE = 413;
+
+    /**
+     * Upstream status: throttled.
+     */
+    public static final int STATUS_TOO_MANY_REQUESTS = 429;
+
+    /**
+     * First upstream 5xx status.
+     */
+    public static final int STATUS_SERVER_ERROR = 500;
+
+    /**
+     * Hint: authentication failed.
+     */
+    private static final String HINT_AUTH = "authentication failed";
+
+    /**
+     * Hint: payload too large.
+     */
+    private static final String HINT_TOO_LARGE = "request payload too large";
+
+    /**
+     * Hint: throttled.
+     */
+    private static final String HINT_RATE_LIMITED = "rate limited";
+
+    /**
+     * Hint: upstream 5xx.
+     */
+    private static final String HINT_UPSTREAM = "upstream error";
+
+    /**
+     * Hint: any other non-2xx.
+     */
+    private static final String HINT_REJECTED = "request rejected";
+
+    /**
      * Shared http client (never follow redirects — blocks open-redirect SSRF).
      */
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -73,6 +124,44 @@ public final class HttpUtil011 {
      * Utility holder, no instances.
      */
     private HttpUtil011() {
+    }
+
+    /**
+     * Classify a non-2xx upstream status into a safe hint. Shared by every
+     * outbound adapter so auth / size / throttling / 5xx failures read the same
+     * way; never echoes headers or the request body.
+     *
+     * @param status upstream http status
+     * @return hint, never null
+     */
+    public static String failureHint(int status) {
+        if (status == STATUS_UNAUTHORIZED || status == STATUS_FORBIDDEN) {
+            return HINT_AUTH;
+        }
+
+        if (status == STATUS_PAYLOAD_TOO_LARGE) {
+            return HINT_TOO_LARGE;
+        }
+
+        if (status == STATUS_TOO_MANY_REQUESTS) {
+            return HINT_RATE_LIMITED;
+        }
+
+        if (status >= STATUS_SERVER_ERROR) {
+            return HINT_UPSTREAM;
+        }
+
+        return HINT_REJECTED;
+    }
+
+    /**
+     * Describe a non-2xx upstream status as {@code HTTP <status> (<hint>)}.
+     *
+     * @param status upstream http status
+     * @return description, never null
+     */
+    public static String describeStatus(int status) {
+        return "HTTP " + status + " (" + failureHint(status) + ")";
     }
 
     /**

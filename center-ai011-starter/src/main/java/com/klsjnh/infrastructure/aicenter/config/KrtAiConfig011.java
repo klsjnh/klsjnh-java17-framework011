@@ -4,42 +4,53 @@ package com.klsjnh.infrastructure.aicenter.config;
  *
  *      @author     xiangrkrs@163.com
  *      @version    ver 0.0.1
- *      @createdate 2026.09.25
- *      @modifydate 2026.09.28
+ *      @createdate 2026.09.26
+ *      @modifydate
  *
  *===========================================
  *          modify history
  *
- *      2026.09.25  ai-center krt config (split from KrtConfig011, absorbs the
- *                  media key-prefix @Value)
- *      2026.09.28  moved from infrastructure.config to the AI-owned package so
- *                  the core scan of infrastructure.config cannot pick it up
+ *      2026.09.26  ai center config (bound to krt.ai-center)
+ *      2026.10.22  flatten chat-timeout-seconds (krt.ai-center.chat-timeout-seconds);
+ *                  add inference guards (image data url budget, reasoning allow-list)
  *
  */
 
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * AI-center framework config bound to the {@code krt.ai-center.*} keys:
- * inference timeout and generated media key prefix. Lives in the AI starter and
- * is scanned by {@code AiCenterAutoConfiguration011} through
+ * inference timeout, multimodal input guards and generated media key prefix.
+ * Lives in the AI starter and is scanned by
+ * {@code AiCenterAutoConfiguration011} through
  * {@code com.klsjnh.infrastructure.aicenter} — never through the core scan.
+ * <p>
+ * The timeout key is flat on purpose: {@code krt.ai-center.chat-timeout-seconds}
+ * (a nested {@code ai-center} field silently bound
+ * {@code krt.ai-center.ai-center.chat-timeout-seconds} before 2026.10.22).
+ * </p>
  */
 
-@Slf4j
 @Data
 @Component
 @ConfigurationProperties(prefix = "krt.ai-center")
 public class KrtAiConfig011 {
 
     /**
-     * AI settings.
+     * Chat request timeout seconds (krt.ai-center.chat-timeout-seconds).
      */
-    private AiConfig aiCenter = new AiConfig();
+    private long chatTimeoutSeconds = 60;
+
+    /**
+     * Multimodal inference guards (krt.ai-center.inference.*).
+     */
+    private InferenceConfig inference = new InferenceConfig();
 
     /**
      * Generated media settings (krt.ai-center.media.*).
@@ -47,15 +58,24 @@ public class KrtAiConfig011 {
     private MediaConfig media = new MediaConfig();
 
     /**
-     * AI settings.
+     * Multimodal input guards.
      */
     @Data
-    public static class AiConfig {
+    public static class InferenceConfig {
 
         /**
-         * Chat request timeout seconds (krt.ai-center.chat-timeout-seconds).
+         * Max decoded bytes of one {@code data:image/...;base64,} part
+         * (krt.ai-center.inference.max-image-data-url-bytes). https URLs are not
+         * downloaded and therefore not limited here.
          */
-        private long chatTimeoutSeconds = 60;
+        private long maxImageDataUrlBytes = 10L * 1024 * 1024;
+
+        /**
+         * Provider codes allowed to receive {@code reasoning_effort}
+         * (krt.ai-center.inference.reasoning-effort-providers). Empty means the
+         * vendor extension is never sent — requesting it fails fast.
+         */
+        private List<String> reasoningEffortProviders = new ArrayList<>();
     }
 
     /**

@@ -64,7 +64,7 @@ web ──► application ──► domain ◄── infrastructure
 |------|--------|----------|
 | **存储中心** | 对象存储统一端口：local011 / minio011 / s3011（S3 兼容，共用 MinIO 客户端）内置 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/archive011/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | **现行** [027 starter](docs/infrastructure011/015.storage-center/011.topic-design.md) · 历史底册 [011.storage-center](docs/archive011/infrastructure011/011.storage-center/011.topic-design.md)（已归档） |
 | **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | **现行** [026 starter](docs/infrastructure011/016.message-center/011.topic-design.md) · 历史 [013.message-center](docs/archive011/013.message-center/011.topic-design.md)（已归档） |
-| **AI 中心** | 三大能力模块：**推理（SSE 流式）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | **现行** [025 starter](docs/infrastructure011/017.ai-center/011.topic-design.md) · 历史 [015.ai-center](docs/archive011/015.ai-center/011.topic-design.md)（已归档） |
+| **AI 中心** | 三大能力模块：**推理（文本/多模态输入 + SSE 流式、结构化 JSON + 受控 reasoning）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | **现行** [025 starter](docs/infrastructure011/017.ai-center/011.topic-design.md) · 历史 [015.ai-center](docs/archive011/015.ai-center/011.topic-design.md)（已归档） |
 | **数据源中心** | 多数据源管理 + **参数化查询（读/写分接口，execute 独立权限码）** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [018.datasource-center](docs/infrastructure011/018.datasource-center/011.topic-design.md) · **starter：`center-datasource011-starter`**（kernel 端口留 core；执行器在 data-mybatis） |
 | **访问中心**（原 IAM / 权限中心口径） | 组织 / 角色 / 菜单 / 权限目录 / 授权适配；用户 CRUD + 登录在 core | [013.access-center](docs/infrastructure011/013.access-center/011.topic-design.md)（现称访问中心 · **starter：`center-access011-starter`**） |
 | **平台中心** | 字典 julyDictionary + 系统配置 julyConfig 管理面 | [014.platform-center](docs/infrastructure011/014.platform-center/README.md)（**starter：`center-platform011-starter`**） |
@@ -144,7 +144,7 @@ bash docs/deploy/deploy.sh                # 默认 mount → 备 runtime + 打�
 | ✅ | **访问中心**（`center-access011-starter` / 文档 013）：组织 · 菜单 · 角色 · 权限目录；**用户 CRUD/登录在 core**；**平台中心**配置（023）· 字典（027）；**调度**（022，quartz011 starter，含执行审计主子表） |
 | ✅ | platform011：数据导出（025，注册制 Provider / EXPORT 审计）+ 数据导入（032，xlsx；Controller 按需；IMPORT 审计）+ 备份（BACKUP 审计） |
 | ✅ | datasource：数据源管理（026，表驱动 + 双向驱动 + 测试连接 + 排序 + 通用 SQL 执行/分页 + **分页方言开放 SPI**，内置 mysql/postgresql/oracle/sqlserver）——**管理面/Sql/Sync 在 `center-datasource011-starter`** |
-| ✅ | aicenter：模型接入（028，主子表 + 密钥脱敏 + 提供商/密钥级探测 + 导出）· 三大能力（030，**推理（SSE 流式）/ 图片 / 语音（TTS+ASR）**，能力 SPI + 通用 OpenAI 兼容适配器 + 产物落盘（调用必传实例+桶，无默认），id/code 解析、model 直传）· **提示词管理（主子表 + `render` 公共件）** |
+| ✅ | aicenter：模型接入（028，主子表 + 密钥脱敏 + 连通性/模型对话探测 + 导出）· 三大能力（030，**推理（文本/多模态输入 + SSE 流式 + 结构化 JSON/受控 reasoning）/ 图片 / 语音（TTS+ASR）**，能力 SPI + 通用 OpenAI 兼容适配器 + 产物落盘（调用必传实例+桶，无默认），id/code 解析、model 直传）· **提示词管理（主子表 + `render` 公共件）** |
 | ✅ | storagecenter：存储中心管理面 + 在线编辑（029，**主子表** `july_storage_provider` + `_bucket` + 桶/对象 + readText/saveText + 预签名 + **provider 注册表**） |
 | ✅ | 装配单轨（宿主零框架扫描 + starter imports 自注册 + 缺安全链熔断）· 中心 starter 命名 `center-<名>011-starter` · 金标准协议 029 |
 | ✅ | **中心整体剥离**（0925b）：AI / 消息 / 存储的 domain+application+infrastructure+web 全部迁入 `center-ai011-starter` / `center-message011-starter` / `center-storage011-starter`；core 仅保留端口契约（storagecenter.object）与备份软依赖；金标准协议 [029](docs/infrastructure011/029.topic-golden-verification.md) |

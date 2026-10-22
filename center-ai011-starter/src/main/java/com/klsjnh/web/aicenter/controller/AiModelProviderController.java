@@ -38,6 +38,7 @@ import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiSaveVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiQueryVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiUpdateVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderApiVo011;
+import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderChatTestVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderInsertVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderQueryVo011;
 import com.klsjnh.web.aicenter.vo.aimodelprovider.AiModelProviderSaveWholeVo011;
@@ -291,6 +292,24 @@ public class AiModelProviderController {
 
         return Response011.success(funcName,
                 aiModelProviderConverter.toTestResultVo(aiModelProviderUseCase.testConnectionApi(operator.id(), idVo.getId())));
+    }
+
+    /**
+     * Probe one model over the chat endpoint (model + key + reply shape).
+     *
+     * @param vo request with provider code + model
+     * @return probe result
+     */
+    @PostMapping("/testChat")
+    @Operation(summary = "测试模型对话（指定 model，POST chat/completions 低成本探测；不写业务数据）")
+    public Response011<AiModelProviderTestResultVo011> testChat(@Valid @RequestBody AiModelProviderChatTestVo011 vo,
+            HttpServletRequest request) {
+        String funcName = "test chat";
+        Operator011 operator = Operator011Resolver.resolve(request);
+
+
+        return Response011.success(funcName, aiModelProviderConverter.toTestResultVo(
+                aiModelProviderUseCase.testChat(operator.id(), vo.getProviderCode(), vo.getModel())));
     }
 
     /**
