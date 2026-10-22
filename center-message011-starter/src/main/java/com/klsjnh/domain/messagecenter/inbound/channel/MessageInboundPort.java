@@ -55,6 +55,20 @@ public interface MessageInboundPort {
     }
 
     /**
+     * Optional vendor handshake (URL verification / challenge). Returning a
+     * non-null body makes the framework answer the callback with that body
+     * verbatim instead of running the receive pipeline. Default: no handshake.
+     *
+     * @param config  whole channel config as key-value pairs, nullable
+     * @param headers request headers, never null
+     * @param rawBody raw request body, nullable
+     * @return response body for the handshake, or null to continue receiving
+     */
+    default String handshake(Map<String, String> config, Map<String, String> headers, String rawBody) {
+        return null;
+    }
+
+    /**
      * Parse the raw request body into a neutral inbound event.
      *
      * @param config  whole channel config as key-value pairs, nullable

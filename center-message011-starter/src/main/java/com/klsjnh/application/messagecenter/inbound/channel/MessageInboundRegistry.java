@@ -16,6 +16,7 @@ package com.klsjnh.application.messagecenter.inbound.channel;
 
 import com.klsjnh.domain.messagecenter.inbound.channel.InboundMessageListener;
 import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundPort;
+import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundProcessor;
 
 import org.springframework.stereotype.Component;
 
@@ -40,20 +41,41 @@ public class MessageInboundRegistry {
     private final Map<String, MessageInboundPort> ports;
 
     /**
-     * Inbound listener beans.
+     * Inbound listener beans (legacy supports-based binding).
      */
     private final List<InboundMessageListener> listeners;
 
     /**
-     * Create the registry from all inbound port and listener beans.
-     *
-     * @param ports     inbound port beans found in the context
-     * @param listeners inbound listener beans found in the context
+     * Channel instance code to explicitly bound processors.
      */
-    public MessageInboundRegistry(List<MessageInboundPort> ports, List<InboundMessageListener> listeners) {
+    private final Map<String, List<MessageInboundProcessor>> processors;
+
+    /**
+     * Create the registry from all inbound port, processor and listener beans.
+     *
+     * @param ports      inbound port beans found in the context
+     * @param listeners  legacy listener beans found in the context
+     * @param processors explicitly bound processor beans found in the context
+     */
+    public MessageInboundRegistry(List<MessageInboundPort> ports, List<InboundMessageListener> listeners,
+            List<MessageInboundProcessor> processors) {
         this.ports = ports.stream()
                 .collect(Collectors.toUnmodifiableMap(MessageInboundPort::channelCode, Function.identity()));
         this.listeners = List.copyOf(listeners);
+
+        Map<String, List<MessageInboundProcessor>> byChannel = new java.util.LinkedHashMap<>();
+        for (MessageInboundProcessor processor : processors) {
+            if (processor.channelCodes() == null) {
+                continue;
+            }
+            for (String channelCode : processor.channelCodes()) {
+                if (channelCode != null && !channelCode.isBlank()) {
+                    byChannel.computeIfAbsent(channelCode, key -> new java.util.ArrayList<>()).add(processor);
+                }
+            }
+        }
+        byChannel.replaceAll((key, value) -> List.copyOf(value));
+        this.processors = Map.copyOf(byChannel);
     }
 
     /**
@@ -74,5 +96,15 @@ public class MessageInboundRegistry {
      */
     public List<InboundMessageListener> listenersFor(String channelCode) {
         return listeners.stream().filter(listener -> listener.supports(channelCode)).toList();
+    }
+
+    /**
+     * Processors explicitly bound to the channel instance code.
+     *
+     * @param channelCode channel code
+     * @return bound processors, never null
+     */
+    public List<MessageInboundProcessor> processorsFor(String channelCode) {
+        return processors.getOrDefault(channelCode, List.of());
     }
 }

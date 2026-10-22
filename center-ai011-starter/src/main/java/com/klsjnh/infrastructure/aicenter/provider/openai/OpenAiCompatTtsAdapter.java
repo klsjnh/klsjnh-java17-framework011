@@ -146,7 +146,20 @@ public class OpenAiCompatTtsAdapter implements AiTtsPort {
      * @return mime type
      */
     private String mime(String format) {
-        return "wav".equalsIgnoreCase(format) ? "audio/wav" : "audio/mpeg";
+        String value = format == null ? "mp3" : format.toLowerCase();
+
+        switch (value) {
+            case "wav":
+                return "audio/wav";
+            case "opus":
+                return "audio/ogg";
+            case "flac":
+                return "audio/flac";
+            case "pcm":
+                return "audio/pcm";
+            default:
+                return "audio/mpeg";
+        }
     }
 
     /**

@@ -24,6 +24,7 @@ import com.klsjnh.domain.messagecenter.inbound.channel.InboundReply;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannel;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannelRepository;
 import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundPort;
+import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundProcessor;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessageRepository;
 import com.klsjnh.domain.shared.AuditInfo;
 import com.klsjnh.domain.shared.EntityId;
@@ -33,18 +34,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Receive-path unit tests: zero supporting listeners fail; anonymous operatorId
@@ -75,14 +80,14 @@ class MessageInboundUseCaseReceiveTest {
         when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
         when(inboundPort.parse(any(), any(), anyString())).thenReturn(sampleEvent());
 
-        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of());
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(), List.of());
         MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
                 authorizationPort);
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> useCase.receive(null, "feishu_demo", Map.of(), "{\"x\":1}"));
 
-        assertTrue(ex.getMessage().contains("no inbound listener supports channel"));
+        assertTrue(ex.getMessage().contains("no inbound processor bound to channel"));
         verify(messageRepository, never()).insert(any());
         verify(authorizationPort, never()).assertHas(any(), anyString());
     }
@@ -109,7 +114,7 @@ class MessageInboundUseCaseReceiveTest {
             }
         };
 
-        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(listener));
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(listener), List.of());
         MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
                 authorizationPort);
 
@@ -141,12 +146,128 @@ class MessageInboundUseCaseReceiveTest {
             }
         };
 
-        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(listener));
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(listener), List.of());
         MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
                 authorizationPort);
 
         assertDoesNotThrow(() -> useCase.receive("op-1", "feishu_demo", Map.of(), "{}"));
         verify(authorizationPort).assertHas(eq("op-1"), anyString());
+    }
+
+    /**
+     * Event ingress (long connection / SDK) reuses persist and dispatch.
+     */
+    @Test
+    void receiveEventPersistsAndDispatches() {
+        when(inboundPort.channelCode()).thenReturn("feishu");
+        when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
+
+        InboundMessageListener listener = new InboundMessageListener() {
+            @Override
+            public boolean supports(String channelCode) {
+                return true;
+            }
+
+            /** {@inheritDoc} */
+            @Override
+            public InboundReply onMessage(InboundMessage message) {
+                return null;
+            }
+        };
+
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(listener), List.of());
+        MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
+                authorizationPort);
+
+        MessageInboundResult result = useCase.receiveEvent(null, "feishu_demo", sampleEvent());
+
+        assertEquals(false, result.duplicate());
+        verify(messageRepository).insert(any());
+        verify(messageRepository).update(any());
+    }
+
+    /**
+     * Persist-only mode accepts a channel with no listener.
+     */
+    @Test
+    void persistOnlyWhenChannelAllowsIt() {
+        when(inboundPort.channelCode()).thenReturn("feishu");
+        when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(persistOnlyChannel());
+        when(inboundPort.parse(any(), any(), anyString())).thenReturn(sampleEvent());
+
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(), List.of());
+        MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
+                authorizationPort);
+
+        assertDoesNotThrow(() -> useCase.receive(null, "feishu_demo", Map.of(), "{}"));
+        verify(messageRepository).insert(any());
+        verify(messageRepository).update(any());
+    }
+
+    /**
+     * Event ingress dedupes by raw message id.
+     */
+    @Test
+    void receiveEventDeduplicates() {
+        when(inboundPort.channelCode()).thenReturn("feishu");
+        when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
+
+        var existing = mock(com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessage.class);
+        when(existing.id()).thenReturn(EntityId.generate());
+        when(messageRepository.findByChannelAndRawId("feishu_demo", "raw-1")).thenReturn(existing);
+
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(), List.of());
+        MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
+                authorizationPort);
+
+        MessageInboundResult result = useCase.receiveEvent(null, "feishu_demo", sampleEvent());
+
+        assertTrue(result.duplicate());
+        verify(messageRepository, never()).insert(any());
+    }
+
+    /**
+     * An explicitly bound processor receives only its channel instance.
+     */
+    @Test
+    void processorBoundToChannelDispatches() {
+        when(inboundPort.channelCode()).thenReturn("feishu");
+        when(channelRepository.findEnabledByCode("feishu_demo")).thenReturn(sampleChannel());
+        AtomicBoolean called = new AtomicBoolean();
+
+        MessageInboundProcessor processor = new MessageInboundProcessor() {
+            @Override
+            public Set<String> channelCodes() {
+                return Set.of("feishu_demo");
+            }
+
+            /** {@inheritDoc} */
+            @Override
+            public InboundReply process(InboundMessage message) {
+                called.set(true);
+                return null;
+            }
+        };
+
+        MessageInboundRegistry registry = new MessageInboundRegistry(List.of(inboundPort), List.of(),
+                List.of(processor));
+        MessageInboundUseCase useCase = new MessageInboundUseCase(channelRepository, messageRepository, registry,
+                authorizationPort);
+
+        useCase.receiveEvent(null, "feishu_demo", sampleEvent());
+
+        assertTrue(called.get());
+        verify(messageRepository).insert(any());
+    }
+
+    /**
+     * Builds a sample enabled inbound channel for tests.
+     *
+     * @return sample channel
+     */
+    private static JulyInboundChannel persistOnlyChannel() {
+        return JulyInboundChannel.create(EntityId.generate(), "feishu_demo", null, "feishu demo", "feishu",
+                "{\"listenerRequired\":\"false\"}", null, AuditInfo.empty());
     }
 
     /**

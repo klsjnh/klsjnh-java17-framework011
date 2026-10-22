@@ -29,6 +29,7 @@ import com.klsjnh.domain.messagecenter.inbound.channel.InboundReply;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannel;
 import com.klsjnh.domain.messagecenter.inbound.channel.JulyInboundChannelRepository;
 import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundPort;
+import com.klsjnh.domain.messagecenter.inbound.channel.MessageInboundProcessor;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyMessageInboundPermissionCodes011;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessage;
 import com.klsjnh.domain.messagecenter.inbound.message.JulyInboundMessageQuerySpec;
@@ -112,6 +113,161 @@ public class MessageInboundUseCase {
             authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.RECEIVE);
         }
 
+        JulyInboundChannel channel = requireChannel(channelCode);
+        MessageInboundPort port = requirePort(channel);
+        Map<String, String> config = parseConfig(channel.config());
+
+        InboundMessage event = port.parse(config, headers == null ? Map.of() : headers, rawBody);
+
+        if (event == null) {
+            throw BusinessException.badRequest("inbound channel returned an empty message");
+        }
+
+        return ingest(channel, config, event, port);
+    }
+
+    /**
+     * Ingest an already-parsed event (long connection / SDK / MQ ingress) into
+     * the same dedupe-persist-dispatch pipeline as the HTTP callback. No vendor
+     * handshake or reply encoding is involved.
+     *
+     * @param operatorId  operator id, nullable for anonymous ingress
+     * @param channelCode channel code
+     * @param event       parsed inbound event
+     * @return receive result, never null
+     */
+    @Transactional
+    public MessageInboundResult receiveEvent(String operatorId, String channelCode, InboundMessage event) {
+        if (!StringUtil011.isBlank(operatorId)) {
+            authorizationPort.assertHas(operatorId, JulyMessageInboundPermissionCodes011.RECEIVE);
+        }
+
+        if (event == null) {
+            throw BusinessException.badRequest("inbound event is required");
+        }
+
+        JulyInboundChannel channel = requireChannel(channelCode);
+
+        return ingest(channel, parseConfig(channel.config()), event, null);
+    }
+
+    /**
+     * Vendor handshake (URL verification / challenge) before receiving. Returns
+     * the body the callback must answer with, or null when no handshake applies.
+     *
+     * @param channelCode channel code
+     * @param headers     request headers
+     * @param rawBody     raw request body
+     * @return handshake response body, nullable
+     */
+    public String handshake(String channelCode, Map<String, String> headers, String rawBody) {
+        JulyInboundChannel channel = requireChannel(channelCode);
+        MessageInboundPort port = requirePort(channel);
+
+        return port.handshake(parseConfig(channel.config()), headers == null ? Map.of() : headers, rawBody);
+    }
+
+    /**
+     * Shared dedupe / persist / dispatch pipeline.
+     *
+     * @param channel inbound channel
+     * @param event   inbound event
+     * @param port    inbound port for reply encoding, null for event ingress
+     * @return receive result
+     */
+    private MessageInboundResult ingest(JulyInboundChannel channel, Map<String, String> config,
+            InboundMessage event, MessageInboundPort port) {
+        String channelCode = channel.channelCode();
+
+        if (!StringUtil011.isBlank(event.rawMessageId())) {
+            JulyInboundMessage existing = messageRepository.findByChannelAndRawId(channelCode, event.rawMessageId());
+            if (existing != null) {
+                return new MessageInboundResult(existing.id().value(), true, null);
+            }
+        }
+
+        List<MessageInboundProcessor> processors = registry.processorsFor(channelCode);
+        List<InboundMessageListener> listeners = processors.isEmpty() ? registry.listenersFor(channelCode) : List.of();
+
+        if (processors.isEmpty() && listeners.isEmpty() && required(config)) {
+            throw BusinessException.badRequest(
+                    "no inbound processor bound to channel: " + channelCode
+                            + " (register a MessageInboundProcessor or set config listenerRequired=false)");
+        }
+
+        JulyInboundMessage message = newMessage(channel, event);
+        messageRepository.insert(message);
+
+        if (processors.isEmpty() && listeners.isEmpty()) {
+            message.markHandled();
+            messageRepository.update(message);
+            return new MessageInboundResult(message.id().value(), false, null);
+        }
+
+        InboundReply reply = processors.isEmpty() ? handle(listeners, event, message)
+                : handleProcessors(processors, event, message);
+
+        messageRepository.update(message);
+
+        String responseBody = reply == null || port == null ? null : port.encodeReply(reply);
+
+        return new MessageInboundResult(message.id().value(), false, responseBody);
+    }
+
+    /**
+     * Whether the channel requires a processor / listener (channel config,
+     * default true).
+     *
+     * @param config channel config
+     * @return true when required
+     */
+    private boolean required(Map<String, String> config) {
+        String flag = config.getOrDefault("processorRequired", config.getOrDefault("listenerRequired", "true"));
+
+        return !"false".equalsIgnoreCase(flag);
+    }
+
+    /**
+     * Dispatch to explicitly bound processors; first non-null reply wins.
+     *
+     * @param processors bound processors
+     * @param event      inbound event
+     * @param message    persisted record
+     * @return first reply, or null
+     */
+    private InboundReply handleProcessors(List<MessageInboundProcessor> processors, InboundMessage event,
+            JulyInboundMessage message) {
+        InboundReply reply = null;
+
+        for (MessageInboundProcessor processor : processors) {
+            try {
+                InboundReply candidate = processor.process(event);
+
+                if (candidate != null) {
+                    reply = candidate;
+                    break;
+                }
+
+                message.markHandled();
+            } catch (Exception ex) {
+                message.markFailed(ex.getClass().getSimpleName() + ": " + ex.getMessage());
+            }
+        }
+
+        if (reply != null) {
+            message.markHandled();
+        }
+
+        return reply;
+    }
+
+    /**
+     * Require an enabled channel by code.
+     *
+     * @param channelCode channel code
+     * @return channel
+     */
+    private JulyInboundChannel requireChannel(String channelCode) {
         if (StringUtil011.isBlank(channelCode)) {
             throw BusinessException.badRequest("channel code is required");
         }
@@ -122,44 +278,23 @@ public class MessageInboundUseCase {
             throw BusinessException.badRequest("channel not enabled or not found: " + channelCode);
         }
 
+        return channel;
+    }
+
+    /**
+     * Require an inbound port for the channel's provider type.
+     *
+     * @param channel channel
+     * @return port
+     */
+    private MessageInboundPort requirePort(JulyInboundChannel channel) {
         MessageInboundPort port = registry.port(channel.providerType());
 
         if (port == null) {
             throw BusinessException.badRequest("no inbound port for provider type: " + channel.providerType());
         }
 
-        InboundMessage event = port.parse(parseConfig(channel.config()), headers == null ? Map.of() : headers,
-                rawBody);
-
-        if (event == null) {
-            throw BusinessException.badRequest("inbound channel returned an empty message");
-        }
-
-        if (!StringUtil011.isBlank(event.rawMessageId())) {
-            JulyInboundMessage existing = messageRepository.findByChannelAndRawId(channelCode, event.rawMessageId());
-            if (existing != null) {
-                return new MessageInboundResult(existing.id().value(), true, null);
-            }
-        }
-
-        List<InboundMessageListener> listeners = registry.listenersFor(channel.channelCode());
-
-        if (listeners.isEmpty()) {
-            throw BusinessException.badRequest(
-                    "no inbound listener supports channel: " + channel.channelCode()
-                            + " (Port alone is not enough; register an InboundMessageListener)");
-        }
-
-        JulyInboundMessage message = newMessage(channel, event);
-        messageRepository.insert(message);
-
-        InboundReply reply = handle(listeners, event, message);
-
-        messageRepository.update(message);
-
-        String responseBody = reply == null ? null : port.encodeReply(reply);
-
-        return new MessageInboundResult(message.id().value(), false, responseBody);
+        return port;
     }
 
     /**

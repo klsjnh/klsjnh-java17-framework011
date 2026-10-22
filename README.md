@@ -14,7 +14,7 @@ Java 17 **纯血 DDD** 技术底座 —— Maven 多模块工程，供第三方�
 | 数据库 | MySQL 8 / Oracle（ojdbc8）/ SQL Server（mssql-jdbc）· Druid 1.2.23；分页方言 SPI 另含 postgresql（**无预置 PG 驱动**） |
 | 调度 | Quartz（spring-boot-starter-quartz，内存模式） |
 | 对象存储 | MinIO SDK 8.5.7（local011 / minio011 / s3011 内置适配器——s3011 即 S3 兼容目标，共用 MinIO 客户端；cos011/oss011 等云厂商走 SPI 扩展） |
-| 消息中心 | 内置出站 `inapp` / `webhook` + 内置入站 `webhook`（HMAC 验签）+ 双向渠道 SPI（更多厂商渠道由使用者插件提供） |
+| 消息中心 | 内置出站 `inapp` / `webhook` + 内置入站 `webhook`（HMAC 验签）+ 双向渠道 SPI（Processor 按实例装配 / 入站媒体端口；更多厂商渠道由插件提供） |
 | 鉴权 | JJWT 0.12.6 |
 | AOP | spring-boot-starter-aop（controller IUD 审计） |
 | JSON | Jackson（导出） |
@@ -47,7 +47,7 @@ web ──► application ──► domain ◄── infrastructure
 | center-access011-starter | **访问中心** | 组织 / 角色 / 菜单 / 权限目录 / `AuthorizationPort` 实现 / 生产写白名单门闸标记；**用户 CRUD + 登录留 core** |
 | center-platform011-starter | **平台中心** | 字典 julyDictionary + 系统配置 julyConfig 管理面；**不引则无字典/配置 API**；导出导入备份内核仍在 core |
 | java17-scheduler-quartz011-starter | 调度（**非「调度中心」**） | **完整 julyScheduler** 主子表：管理面 CRUD/启停 + 执行审计 `july_scheduler_audit`（链接列 **`pk_mt`**）+ Quartz（RAMJobStore）+ Handler 注册表 + 启动重注册；不引则无 start；**无独立开启注解，随 `@EnablePlatform011Center` 的 system011 扫描装配**（只引 jar 不启 platform 中心则调度不装配） |
-| center-message011-starter | 消息 | **完整消息中心**：出入两套（渠道 / 模板 / 消息）管理面 + 内置渠道 inapp / webhook（厂商渠道 SPI 扩展） |
+| center-message011-starter | 消息 | **完整消息中心**：出入两套（渠道 / 模板 / 消息）管理面 + 内置渠道 inapp / webhook（厂商渠道 SPI 扩展；入站 Processor 按 bot/实例装配 + 媒体下载端口） |
 | center-ai011-starter | AI | **完整 AI 中心**：管理面（模型接入主子表、提示词业务域）+ 能力引擎（推理 / 图片 / 语音适配器 + agnes / sensenova）+ 媒体落盘 · krt.ai-center 绑定；依赖 center-storage |
 | java17-observability011-starter | 可观测性 | actuator + Prometheus · traceId MDC 过滤器（白名单路径也有 traceId）· 健康指示器（动态数据源池 / 存储默认行 / Quartz 引擎） |
 | java17-app011 | 参考应用 | 唯一 main + 配置 + demo11 样板 + 演示账号播种（demo 内容已移出框架） |
@@ -63,7 +63,7 @@ web ──► application ──► domain ◄── infrastructure
 | 中心 | 一句话 | 架构底册 · **starter 体系文档**（设计 / 架构 / 使用 / 二开） |
 |------|--------|----------|
 | **存储中心** | 对象存储统一端口：local011 / minio011 / s3011（S3 兼容，共用 MinIO 客户端）内置 + **工厂型 provider 注册表**；表驱动多实例 + 实例/桶/对象管理 + 在线编辑；对象元数据为**规约**（非平台能力，见 [016](docs/archive011/infrastructure011/011.storage-center/016.topic-object-metadata-convention.md)） | **现行** [027 starter](docs/infrastructure011/015.storage-center/011.topic-design.md) · 历史底册 [011.storage-center](docs/archive011/infrastructure011/011.storage-center/011.topic-design.md)（已归档） |
-| **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | **现行** [026 starter](docs/infrastructure011/016.message-center/011.topic-design.md) · 历史 [013.message-center](docs/archive011/013.message-center/011.topic-design.md)（已归档） |
+| **消息中心** | 出入两套、渠道可插拔：出站 `MessageChannelPort` + 入站 `MessageInboundPort` / `MessageInboundProcessor` / `MessageMediaPort`；内置 `inapp`/`webhook`，厂商渠道 SPI 扩展 | **现行** [026 starter](docs/infrastructure011/016.message-center/011.topic-design.md) · 历史 [013.message-center](docs/archive011/013.message-center/011.topic-design.md)（已归档） |
 | **AI 中心** | 三大能力模块：**推理（文本/多模态输入 + SSE 流式、结构化 JSON + 受控 reasoning）/ 图片（文生图·图生图）/ 语音（TTS·ASR）**；能力 SPI + 通用 OpenAI 兼容适配器；**提示词管理（主子表 + `render`）**；产物落盘（生命周期归使用方） | **现行** [025 starter](docs/infrastructure011/017.ai-center/011.topic-design.md) · 历史 [015.ai-center](docs/archive011/015.ai-center/011.topic-design.md)（已归档） |
 | **数据源中心** | 多数据源管理 + **参数化查询（读/写分接口，execute 独立权限码）** + **同步体系（S1 单表）**：表驱动多实例 / 方言 SPI / 主子表对照 | [018.datasource-center](docs/infrastructure011/018.datasource-center/011.topic-design.md) · **starter：`center-datasource011-starter`**（kernel 端口留 core；执行器在 data-mybatis） |
 | **访问中心**（原 IAM / 权限中心口径） | 组织 / 角色 / 菜单 / 权限目录 / 授权适配；用户 CRUD + 登录在 core | [013.access-center](docs/infrastructure011/013.access-center/011.topic-design.md)（现称访问中心 · **starter：`center-access011-starter`**） |

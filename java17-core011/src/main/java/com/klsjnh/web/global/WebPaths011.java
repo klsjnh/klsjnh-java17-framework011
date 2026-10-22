@@ -50,6 +50,15 @@ public final class WebPaths011 {
     public static final String MESSAGE_INBOUND_RECEIVE = MESSAGE_INBOUND_MESSAGE + "/receive";
 
     /**
+     * Raw vendor callback endpoint: the request body is the vendor payload
+     * itself (no {@code rawBody} envelope). Handshake responses (URL
+     * verification / challenge) are written verbatim; otherwise the same
+     * receive pipeline runs. Add this exact path to
+     * {@code krt.web.auth-whitelist-paths} for anonymous callbacks.
+     */
+    public static final String MESSAGE_INBOUND_RECEIVE_RAW = MESSAGE_INBOUND_MESSAGE + "/receiveRaw";
+
+    /**
      * Not instantiable.
      */
     private WebPaths011() {

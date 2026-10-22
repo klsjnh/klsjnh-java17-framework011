@@ -234,6 +234,22 @@ public class AiMediaStore011 implements AiMediaStorePort {
             return ".mp3";
         }
 
+        if (mimeType.contains("ogg") || mimeType.contains("opus")) {
+            return ".opus";
+        }
+
+        if (mimeType.contains("flac")) {
+            return ".flac";
+        }
+
+        if (mimeType.contains("pcm")) {
+            return ".pcm";
+        }
+
+        if (mimeType.contains("webp")) {
+            return ".webp";
+        }
+
         return ".bin";
     }
 

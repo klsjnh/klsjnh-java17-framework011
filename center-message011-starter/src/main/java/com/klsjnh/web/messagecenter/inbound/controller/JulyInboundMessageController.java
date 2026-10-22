@@ -43,6 +43,8 @@ import com.klsjnh.web.util.Operator011Resolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -112,6 +114,36 @@ public class JulyInboundMessageController {
         return Response011.success(funcName,
                 julyInboundMessageConverter.toReceiveResultVo(
                         messageInboundUseCase.receive(operatorId, channelCode, collectHeaders(request), rawBody)));
+    }
+
+    /**
+     * Raw vendor callback: the body is the vendor payload itself (no
+     * {@code rawBody} envelope). A vendor handshake (URL verification) is
+     * answered verbatim; otherwise the same receive pipeline runs.
+     *
+     * @param channelCode channel code
+     * @param rawBody     raw vendor body
+     * @param request     http request
+     * @return vendor-facing response body
+     */
+    @PostMapping(value = "/receiveRaw", consumes = MediaType.ALL_VALUE)
+    @Operation(summary = "接收消息（裸报文；URL 校验原样应答；渠道验签归 Port）")
+    public ResponseEntity<String> receiveRaw(@RequestParam("channelCode") String channelCode,
+            @RequestBody(required = false) String rawBody, HttpServletRequest request) {
+        Map<String, String> headers = collectHeaders(request);
+
+        String handshake = messageInboundUseCase.handshake(channelCode, headers, rawBody);
+
+        if (handshake != null) {
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(handshake);
+        }
+
+        Operator011 operator = Operator011Resolver.resolve(request);
+        String operatorId = operator == null ? null : operator.id();
+        String responseBody = messageInboundUseCase.receive(operatorId, channelCode, headers, rawBody).responseBody();
+
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(responseBody == null ? "{}" : responseBody);
     }
 
     /**
