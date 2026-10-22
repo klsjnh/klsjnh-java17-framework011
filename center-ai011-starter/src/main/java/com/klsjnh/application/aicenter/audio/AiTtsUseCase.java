@@ -22,6 +22,7 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.audio.AiAudioPermissionCodes011;
 import com.klsjnh.domain.aicenter.audio.AiTtsPort;
 import com.klsjnh.domain.aicenter.audio.AiTtsRequest;
@@ -67,19 +68,26 @@ public class AiTtsUseCase {
     private final AuthorizationPort authorizationPort;
 
     /**
+     * Provider rate / concurrency guard.
+     */
+    private final AiRateLimiterPort rateLimiter;
+
+    /**
      * Create the use case.
      *
      * @param resolver           provider resolver
      * @param registry           capability registry
      * @param mediaStore         media store
      * @param authorizationPort  authorization port
+     * @param rateLimiter        provider rate limiter
      */
     public AiTtsUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore,
-            AuthorizationPort authorizationPort) {
+            AuthorizationPort authorizationPort, AiRateLimiterPort rateLimiter) {
         this.resolver = resolver;
         this.registry = registry;
         this.mediaStore = mediaStore;
         this.authorizationPort = authorizationPort;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -128,7 +136,11 @@ public class AiTtsUseCase {
                         model, target.returnType()),
                 input, voice, instruction, speed, volume, format, sampleRate);
 
-        AiMedia media = port.synthesize(request);
+        AiMedia media;
+
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(provider.providerCode(), api.apiCode(), model)) {
+            media = port.synthesize(request);
+        }
 
         return mediaStore.save(media, location);
     }

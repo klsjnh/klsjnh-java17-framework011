@@ -23,6 +23,7 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.inference.AiChatContentPart;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
@@ -82,6 +83,11 @@ public class AiInferenceUseCase {
     private final KrtAiConfig011 config;
 
     /**
+     * Provider rate / concurrency guard.
+     */
+    private final AiRateLimiterPort rateLimiter;
+
+    /**
      * Create the use case.
      *
      * @param resolver           provider resolver
@@ -89,14 +95,16 @@ public class AiInferenceUseCase {
      * @param userAuditPort      user audit port
      * @param authorizationPort  authorization port
      * @param config             ai-center config
+     * @param rateLimiter        provider rate limiter
      */
     public AiInferenceUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, UserAuditPort userAuditPort,
-            AuthorizationPort authorizationPort, KrtAiConfig011 config) {
+            AuthorizationPort authorizationPort, KrtAiConfig011 config, AiRateLimiterPort rateLimiter) {
         this.resolver = resolver;
         this.registry = registry;
         this.userAuditPort = userAuditPort;
         this.authorizationPort = authorizationPort;
         this.config = config;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -133,8 +141,12 @@ public class AiInferenceUseCase {
         AiInferencePort port = requireInferencePort(provider);
         AiInferenceOptions resolved = resolveOptions(provider, options, false);
         validateContent(messages);
-        AiInferenceResult result = port.chat(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), model, messages,
-                temperature, maxTokens, resolved));
+        AiInferenceResult result;
+
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(provider.providerCode(), api.apiCode(), model)) {
+            result = port.chat(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), model, messages,
+                    temperature, maxTokens, resolved));
+        }
 
         audit(provider.providerCode(), api.apiCode(), model, result);
 
@@ -180,9 +192,15 @@ public class AiInferenceUseCase {
         validateContent(messages);
 
         audit(provider.providerCode(), api.apiCode(), model, null);
+        AiRateLimiterPort.Permit permit = rateLimiter.acquire(provider.providerCode(), api.apiCode(), model);
 
-        return port.stream(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), model, messages, temperature,
-                maxTokens, resolved));
+        try {
+            return port.stream(new AiInferenceCommand(provider.baseUrl(), api.apiKey(), model, messages, temperature,
+                    maxTokens, resolved)).onClose(permit::close);
+        } catch (RuntimeException ex) {
+            permit.close();
+            throw ex;
+        }
     }
 
     /**

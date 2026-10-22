@@ -19,6 +19,7 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.file.AiFileCommand;
 import com.klsjnh.domain.aicenter.file.AiFileListCommand;
@@ -67,19 +68,26 @@ public class AiFileUseCase {
     private final KrtAiConfig011 config;
 
     /**
+     * Provider rate / concurrency guard.
+     */
+    private final AiRateLimiterPort rateLimiter;
+
+    /**
      * Create the use case.
      *
      * @param resolver          provider resolver
      * @param registry          capability registry
      * @param authorizationPort authorization port
      * @param config            ai-center config
+     * @param rateLimiter       provider rate limiter
      */
     public AiFileUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry,
-            AuthorizationPort authorizationPort, KrtAiConfig011 config) {
+            AuthorizationPort authorizationPort, KrtAiConfig011 config, AiRateLimiterPort rateLimiter) {
         this.resolver = resolver;
         this.registry = registry;
         this.authorizationPort = authorizationPort;
         this.config = config;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -112,8 +120,12 @@ public class AiFileUseCase {
 
         Resolved resolved = resolve(operatorId, target, AiFilePermissionCodes011.UPLOAD);
 
-        return resolved.port().upload(new AiFileUploadCommand(resolved.provider().baseUrl(), resolved.apiKey(),
-                resolved.provider().providerCode(), fileName, hasBytes ? bytes : null, hasUrl ? url : null, purpose));
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(resolved.provider().providerCode(),
+                null, null)) {
+            return resolved.port().upload(new AiFileUploadCommand(resolved.provider().baseUrl(), resolved.apiKey(),
+                    resolved.provider().providerCode(), fileName, hasBytes ? bytes : null, hasUrl ? url : null,
+                    purpose));
+        }
     }
 
     /**
@@ -128,7 +140,9 @@ public class AiFileUseCase {
         Resolved resolved = resolve(operatorId, target, AiFilePermissionCodes011.SELECT);
         requireFileId(fileId);
 
-        return resolved.port().get(command(resolved, fileId));
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(resolved.provider().providerCode(), null, null)) {
+            return resolved.port().get(command(resolved, fileId));
+        }
     }
 
     /**
@@ -142,8 +156,10 @@ public class AiFileUseCase {
     public List<AiFileRef> list(String operatorId, AiInvokeTarget target, AiFilePurpose purpose) {
         Resolved resolved = resolve(operatorId, target, AiFilePermissionCodes011.SELECT);
 
-        return resolved.port().list(new AiFileListCommand(resolved.provider().baseUrl(), resolved.apiKey(),
-                resolved.provider().providerCode(), purpose));
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(resolved.provider().providerCode(), null, null)) {
+            return resolved.port().list(new AiFileListCommand(resolved.provider().baseUrl(), resolved.apiKey(),
+                    resolved.provider().providerCode(), purpose));
+        }
     }
 
     /**
@@ -156,7 +172,9 @@ public class AiFileUseCase {
     public void delete(String operatorId, AiInvokeTarget target, String fileId) {
         Resolved resolved = resolve(operatorId, target, AiFilePermissionCodes011.DELETE);
         requireFileId(fileId);
-        resolved.port().delete(command(resolved, fileId));
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(resolved.provider().providerCode(), null, null)) {
+            resolved.port().delete(command(resolved, fileId));
+        }
     }
 
     /**
@@ -171,7 +189,9 @@ public class AiFileUseCase {
         Resolved resolved = resolve(operatorId, target, AiFilePermissionCodes011.CONTENT);
         requireFileId(fileId);
 
-        return resolved.port().content(command(resolved, fileId));
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(resolved.provider().providerCode(), null, null)) {
+            return resolved.port().content(command(resolved, fileId));
+        }
     }
 
     /**

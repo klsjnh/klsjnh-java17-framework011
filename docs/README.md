@@ -79,7 +79,8 @@
 | 031 | 在用 | requirement013 数据源中心；[011.persistence-spec](infrastructure011/011.persistence-spec/011.topic-design.md) |
 | 032 | 在用 | requirement011/032 平台导入 |
 | 033 | 在用 | infrastructure011/033 机密加密存储（SecretCipher）；权限 → 013.access-center/016 |
+| 035 | 在用 | [requirement013/035](requirement013/035.topic-ai-rate-limit.md) AI 中心 Provider 限流与并发 |
 
 > 历史占用号不回收。本表仅登记**现行**用途。
 
-**下一可用编号：035。**（034 含 4 跳过；044/046/048/049 含 4，跳过）
+**下一可用编号：036。**（034 含 4 跳过；044/046/048/049 含 4，跳过）

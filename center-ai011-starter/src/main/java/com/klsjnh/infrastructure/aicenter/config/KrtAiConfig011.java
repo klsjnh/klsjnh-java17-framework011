@@ -22,7 +22,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AI-center framework config bound to the {@code krt.ai-center.*} keys:
@@ -56,6 +58,11 @@ public class KrtAiConfig011 {
      * Provider file asset guards (krt.ai-center.file.*).
      */
     private FileConfig file = new FileConfig();
+
+    /**
+     * Provider rate / concurrency guards (krt.ai-center.rate-limit.*).
+     */
+    private RateLimitConfig rateLimit = new RateLimitConfig();
 
     /**
      * Generated media settings (krt.ai-center.media.*).
@@ -94,6 +101,55 @@ public class KrtAiConfig011 {
          * (krt.ai-center.file.max-upload-bytes).
          */
         private long maxUploadBytes = 64L * 1024 * 1024;
+    }
+
+    /**
+     * Provider rate / concurrency guards.
+     */
+    @Data
+    public static class RateLimitConfig {
+
+        /**
+         * Enable the in-process rate limiter (krt.ai-center.rate-limit.enabled).
+         */
+        private boolean enabled = true;
+
+        /**
+         * Defaults for providers without an explicit entry.
+         */
+        private ProviderLimit defaults = new ProviderLimit();
+
+        /**
+         * Per-provider overrides (provider code -> limit).
+         */
+        private Map<String, ProviderLimit> providers = new LinkedHashMap<>();
+    }
+
+    /**
+     * One provider's rate / concurrency limit. Zero disables that dimension.
+     */
+    @Data
+    public static class ProviderLimit {
+
+        /**
+         * Minimum interval between two request starts in milliseconds.
+         */
+        private long minIntervalMs = 0;
+
+        /**
+         * Max in-flight requests; 0 = unlimited.
+         */
+        private int maxConcurrent = 0;
+
+        /**
+         * Max queue wait in milliseconds; 0 = fail immediately when limited.
+         */
+        private long maxWaitMs = 10000;
+
+        /**
+         * Limit scope: provider / api / model.
+         */
+        private String scope = "provider";
     }
 
     /**

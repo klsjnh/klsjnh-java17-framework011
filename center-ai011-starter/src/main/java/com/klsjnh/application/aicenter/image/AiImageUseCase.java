@@ -22,6 +22,7 @@ import com.klsjnh.common.util.StringUtil011;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.capability.AiMedia;
 import com.klsjnh.domain.aicenter.image.AiImagePermissionCodes011;
@@ -68,19 +69,26 @@ public class AiImageUseCase {
     private final AuthorizationPort authorizationPort;
 
     /**
+     * Provider rate / concurrency guard.
+     */
+    private final AiRateLimiterPort rateLimiter;
+
+    /**
      * Create the use case.
      *
      * @param resolver           provider resolver
      * @param registry           capability registry
      * @param mediaStore         media store
      * @param authorizationPort  authorization port
+     * @param rateLimiter        provider rate limiter
      */
     public AiImageUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry, AiMediaStorePort mediaStore,
-            AuthorizationPort authorizationPort) {
+            AuthorizationPort authorizationPort, AiRateLimiterPort rateLimiter) {
         this.resolver = resolver;
         this.registry = registry;
         this.mediaStore = mediaStore;
         this.authorizationPort = authorizationPort;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -129,7 +137,11 @@ public class AiImageUseCase {
                 resolvedTarget(target, provider, model), prompt, size, steps, seed, guidanceScale, negativePrompt,
                 imageUrl, imageBytes);
 
-        AiMedia media = port.generate(request);
+        AiMedia media;
+
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(provider.providerCode(), api.apiCode(), model)) {
+            media = port.generate(request);
+        }
 
         return mediaStore.save(media, location);
     }

@@ -66,6 +66,16 @@ public class BusinessException extends RuntimeException {
     }
 
     /**
+     * Build a 429 business exception.
+     *
+     * @param message client-safe message
+     * @return exception instance
+     */
+    public static BusinessException tooManyRequests(String message) {
+        return new BusinessException(HttpCodeEnum011.TOO_MANY_REQUESTS, message);
+    }
+
+    /**
      * Build a 403 business exception.
      *
      * @param message client-safe message

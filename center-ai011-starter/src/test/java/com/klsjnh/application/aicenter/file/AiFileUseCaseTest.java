@@ -18,6 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.file.AiFilePort;
 import com.klsjnh.domain.aicenter.file.AiFilePurpose;
@@ -72,7 +73,9 @@ class AiFileUseCaseTest {
         when(port.upload(any())).thenReturn(new AiFileRef("stepfun", "file_1", "a.pdf", 3, "file-extract",
                 "processed", 1L));
 
-        useCase = new AiFileUseCase(resolver, registry, authorizationPort, new KrtAiConfig011());
+        AiRateLimiterPort rateLimiter = mock(AiRateLimiterPort.class);
+        when(rateLimiter.acquire(any(), any(), any())).thenReturn(AiRateLimiterPort.noop());
+        useCase = new AiFileUseCase(resolver, registry, authorizationPort, new KrtAiConfig011(), rateLimiter);
         target = new AiInvokeTarget("stepfun", null, null, null, null, null);
     }
 

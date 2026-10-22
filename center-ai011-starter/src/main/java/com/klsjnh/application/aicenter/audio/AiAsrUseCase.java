@@ -19,6 +19,7 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.audio.AiAsrPort;
 import com.klsjnh.domain.aicenter.audio.AiAsrRequest;
 import com.klsjnh.domain.aicenter.audio.AiAsrResult;
@@ -55,17 +56,24 @@ public class AiAsrUseCase {
     private final AuthorizationPort authorizationPort;
 
     /**
+     * Provider rate / concurrency guard.
+     */
+    private final AiRateLimiterPort rateLimiter;
+
+    /**
      * Create the use case.
      *
      * @param resolver           provider resolver
      * @param registry           capability registry
      * @param authorizationPort  authorization port
+     * @param rateLimiter        provider rate limiter
      */
     public AiAsrUseCase(AiProviderResolver resolver, AiCapabilityRegistry registry,
-            AuthorizationPort authorizationPort) {
+            AuthorizationPort authorizationPort, AiRateLimiterPort rateLimiter) {
         this.resolver = resolver;
         this.registry = registry;
         this.authorizationPort = authorizationPort;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -105,6 +113,8 @@ public class AiAsrUseCase {
                         model, target.returnType()),
                 audio, audioUrl, format, language);
 
-        return port.recognize(request);
+        try (AiRateLimiterPort.Permit ignored = rateLimiter.acquire(provider.providerCode(), api.apiCode(), model)) {
+            return port.recognize(request);
+        }
     }
 }

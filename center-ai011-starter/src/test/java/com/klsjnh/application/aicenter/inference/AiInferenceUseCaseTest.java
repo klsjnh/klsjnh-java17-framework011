@@ -18,6 +18,7 @@ import com.klsjnh.common.exception.BusinessException;
 
 import com.klsjnh.application.aicenter.AiCapabilityRegistry;
 import com.klsjnh.application.aicenter.AiProviderResolver;
+import com.klsjnh.application.aicenter.ratelimit.AiRateLimiterPort;
 import com.klsjnh.domain.aicenter.capability.AiInvokeTarget;
 import com.klsjnh.domain.aicenter.inference.AiChatContentPart;
 import com.klsjnh.domain.aicenter.inference.AiChatMessage;
@@ -104,8 +105,10 @@ class AiInferenceUseCaseTest {
         when(registry.inferencePort("p1")).thenReturn(port);
         when(port.chat(any())).thenReturn(new AiInferenceResult("ok", "stop", 1, 1, 2));
 
+        AiRateLimiterPort rateLimiter = mock(AiRateLimiterPort.class);
+        when(rateLimiter.acquire(any(), any(), any())).thenReturn(AiRateLimiterPort.noop());
         useCase = new AiInferenceUseCase(resolver, registry, mock(UserAuditPort.class), mock(AuthorizationPort.class),
-                config);
+                config, rateLimiter);
 
         target = new AiInvokeTarget("p1", null, null, null, "m1", null);
     }

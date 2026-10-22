@@ -41,6 +41,9 @@ public enum HttpCodeEnum011 {
     /** Resource or endpoint does not exist. */
     NOT_FOUND(404, "not found"),
 
+    /** Rate limit / concurrency guard reached; retry later. */
+    TOO_MANY_REQUESTS(429, "too many requests"),
+
     /** Unexpected server-side failure. */
     ERROR(500, "internal server error");
 
