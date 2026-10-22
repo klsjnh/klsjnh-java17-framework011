@@ -33,6 +33,9 @@ public final class AiCapabilityCodes {
     /** Speech recognition. */
     public static final String ASR = "asr";
 
+    /** Provider file assets (upload / list / get / delete / content). */
+    public static final String FILE = "file";
+
     private AiCapabilityCodes() {
     }
 }

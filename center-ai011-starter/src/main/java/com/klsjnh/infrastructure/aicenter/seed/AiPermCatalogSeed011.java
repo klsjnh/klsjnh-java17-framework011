@@ -61,6 +61,7 @@ public class AiPermCatalogSeed011 {
         seedInference();
         seedImage();
         seedAudio();
+        seedFile();
         logger.info("ai center perm catalog seed ready");
     }
 
@@ -112,6 +113,17 @@ public class AiPermCatalogSeed011 {
         ensureObject("aiAudio", "AI语音", "aicenter", 14);
         ensureAction("aiAudio", "synthesize", "合成", "aicenter:aiAudio:synthesize", 1);
         ensureAction("aiAudio", "recognize", "识别", "aicenter:aiAudio:recognize", 2);
+    }
+
+    /**
+     * Seed aiFile object and actions.
+     */
+    private void seedFile() {
+        ensureObject("aiFile", "AI厂商文件", "aicenter", 15);
+        ensureAction("aiFile", "upload", "上传", "aicenter:aiFile:upload", 1);
+        ensureAction("aiFile", "select", "查看", "aicenter:aiFile:select", 2);
+        ensureAction("aiFile", "download", "下载", "aicenter:aiFile:download", 3);
+        ensureAction("aiFile", "delete", "删除", "aicenter:aiFile:delete", 4);
     }
 
     /**

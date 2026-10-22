@@ -14,6 +14,7 @@ package com.klsjnh.common.util;
  *      2026.09.19  add binary GET and multipart upload
  *      2026.09.26  outbound url guard + response size cap + no redirects
  *      2026.10.22  shared upstream status classification (auth / 413 / 429 / 5xx)
+ *      2026.10.22  DELETE for provider resource cleanup
  *
  */
 
@@ -190,6 +191,21 @@ public final class HttpUtil011 {
     }
 
     /**
+     * HTTP GET with extra headers and an explicit timeout.
+     *
+     * @param url     request url
+     * @param headers extra headers, nullable
+     * @param timeout read timeout
+     * @return response
+     * @throws IOException          on transport failure
+     * @throws InterruptedException when the call is interrupted
+     */
+    public static HttpResponse011 get(String url, Map<String, String> headers, Duration timeout)
+            throws IOException, InterruptedException {
+        return send(builder(url, headers, timeout).GET().build());
+    }
+
+    /**
      * HTTP GET returning status and body as bytes (media download).
      *
      * @param url request url
@@ -282,6 +298,21 @@ public final class HttpUtil011 {
                 .POST(HttpRequest.BodyPublishers.ofString(json == null ? "" : json, StandardCharsets.UTF_8));
 
         return send(builder.build());
+    }
+
+    /**
+     * HTTP DELETE with extra headers.
+     *
+     * @param url     request url
+     * @param headers extra headers, nullable
+     * @param timeout read timeout
+     * @return response
+     * @throws IOException          on transport failure
+     * @throws InterruptedException when the call is interrupted
+     */
+    public static HttpResponse011 delete(String url, Map<String, String> headers, Duration timeout)
+            throws IOException, InterruptedException {
+        return send(builder(url, headers, timeout).DELETE().build());
     }
 
     /**

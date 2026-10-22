@@ -53,6 +53,11 @@ public class KrtAiConfig011 {
     private InferenceConfig inference = new InferenceConfig();
 
     /**
+     * Provider file asset guards (krt.ai-center.file.*).
+     */
+    private FileConfig file = new FileConfig();
+
+    /**
      * Generated media settings (krt.ai-center.media.*).
      */
     private MediaConfig media = new MediaConfig();
@@ -76,6 +81,19 @@ public class KrtAiConfig011 {
          * vendor extension is never sent — requesting it fails fast.
          */
         private List<String> reasoningEffortProviders = new ArrayList<>();
+    }
+
+    /**
+     * Provider file asset guards.
+     */
+    @Data
+    public static class FileConfig {
+
+        /**
+         * Max bytes accepted for one provider file upload
+         * (krt.ai-center.file.max-upload-bytes).
+         */
+        private long maxUploadBytes = 64L * 1024 * 1024;
     }
 
     /**

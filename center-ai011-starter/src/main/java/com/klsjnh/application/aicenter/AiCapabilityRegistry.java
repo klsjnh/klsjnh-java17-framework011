@@ -19,6 +19,7 @@ import com.klsjnh.domain.aicenter.audio.AiAsrPort;
 import com.klsjnh.domain.aicenter.audio.AiTtsPort;
 import com.klsjnh.domain.aicenter.capability.AiCapabilityCodes;
 import com.klsjnh.domain.aicenter.capability.AiCapabilityPort;
+import com.klsjnh.domain.aicenter.file.AiFilePort;
 import com.klsjnh.domain.aicenter.image.AiImagePort;
 import com.klsjnh.domain.aicenter.inference.AiInferencePort;
 
@@ -119,5 +120,15 @@ public class AiCapabilityRegistry {
      */
     public AiAsrPort asrPort(String providerCode) {
         return (AiAsrPort) port(AiCapabilityCodes.ASR, providerCode);
+    }
+
+    /**
+     * Resolve the file port for a provider code.
+     *
+     * @param providerCode provider code
+     * @return port or null when unsupported
+     */
+    public AiFilePort filePort(String providerCode) {
+        return (AiFilePort) port(AiCapabilityCodes.FILE, providerCode);
     }
 }
