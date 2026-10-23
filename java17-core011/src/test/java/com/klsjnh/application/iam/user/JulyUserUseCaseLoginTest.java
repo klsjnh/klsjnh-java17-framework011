@@ -136,4 +136,23 @@ class JulyUserUseCaseLoginTest {
 
         assertThrows(BusinessException.class, () -> useCase.loginByUserName("demo", "127.0.0.1"));
     }
+
+    /**
+     * Debug / development: a missing test account still gets a valid virtual
+     * token, so an empty dev database does not block the first login.
+     */
+    @Test
+    void loginByUserNameMissingAccountIssuesVirtualTokenOutsideProduction() {
+        when(runtimeStatusPort.allowsPasswordlessLogin()).thenReturn(true);
+        when(repository.findByAccount("ghost")).thenReturn(null);
+        when(authTokenPort.issue("dev011", "ghost", 0)).thenReturn("virtual-token");
+
+        LoginResult result = useCase.loginByUserName("ghost", "127.0.0.1");
+
+        assertEquals("virtual-token", result.token());
+        assertEquals("ghost", result.userAccount());
+        assertEquals("dev011", result.userName());
+        assertEquals(List.of(), result.roles());
+        verify(authTokenPort).issue("dev011", "ghost", 0);
+    }
 }

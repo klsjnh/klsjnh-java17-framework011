@@ -17,6 +17,7 @@ package com.klsjnh.web.iam.access.controller;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.iam.access.perm.JulyPermCatalogUseCase;
+import com.klsjnh.domain.iam.auth.PermissionCheckContext011;
 import com.klsjnh.domain.iam.perm.JulyPermAction;
 import com.klsjnh.domain.iam.perm.JulyPermObject;
 
@@ -64,6 +65,7 @@ public class JulyPermCatalogController {
     @Operation(summary = "权限对象列表")
     public Response011<List<Map<String, Object>>> selectObjects() {
         String funcName = "select objects";
+        PermissionCheckContext011.markChecked();
         List<Map<String, Object>> rows = catalogUseCase.listObjects().stream().map(this::toObjectMap).toList();
 
         return Response011.success(funcName, rows);
@@ -79,6 +81,7 @@ public class JulyPermCatalogController {
     @Operation(summary = "对象下动作列表")
     public Response011<List<Map<String, Object>>> selectActions(@RequestParam("objectCode") String objectCode) {
         String funcName = "select actions";
+        PermissionCheckContext011.markChecked();
         List<Map<String, Object>> rows = catalogUseCase.listActions(objectCode).stream().map(this::toActionMap)
                 .toList();
 

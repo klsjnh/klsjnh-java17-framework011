@@ -83,19 +83,21 @@ class PermissionWhitelistGate011Test {
     }
 
     /**
-     * GET and select/get-class path actions stay temporarily opt-in.
+     * Reads are checked in production too; only logout and preflight are exempt.
      */
     @Test
-    void readLikeStaysOptInTemporarily() {
-        assertFalse(PermissionWhitelistGate011.requiresCheckedPermission("GET",
+    void readsRequireCheckedPermissionInProduction() {
+        assertTrue(PermissionWhitelistGate011.requiresCheckedPermission("GET",
                 "/klsjnh/iam/julyUser/v1/getById"));
-        assertFalse(PermissionWhitelistGate011.requiresCheckedPermission("POST",
+        assertTrue(PermissionWhitelistGate011.requiresCheckedPermission("POST",
                 "/klsjnh/iam/julyUser/v1/selectListByPage"));
         assertFalse(PermissionWhitelistGate011.requiresCheckedPermission("POST",
                 "/klsjnh/iam/julyUser/v1/logout"));
-        assertFalse(PermissionWhitelistGate011.shouldDenyUnchecked(true, "GET",
+        assertFalse(PermissionWhitelistGate011.requiresCheckedPermission("OPTIONS",
+                "/klsjnh/iam/julyUser/v1/getById"));
+        assertTrue(PermissionWhitelistGate011.shouldDenyUnchecked(true, "GET",
                 "/klsjnh/iam/julyUser/v1/getById", false));
-        assertFalse(PermissionWhitelistGate011.shouldDenyUnchecked(true, "POST",
+        assertTrue(PermissionWhitelistGate011.shouldDenyUnchecked(true, "POST",
                 "/klsjnh/iam/julyUser/v1/selectListByPage", false));
     }
 

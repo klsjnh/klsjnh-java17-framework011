@@ -50,8 +50,8 @@ public interface RuntimeStatusPort {
      * Whether permission PEP is active (production whitelist): unchecked
      * mutating requests on protected paths are denied, and
      * {@link AuthorizationPort#assertHas} / {@code has} perform real checks.
-     * Debug returns false — assertHas is a no-op only in debug; development
-     * runs real checks without the post-hoc whitelist gate.
+     * Debug and development return false — assertHas is a no-op outside
+     * production.
      *
      * @return true when {@code krt.status} is production (and access center present)
      */

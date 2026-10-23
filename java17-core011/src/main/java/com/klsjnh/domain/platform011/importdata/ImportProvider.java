@@ -33,6 +33,15 @@ public interface ImportProvider {
     String objectCode();
 
     /**
+     * Permission module code of this object (first segment of the import
+     * permission, e.g. {@code system011} for
+     * {@code system011:julyDictionary:import}).
+     *
+     * @return module code, never blank
+     */
+    String moduleCode();
+
+    /**
      * Expected sheets and column headers for decoding.
      *
      * @return sheet specs

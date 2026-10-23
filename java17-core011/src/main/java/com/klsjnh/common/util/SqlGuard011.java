@@ -75,6 +75,21 @@ public final class SqlGuard011 {
      */
     private static final Pattern LEADING_COPY = Pattern.compile("^\\s*copy\\b", Pattern.CASE_INSENSITIVE);
 
+    /**
+     * Time / lock functions that let a caller turn a query into a DoS vector.
+     */
+    private static final Pattern FORBIDDEN_FUNCTIONS = Pattern.compile(
+            "\\b(sleep|benchmark|pg_sleep|waitfor|get_lock|release_lock)\\b", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Framework credential / tenant control tables that the dynamic SQL
+     * endpoint must never read or write.
+     */
+    private static final Pattern FORBIDDEN_TABLES = Pattern.compile(
+            "\\b(july_user|july_user_role|july_role_permissions|july_ai_model_provider"
+                    + "|july_ai_model_provider_api|july_datasource|july_message_outbound_channel"
+                    + "|july_message_inbound_channel|july_storage_provider)\\b", Pattern.CASE_INSENSITIVE);
+
     private SqlGuard011() {
     }
 
@@ -122,6 +137,8 @@ public final class SqlGuard011 {
         if (LEADING_COPY.matcher(trimmed).find()) {
             throw BusinessException.badRequest("sql must not be a COPY statement");
         }
+
+        assertNoDosOrSensitiveTable(trimmed);
     }
 
     /**
@@ -154,6 +171,23 @@ public final class SqlGuard011 {
 
         if (FORBIDDEN_SERVER_ACCESS.matcher(trimmed).find()) {
             throw BusinessException.badRequest("sql contains a forbidden server-access keyword");
+        }
+
+        assertNoDosOrSensitiveTable(trimmed);
+    }
+
+    /**
+     * Reject time/lock functions and framework credential tables.
+     *
+     * @param sql trimmed statement
+     */
+    private static void assertNoDosOrSensitiveTable(String sql) {
+        if (FORBIDDEN_FUNCTIONS.matcher(sql).find()) {
+            throw BusinessException.badRequest("sql contains a forbidden time/lock function");
+        }
+
+        if (FORBIDDEN_TABLES.matcher(sql).find()) {
+            throw BusinessException.badRequest("sql must not access framework credential tables");
         }
     }
 }

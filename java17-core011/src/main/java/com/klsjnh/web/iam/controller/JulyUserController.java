@@ -260,6 +260,26 @@ public class JulyUserController {
     }
 
     /**
+     * Passwordless login via GET (debug / development runtime modes), so a
+     * browser or script can obtain a token with a single URL.
+     *
+     * @param userAccount login account, defaults to {@code klsjnh}
+     * @param request     http request (client IP for the audit)
+     * @return login session with the signed token
+     */
+    @GetMapping("/loginByUserName")
+    @Operation(summary = "免密登录 GET（仅 debug / development 运行态）")
+    public Response011<JulyUserSessionVo011> loginByUserNameGet(
+            @RequestParam(value = "userAccount", defaultValue = "klsjnh") String userAccount,
+            HttpServletRequest request) {
+        String funcName = "login by user name";
+
+        LoginResult result = julyUserUseCase.loginByUserName(userAccount, ClientIp011Resolver.resolve(request));
+
+        return Response011.success(funcName, toSession(result));
+    }
+
+    /**
      * Change the password of the current operator (old password verified).
      *
      * @param vo      change request

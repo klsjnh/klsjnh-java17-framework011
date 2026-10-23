@@ -16,6 +16,8 @@ package com.klsjnh.web.global;
  *
  */
 
+import com.klsjnh.common.constant.FrameConst011;
+
 import com.klsjnh.domain.iam.auth.AuthTokenPort;
 import com.klsjnh.domain.iam.auth.RuntimeStatusPort;
 
@@ -173,13 +175,13 @@ class GlobalAuthFilterWhitelistTest {
     }
 
     /**
-     * Debug: an anonymous write-class request on a protected path is answered
-     * 401 (H1) — debug no longer opens writes to the world.
+     * Debug: an anonymous write-class request passes and gets the virtual dev
+     * operator.
      *
      * @throws Exception servlet failure
      */
     @Test
-    void debugAnonymousWriteRequiresToken() throws Exception {
+    void debugAnonymousWritePassesWithVirtualOperator() throws Exception {
         when(runtimeStatusPort.isProduction()).thenReturn(false);
         when(runtimeStatusPort.isDebug()).thenReturn(true);
 
@@ -189,8 +191,10 @@ class GlobalAuthFilterWhitelistTest {
 
         filter.doFilter(request, response, chain);
 
-        assertEquals(401, response.getStatus());
-        verify(chain, never()).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+        assertEquals("dev011", request.getAttribute(FrameConst011.OPERATOR_ID));
+        assertEquals("klsjnh", request.getAttribute(FrameConst011.OPERATOR_ACCOUNT));
+        verify(chain).doFilter(request, response);
     }
 
     /**

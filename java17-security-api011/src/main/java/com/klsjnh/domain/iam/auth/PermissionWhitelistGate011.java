@@ -17,11 +17,10 @@ package com.klsjnh.domain.iam.auth;
 /**
  * Pure decision helper for production permission whitelist enforcement.
  * <p>
- * When {@code krt.status=production}, mutating requests under {@code /klsjnh/**}
- * must have called {@code assertHas} (or equivalent) during the request;
- * otherwise the filter answers 403. Safe HTTP methods and temporary
- * select/get-class path actions stay opt-in so a single cutover does not
- * fail-close every list endpoint that uses POST.
+ * When {@code krt.status=production}, every request under {@code /klsjnh/**}
+ * (reads included) must have called {@code assertHas} (or equivalent) during
+ * the request; otherwise the filter answers 403. Only preflight / head /
+ * trace and logout are exempt.
  * </p>
  */
 
@@ -70,11 +69,12 @@ public final class PermissionWhitelistGate011 {
             return false;
         }
 
-        if (isSafeHttpMethod(method)) {
+        if ("OPTIONS".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method)
+                || "TRACE".equalsIgnoreCase(method)) {
             return false;
         }
 
-        return !isTemporarilyOptInAction(normalizedUri);
+        return !"logout".equals(lastPathSegment(normalizedUri));
     }
 
     /**

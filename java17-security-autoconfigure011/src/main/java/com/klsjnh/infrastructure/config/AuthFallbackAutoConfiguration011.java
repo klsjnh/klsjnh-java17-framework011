@@ -36,15 +36,15 @@ import org.springframework.context.annotation.Bean;
  * only candidate. Two ports can never coexist.
  * </p>
  * <p>
- * The bean is additionally gated by the explicit {@code
- * krt.security.permissive=true} opt-in, and {@link PermissiveAuthorizationPort}
- * refuses to start outside debug — so a user-only assembly fails closed instead
- * of silently allowing every permission check.
+ * The bean is enabled by default outside production ({@code matchIfMissing =
+ * true}); {@link PermissiveAuthorizationPort} refuses to start in production —
+ * so a user-only assembly still fails closed instead of silently allowing every
+ * permission check.
  * </p>
  */
 
 @AutoConfiguration(afterName = "com.klsjnh.enabled.AccessCenterAutoConfiguration011")
-@ConditionalOnProperty(name = "krt.security.permissive", havingValue = "true")
+@ConditionalOnProperty(name = "krt.security.permissive", havingValue = "true", matchIfMissing = true)
 public class AuthFallbackAutoConfiguration011 {
 
     /**

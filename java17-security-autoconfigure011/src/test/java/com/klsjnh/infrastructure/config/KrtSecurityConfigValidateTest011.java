@@ -18,6 +18,9 @@ package com.klsjnh.infrastructure.config;
 import com.klsjnh.common.enums.FrameworkStatus011;
 import com.klsjnh.common.util.OutboundUrlGuard011;
 
+import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.env.Environment;
 
 import org.junit.jupiter.api.AfterEach;
@@ -26,7 +29,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -166,6 +171,41 @@ class KrtSecurityConfigValidateTest011 {
     }
 
     /**
+     * Development boots without any JWT / crypto config: allow-insecure
+     * defaults to true and the built-in development keys are filled in.
+     */
+    @Test
+    void developmentAutoFillsBlankSecrets() {
+        when(environment.getActiveProfiles()).thenReturn(new String[] { "development" });
+        KrtSecurityConfig011 config = new KrtSecurityConfig011(environment);
+        config.setStatus(FrameworkStatus011.DEVELOPMENT);
+
+        assertTrue(config.isAllowInsecureStatus());
+        assertDoesNotThrow(config::validate);
+        assertTrue(config.getJwt().getSecret() != null && !config.getJwt().getSecret().isBlank());
+        assertTrue(config.getCrypto().getMasterKey() != null
+                && config.getCrypto().getMasterKey().length() >= 32);
+    }
+
+    /**
+     * Spring configuration-properties binding accepts the tolerant
+     * {@code debug*} prefix instead of calling {@code Enum.valueOf}.
+     */
+    @Test
+    void bindsDebugPrefixedStatus() {
+        assertBinds("debug011", FrameworkStatus011.DEBUG);
+    }
+
+    /**
+     * Spring configuration-properties binding accepts the tolerant
+     * {@code dev*} prefix instead of calling {@code Enum.valueOf}.
+     */
+    @Test
+    void bindsDevelopmentPrefixedStatus() {
+        assertBinds("dev011", FrameworkStatus011.DEVELOPMENT);
+    }
+
+    /**
      * production must reject allow-private outbound.
      */
     @Test
@@ -176,6 +216,24 @@ class KrtSecurityConfigValidateTest011 {
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, config::validate);
         assertTrue(ex.getMessage() != null && ex.getMessage().contains("allow-private"));
+    }
+
+    /**
+     * Boot a minimal context with the real configuration-properties binder and
+     * the framework status converter.
+     *
+     * @param rawStatus raw {@code krt.status} value
+     * @param expected  expected resolved status
+     */
+    private static void assertBinds(String rawStatus, FrameworkStatus011 expected) {
+        new ApplicationContextRunner()
+                .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class))
+                .withUserConfiguration(KrtSecurityConfig011.class, FrameworkStatus011Converter011.class)
+                .withPropertyValues("krt.status=" + rawStatus)
+                .run(context -> {
+                    assertNull(context.getStartupFailure());
+                    assertEquals(expected, context.getBean(KrtSecurityConfig011.class).getStatus());
+                });
     }
 
     /**

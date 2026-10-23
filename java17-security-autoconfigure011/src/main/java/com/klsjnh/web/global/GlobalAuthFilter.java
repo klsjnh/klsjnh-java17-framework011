@@ -114,7 +114,7 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
      * Path prefixes that never require a token (error page, LB probe).
      */
     private static final List<String> WHITELIST_PREFIXES = List.of(
-            "/favicon.ico", "/error", "/klsjnh/open/", "/actuator/health");
+            "/favicon.ico", "/error", "/actuator/health");
 
     /**
      * Token port (verify only; issuing stays in the login flow).
@@ -259,13 +259,11 @@ public class GlobalAuthFilter extends OncePerRequestFilter {
                     writeUnauthorized(request, response);
                     return;
                 }
-                // Debug relaxes the token gate for reads only: an anonymous
-                // write-class request on a protected path still needs a valid
-                // token (same rule as the production permission whitelist).
-                if (PermissionWhitelistGate011.requiresCheckedPermission(request.getMethod(), uri)) {
-                    writeUnauthorized(request, response);
-                    return;
-                }
+                // DEBUG is fully open: inject the virtual dev operator so
+                // authenticated() checks, audit fill and write paths work
+                // without a token. A real token still wins when present.
+                request.setAttribute(FrameConst011.OPERATOR_ID, "dev011");
+                request.setAttribute(FrameConst011.OPERATOR_ACCOUNT, "klsjnh");
             }
 
             filterChain.doFilter(request, response);

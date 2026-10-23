@@ -44,7 +44,7 @@ web ──► application ──► domain ◄── infrastructure
 | java17-data-mybatis011-starter | 数据启动 | Druid + JDBC 驱动（mysql/oracle/sqlserver runtime）· 动态数据源 kernel 执行器（池 / 路由 / 方言 SPI 4+4 / 探针）· **框架 Mapper 自动装配**（AutoConfiguration.imports，消费方只声明自己的 @MapperScan） |
 | center-datasource011-starter | **数据源中心** | july_datasource 管理面 + JulySql 查询/执行 HTTP（selectByPage / execute 分权限码）+ Sync（july_sync_rule / S1 引擎）；**kernel 端口契约留 core**；池/路由实现留 data-mybatis |
 | center-storage011-starter | 存储 | **完整存储中心**：管理面（provider 实例 / 桶 / 对象 / 在线编辑）+ local011 + minio011 适配器（运行时按 `krt.storage-center.default-type` 选择；厂商走 SPI）；**object 端口契约留 core** |
-| center-access011-starter | **访问中心** | 组织 / 角色 / 菜单 / 权限目录 / `AuthorizationPort` 实现 / 生产写白名单门闸标记；**用户 CRUD + 登录留 core** |
+| center-access011-starter | **访问中心** | 组织 / 角色 / 菜单 / 权限目录 / `AuthorizationPort` 实现 / 生产读写白名单门闸；**用户 CRUD + 登录留 core** |
 | center-platform011-starter | **平台中心** | 字典 julyDictionary + 系统配置 julyConfig 管理面；**不引则无字典/配置 API**；导出导入备份内核仍在 core |
 | java17-scheduler-quartz011-starter | 调度（**非「调度中心」**） | **完整 julyScheduler** 主子表：管理面 CRUD/启停 + 执行审计 `july_scheduler_audit`（链接列 **`pk_mt`**）+ Quartz（RAMJobStore）+ Handler 注册表 + 启动重注册；不引则无 start；**无独立开启注解，随 `@EnablePlatform011Center` 的 system011 扫描装配**（只引 jar 不启 platform 中心则调度不装配） |
 | center-message011-starter | 消息 | **完整消息中心**：出入两套（渠道 / 模板 / 消息）管理面 + 内置渠道 inapp / webhook（厂商渠道 SPI 扩展；入站 Processor 按 bot/实例装配 + 媒体下载端口） |
@@ -88,7 +88,7 @@ web ──► application ──► domain ◄── infrastructure
      java17-scheduler-quartz011-starter / java17-observability011-starter -->
 ```
 
-不引的 starter 整个中心不存在（端点 404、代码不在 classpath）；缺安全链拒绝启动。**不引 `center-access011-starter` 时**：无组织/角色/菜单/权限目录管理面，且 `AuthorizationPort` 缺失——须显式 `krt.security.permissive=true`（**仅 debug 态可用**）否则容器拒绝启动。**不引 `center-platform011-starter` 时**：无字典/系统配置管理面（调度 starter 也随之不装配）。**不引 `center-datasource011-starter` 时**：无 `/klsjnh/datasource/**` 管理面 / Sql HTTP / Sync；kernel（`SqlRoutingPort` 等）仍可由 `java17-data-mybatis011-starter` 提供。完整四步 + 必选/可选表 + demo 照抄入口：**[docs/020.business-project-quickstart.md](docs/020.business-project-quickstart.md)**；活示例（兄弟工程，仓库外）：最小登录 + `july_demo011` CRUD **`java17-demo011-app011`**（库 `july_demo011core`，11161）+ 全量 CRUD/调度 **`java17-demo013-app013`**（见 020 §3.5）。
+不引的 starter 整个中心不存在（端点 404、代码不在 classpath）；缺安全链拒绝启动。**不引 `center-access011-starter` 时**：无组织/角色/菜单/权限目录管理面，自动装配 `PermissiveAuthorizationPort` 兜底（`krt.security.permissive` 缺省即生效）——**非生产放行，production 启动失败**（fail-closed）。**不引 `center-platform011-starter` 时**：无字典/系统配置管理面（调度 starter 也随之不装配）。**不引 `center-datasource011-starter` 时**：无 `/klsjnh/datasource/**` 管理面 / Sql HTTP / Sync；kernel（`SqlRoutingPort` 等）仍可由 `java17-data-mybatis011-starter` 提供。完整四步 + 必选/可选表 + demo 照抄入口：**[docs/020.business-project-quickstart.md](docs/020.business-project-quickstart.md)**；活示例（兄弟工程，仓库外）：最小登录 + `july_demo011` CRUD **`java17-demo011-app011`**（库 `july_demo011core`，11161）+ 全量 CRUD/调度 **`java17-demo013-app013`**（见 020 §3.5）。
 
 ## 快速开始
 
@@ -102,7 +102,7 @@ mvn -o clean package -DskipTests          # 离线构建，产出 java17-app011 
 
 > **结构性改动后**（模块边界 / 装配 / 契约）：按 [029 金标准协议](docs/infrastructure011/029.topic-golden-verification.md) 跑 G1–G8 全量回归，并建议 **G9a**（`tools/demo011-dual-mode-smoke.sh`：`MODE=dev` + `MODE=prod` 均 EXIT=0，jar :11161）与 **G9b**（demo013 调度 + `selectExecListByPage` 用 **`pkMt`/`pk_mt`**）。
 
-> 说明：`application.yml` 默认 `spring.profiles.active=development`；入库的 `application-development.yml` 默认 `krt.status: development`（需 token + 真实权限校验；`KRT_STATUS=debug` 才放开读类，写类仍需 token——**勿当生产契约**）。数据源与 dev 用 krt 落 development yml；本机差异走忽略的 `application-local.yml`（**fat jar 已 excludes local/production**，见 [015.topic-config](docs/infrastructure011/015.topic-config.md)）。
+> 说明：`application.yml` 默认 `spring.profiles.active=development`；入库的 `application-development.yml` 默认 `krt.status: development`（需 token，但 GET/POST `loginByUserName` 可免密拿 token；RBAC no-op）。`KRT_STATUS=debug` 进入 **全开放调试态**（免 token，自动虚拟操作人 `dev011`）；`production` 才启用真实 RBAC + 读写白名单、禁用免密登录、文档 404、`errorMessage` 恒空。**勿把 debug/development 当生产契约**。数据源与 dev 用 krt 落 development yml；本机差异走忽略的 `application-local.yml`（**fat jar 已 excludes local/production**，见 [015.topic-config](docs/infrastructure011/015.topic-config.md)）。
 
 ## 部署（Docker）
 
@@ -121,7 +121,7 @@ bash docs/deploy/deploy.sh                # 默认 mount → 备 runtime + 打�
 
 `statusCode` · `message` · `errorMessage` · `timestamp` · `traceId` · `data`
 
-- `statusCode` 与 HTTP 传输状态码保持一致；`errorMessage` **仅 debug 态填充**
+- `statusCode` 与 HTTP 传输状态码保持一致；`errorMessage` **仅非 production（debug / development）填充**，production 恒为 `""`
 - 状态码常量：SUCCESS(200) / BAD_REQUEST(400) / UNAUTHORIZED(401) / FORBIDDEN(403) / NOT_FOUND(404) / ERROR(500)
 - 关键约定：点查 `getByXxx` 用 GET；写动作 POST；单个/批量删除分离；入参一律具名 `*Vo011`；敏感字段类型层剔除
 - 已知缺口与自检清单：[docs/019.backend-api-review.md](docs/019.backend-api-review.md)；完整契约：[docs/013.api-contract.md](docs/013.api-contract.md)

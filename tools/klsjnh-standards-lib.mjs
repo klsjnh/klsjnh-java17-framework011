@@ -720,12 +720,19 @@ const SELECT_READ_PATTERN = /^select[A-Z]\w*$|^select$/;
 const SAFE_GET_PATTERN = /^(stat|download|read|presign)[A-Z]\w*$/;
 
 /**
+ * Actions intentionally exposed as both GET and POST (passwordless login is
+ * safe to call from a browser address bar in dev/debug, while existing
+ * scripts still POST the account).
+ */
+const GET_OR_POST_ACTIONS = new Set(['loginByUserName']);
+
+/**
  * Known write-purpose action names (documentation / clarity). Unknown actions
  * that are not point/select/safe-get also require @PostMapping (016 §6.2).
  */
 const WRITE_ACTIONS = new Set([
   'insert', 'update', 'upsert', 'logicDelete', 'logicDeleteBatch', 'delete', 'deleteBatch',
-  'assignRoles', 'assignMenus', 'resetPassword', 'changePassword', 'login', 'loginByUserName',
+  'assignRoles', 'assignMenus', 'resetPassword', 'changePassword', 'login',
   'logout', 'start', 'stop', 'runOnce', 'export',
 ]);
 
@@ -797,6 +804,9 @@ export function testApiUrlStandards(path, content, violations) {
   while ((match = mappingPattern.exec(content)) !== null) {
     const action = extractAction(match[1]);
     if (!action) {
+      continue;
+    }
+    if (GET_OR_POST_ACTIONS.has(action)) {
       continue;
     }
     const httpMethod = extractHttpMethod(match[0]);

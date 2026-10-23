@@ -77,6 +77,16 @@ public class JulyDictionaryImportProvider implements ImportProvider {
     }
 
     /**
+     * Permission module code.
+     *
+     * @return system011
+     */
+    @Override
+    public String moduleCode() {
+        return "system011";
+    }
+
+    /**
      * Sheet specs.
      *
      * @return master + children

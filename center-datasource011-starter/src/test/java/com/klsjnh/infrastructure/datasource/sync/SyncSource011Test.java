@@ -100,10 +100,10 @@ class SyncSource011Test {
      */
     @Test
     void sqlEndpointPassesReadOnlySelect() {
-        when(sqlRoutingPort.selectListByPage("dsA", "SELECT id FROM july_user", null, 1, 500))
+        when(sqlRoutingPort.selectListByPage("dsA", "SELECT id FROM demo_table", null, 1, 500))
                 .thenReturn(new PageResult011<>(1, 500, 0, 0, List.of()));
 
-        List<Map<String, Object>> rows = source.readPage(new Endpoint("dsA", "sql", "SELECT id FROM july_user"), 500,
+        List<Map<String, Object>> rows = source.readPage(new Endpoint("dsA", "sql", "SELECT id FROM demo_table"), 500,
                 1);
 
         assertEquals(0, rows.size());

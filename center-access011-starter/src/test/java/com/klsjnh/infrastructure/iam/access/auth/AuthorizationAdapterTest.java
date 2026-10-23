@@ -92,7 +92,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void builtinRoleBypassesAllCodes() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
         when(userRoleRepository.findRoleIds("u-super")).thenReturn(List.of("r-builtin"));
         when(roleRepository.findById("r-builtin")).thenReturn(
                 JulyRole.createBuiltin(EntityId.of("r-builtin"), "role_super_admin", "超管", null, AuditInfo.empty()));
@@ -107,7 +107,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void backupOnlyCannotSelect() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
         when(userRoleRepository.findRoleIds("u-backup")).thenReturn(List.of("r-backup"));
         when(roleRepository.findById("r-backup")).thenReturn(
                 JulyRole.create(EntityId.of("r-backup"), "role_backup_admin", "备份", null, AuditInfo.empty()));
@@ -126,7 +126,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void selectOnlyCannotDelete() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
         when(userRoleRepository.findRoleIds("u-user")).thenReturn(List.of("r-user"));
         when(roleRepository.findById("r-user")).thenReturn(
                 JulyRole.create(EntityId.of("r-user"), "role_user", "普通", null, AuditInfo.empty()));
@@ -142,7 +142,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void blankOperatorUnauthorized() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> adapter.assertHas("", JulyUserPermissionCodes011.SELECT));
         assertEquals(401, ex.getCode());
@@ -153,7 +153,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void assertHasMarksPermissionCheckContext() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
         assertFalse(PermissionCheckContext011.wasChecked());
         when(userRoleRepository.findRoleIds("u-super")).thenReturn(List.of("r-builtin"));
         when(roleRepository.findById("r-builtin")).thenReturn(
@@ -164,17 +164,14 @@ class AuthorizationAdapterTest {
     }
 
     /**
-     * Development (non-debug) runs the real catalog check: a roleless operator
-     * is denied (403) instead of silently allowed.
+     * Development is a permissive non-production mode: assertHas is a no-op.
      */
     @Test
-    void developmentAssertHasDeniesRolelessOperator() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
-        when(userRoleRepository.findRoleIds("u-norole")).thenReturn(List.of());
+    void developmentAssertHasIsNoOp() {
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
 
-        BusinessException ex = assertThrows(BusinessException.class,
-                () -> adapter.assertHas("u-norole", JulyUserPermissionCodes011.SELECT));
-        assertEquals(403, ex.getCode());
+        assertDoesNotThrow(() -> adapter.assertHas("u-norole", JulyUserPermissionCodes011.SELECT));
+        assertTrue(PermissionCheckContext011.wasChecked());
     }
 
     /**
@@ -182,7 +179,7 @@ class AuthorizationAdapterTest {
      */
     @Test
     void debugAssertHasIsNoOp() {
-        when(runtimeStatusPort.isDebug()).thenReturn(true);
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
 
         assertDoesNotThrow(() -> adapter.assertHas("", JulyUserPermissionCodes011.SELECT));
         assertTrue(adapter.has("anyone", JulyUserPermissionCodes011.LOGIC_DELETE));

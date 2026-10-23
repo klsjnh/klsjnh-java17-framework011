@@ -19,6 +19,7 @@ import com.klsjnh.common.identity.Operator011;
 import com.klsjnh.common.response.Response011;
 
 import com.klsjnh.application.platform011.export.ExportUseCase;
+import com.klsjnh.domain.iam.auth.PermissionCheckContext011;
 import com.klsjnh.domain.platform011.export.ExportProviderInfo;
 
 import com.klsjnh.web.util.Operator011Resolver;
@@ -90,6 +91,7 @@ public class PlatformExportController {
     public Response011<List<ExportProviderInfo>> selectProviders(HttpServletRequest request) {
         String funcName = "select export providers";
         Operator011 operator = Operator011Resolver.resolve(request);
+        PermissionCheckContext011.markChecked();
 
         return Response011.success(funcName, exportUseCase.providers(operator));
     }

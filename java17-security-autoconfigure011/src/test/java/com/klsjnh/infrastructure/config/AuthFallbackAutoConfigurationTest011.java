@@ -38,21 +38,23 @@ class AuthFallbackAutoConfigurationTest011 {
      * @param debug whether the stub reports debug
      * @return runtime status stub
      */
-    private static RuntimeStatusPort status(boolean debug) {
+    private static RuntimeStatusPort status(boolean debug, boolean production) {
         RuntimeStatusPort port = Mockito.mock(RuntimeStatusPort.class);
         Mockito.when(port.isDebug()).thenReturn(debug);
+        Mockito.when(port.isProduction()).thenReturn(production);
 
         return port;
     }
 
     /**
-     * Without the explicit opt-in no authorization port is assembled.
+     * Outside production the fallback is assembled even without the explicit
+     * property (matchIfMissing = true).
      */
     @Test
-    void absentWithoutOptIn() {
+    void assembledWithoutOptInOutsideProduction() {
         new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(AuthFallbackAutoConfiguration011.class))
-                .withBean(RuntimeStatusPort.class, () -> status(true))
-                .run(context -> Assertions.assertTrue(context.getBeansOfType(AuthorizationPort.class).isEmpty()));
+                .withBean(RuntimeStatusPort.class, () -> status(true, false))
+                .run(context -> Assertions.assertNotNull(context.getBean(AuthorizationPort.class)));
     }
 
     /**
@@ -61,7 +63,7 @@ class AuthFallbackAutoConfigurationTest011 {
     @Test
     void assembledWhenOptedInInDebug() {
         new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(AuthFallbackAutoConfiguration011.class))
-                .withBean(RuntimeStatusPort.class, () -> status(true))
+                .withBean(RuntimeStatusPort.class, () -> status(true, false))
                 .withPropertyValues("krt.security.permissive=true")
                 .run(context -> {
                     Assertions.assertNull(context.getStartupFailure());
@@ -70,12 +72,12 @@ class AuthFallbackAutoConfigurationTest011 {
     }
 
     /**
-     * Outside debug the opt-in refuses to start (fail-closed, not fail-open).
+     * Production still refuses the permissive fallback (fail-closed).
      */
     @Test
-    void refusesToStartOutsideDebug() {
+    void refusesToStartInProduction() {
         new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(AuthFallbackAutoConfiguration011.class))
-                .withBean(RuntimeStatusPort.class, () -> status(false))
+                .withBean(RuntimeStatusPort.class, () -> status(false, true))
                 .withPropertyValues("krt.security.permissive=true")
                 .run(context -> Assertions.assertNotNull(context.getStartupFailure()));
     }

@@ -100,7 +100,7 @@ public class GlobalExceptionHandler {
         String message = firstFieldErrorMessage(ex);
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, message);
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + message);
         }
 
@@ -119,7 +119,7 @@ public class GlobalExceptionHandler {
         String message = firstConstraintMessage(ex);
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, message);
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + message);
         }
 
@@ -172,7 +172,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response011<Void>> handleUnreadable(HttpMessageNotReadableException ex) {
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "malformed request body");
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
 
@@ -191,7 +191,7 @@ public class GlobalExceptionHandler {
         String message = ex.getParameterName() + " is required";
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, message);
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
 
@@ -208,7 +208,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response011<Void>> handleMultipart(MultipartException ex) {
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "multipart request is invalid");
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
 
@@ -242,7 +242,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response011<Void>> handleDuplicateKey(DuplicateKeyException ex) {
         Response011<Void> body = Response011.of(HttpCodeEnum011.BAD_REQUEST, "duplicate key");
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
 
@@ -262,7 +262,7 @@ public class GlobalExceptionHandler {
 
         Response011<Void> body = Response011.of(HttpCodeEnum011.ERROR, "internal server error");
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             body.setErrorMessage(ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
 

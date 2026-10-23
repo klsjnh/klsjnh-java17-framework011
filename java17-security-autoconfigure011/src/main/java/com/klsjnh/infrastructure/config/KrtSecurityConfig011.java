@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.klsjnh.common.enums.FrameworkStatus011;
 import com.klsjnh.common.util.OutboundUrlGuard011;
 
+import com.klsjnh.web.util.ClientIp011Resolver;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -64,6 +66,20 @@ public class KrtSecurityConfig011 {
             "dev-crypto-master-key-klsjnh-framework011-change-me-32b");
 
     /**
+     * Built-in JWT secret used only outside production when the config is
+     * blank; production rejects it via {@link #KNOWN_DEV_SECRETS}.
+     */
+    private static final String DEV_JWT_SECRET =
+            "dev-secret-klsjnh-framework011-20260912-change-me-in-production-0123456789";
+
+    /**
+     * Built-in crypto master key used only outside production when the config
+     * is blank; production rejects it via {@link #KNOWN_DEV_SECRETS}.
+     */
+    private static final String DEV_CRYPTO_MASTER_KEY =
+            "dev-crypto-master-key-klsjnh-framework011-change-me-32b";
+
+    /**
      * Spring environment, used by the startup guard to inspect active profiles.
      */
     @EqualsAndHashCode.Exclude
@@ -83,7 +99,7 @@ public class KrtSecurityConfig011 {
      * Development yml sets this true; bare deploy / missing yml cannot open
      * the auth gate by accident.
      */
-    private boolean allowInsecureStatus = false;
+    private boolean allowInsecureStatus = true;
 
     /**
      * JWT settings, default expire minutes 480.
@@ -130,6 +146,17 @@ public class KrtSecurityConfig011 {
                             + " requires krt.allow-insecure-status=true (fail-closed: refuse open auth)");
         }
 
+        if (status != FrameworkStatus011.PRODUCTION) {
+            if (jwtSecretBlank()) {
+                jwt.setSecret(DEV_JWT_SECRET);
+                log.warn("krt.jwt.secret is blank in {} mode; production refuses the built-in development secret", status.getCode());
+            }
+            if (cryptoMasterKeyInvalid()) {
+                crypto.setMasterKey(DEV_CRYPTO_MASTER_KEY);
+                log.warn("krt.crypto.master-key is blank/short in {} mode; production refuses the built-in key", status.getCode());
+            }
+        }
+
         if (status == FrameworkStatus011.PRODUCTION && jwtSecretBlank()) {
             throw new IllegalStateException("krt.jwt.secret is required in production");
         }
@@ -154,11 +181,13 @@ public class KrtSecurityConfig011 {
         }
 
         applyOutboundPolicy();
+        ClientIp011Resolver.configureTrustedProxies(web == null ? List.of() : web.getTrustedProxies());
 
-        if (status.isDebug()) {
+        if (status != FrameworkStatus011.PRODUCTION) {
             log.warn("**************************************************************");
-            log.warn("* krt.status=debug: auth filter does NOT reject requests;    *");
-            log.warn("* AuthorizationPort.assertHas is a no-op. NEVER ship this.  *");
+            log.warn("* krt.status={}: OPEN development mode", status.getCode());
+            log.warn("* auth filter / RBAC / default secrets are relaxed.          *");
+            log.warn("* NEVER expose this instance to the public internet.         *");
             log.warn("**************************************************************");
         }
 

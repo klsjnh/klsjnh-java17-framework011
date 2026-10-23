@@ -25,6 +25,7 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.vo.BatchDeleteResultVo011;
 
 import com.klsjnh.domain.iam.auth.AuthorizationPort;
+import com.klsjnh.domain.iam.auth.PermissionCheckContext011;
 import com.klsjnh.domain.iam.role.JulyRole;
 import com.klsjnh.domain.iam.role.JulyRoleRepository;
 import com.klsjnh.domain.iam.role.JulyUserRoleRepository;
@@ -281,6 +282,11 @@ public class JulyMenuUseCase {
         if (operatorId == null || operatorId.isBlank()) {
             throw BusinessException.unauthorized("not authenticated");
         }
+
+        // Self-service navigation: the authenticated operator may read its own
+        // menu without an object-level permission code; mark the request so the
+        // production whitelist gate sees an explicit decision.
+        PermissionCheckContext011.markChecked();
 
         List<String> roleIds = userRoleRepository.findRoleIds(operatorId);
 

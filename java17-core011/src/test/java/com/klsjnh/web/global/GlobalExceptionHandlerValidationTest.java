@@ -61,7 +61,7 @@ class GlobalExceptionHandlerValidationTest {
      */
     @Test
     void methodArgumentNotValidMapsToBadRequestEnvelope() throws Exception {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
 
         BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "vo");
         bindingResult.addError(new FieldError("vo", "code", "code is required"));
@@ -80,7 +80,7 @@ class GlobalExceptionHandlerValidationTest {
      */
     @Test
     void missingRequestParameterMapsToBadRequestEnvelope() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
 
         MissingServletRequestParameterException ex = new MissingServletRequestParameterException("objectName",
                 "String");
@@ -96,7 +96,7 @@ class GlobalExceptionHandlerValidationTest {
      */
     @Test
     void multipartExceptionMapsToBadRequestEnvelope() {
-        when(runtimeStatusPort.isDebug()).thenReturn(false);
+        when(runtimeStatusPort.isProduction()).thenReturn(true);
 
         MultipartException ex = new MultipartException("no multipart boundary");
 
@@ -113,7 +113,7 @@ class GlobalExceptionHandlerValidationTest {
      */
     @Test
     void debugModeExposesErrorMessage() throws Exception {
-        when(runtimeStatusPort.isDebug()).thenReturn(true);
+        when(runtimeStatusPort.isProduction()).thenReturn(false);
 
         BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "vo");
         bindingResult.addError(new FieldError("vo", "code", "code is required"));

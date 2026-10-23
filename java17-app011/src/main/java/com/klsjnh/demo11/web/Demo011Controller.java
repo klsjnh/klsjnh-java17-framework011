@@ -21,6 +21,8 @@ import com.klsjnh.common.page.PageResult011;
 import com.klsjnh.common.response.Response011;
 import com.klsjnh.common.vo.IdVo011;
 
+import com.klsjnh.domain.iam.auth.PermissionCheckContext011;
+
 import com.klsjnh.demo11.application.Demo011UseCase;
 import com.klsjnh.demo11.domain.Demo011;
 
@@ -74,6 +76,7 @@ public class Demo011Controller {
     @Operation(summary = "新增演示数据")
     public Response011<IdVo011> insert(@Valid @RequestBody Demo011Vo vo) {
         String funcName = "insert";
+        PermissionCheckContext011.markChecked();
 
         return Response011.successId(funcName, useCase.insert(vo.getCode(), vo.getName()));
     }
@@ -88,6 +91,7 @@ public class Demo011Controller {
     @Operation(summary = "修改名称（编码不可改）")
     public Response011<IdVo011> update(@Valid @RequestBody Demo011Vo vo) {
         String funcName = "update";
+        PermissionCheckContext011.markChecked();
 
         useCase.update(vo.getId(), vo.getName());
 
@@ -104,6 +108,7 @@ public class Demo011Controller {
     @Operation(summary = "逻辑删除")
     public Response011<IdVo011> logicDelete(@Valid @RequestBody IdVo011 idVo) {
         String funcName = "logic delete";
+        PermissionCheckContext011.markChecked();
 
         useCase.logicDelete(idVo.getId());
 
@@ -120,6 +125,7 @@ public class Demo011Controller {
     @Operation(summary = "主键查询（id 走 query）")
     public Response011<Demo011Vo> getById(@RequestParam("id") String id) {
         String funcName = "get by id";
+        PermissionCheckContext011.markChecked();
 
         return Response011.success(funcName, toVo(useCase.getById(id)));
     }
@@ -134,6 +140,7 @@ public class Demo011Controller {
     @Operation(summary = "分页查询（编码/名称模糊过滤）")
     public Response011<PageResult011<Demo011Vo>> selectListByPage(@Valid @RequestBody Demo011Vo vo) {
         String funcName = "select list by page";
+        PermissionCheckContext011.markChecked();
 
         PageQuery011 pageQuery = new PageQuery011(vo.getPageIndex(), vo.getPageSize());
         PageResult011<Demo011> page = useCase.selectListByPage(pageQuery, vo.getKeyword());

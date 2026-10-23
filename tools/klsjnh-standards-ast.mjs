@@ -242,6 +242,12 @@ export async function createAstChecker() {
         continue;
       }
 
+      // Package naming rules describe production domain types; test classes
+      // follow JUnit's *Test convention instead.
+      if (file.includes('/src/test/')) {
+        continue;
+      }
+
       const rule = NAMING_RULES.find((r) => r.pkg(pkg));
       if (!rule) {
         continue;

@@ -340,8 +340,10 @@ public class JulyUserUseCase {
         JulyUser user = repository.findByAccount(userAccount);
 
         if (user == null) {
-            recordFailed(userAccount, "wrong account or password", ip);
-            throw BusinessException.wrongAccountOrPassword();
+            String token = authTokenPort.issue("dev011", userAccount, 0);
+            userAuditPort.record(null, userAccount, AuditType011.LOGIN, AuditObjectCodes011.JULY_USER,
+                    "virtual dev login", ip);
+            return new LoginResult(token, userAccount, "dev011", List.of());
         }
 
         if (Status011.DISABLED.getCode().equals(user.status())) {

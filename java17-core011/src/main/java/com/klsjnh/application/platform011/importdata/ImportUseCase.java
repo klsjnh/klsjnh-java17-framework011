@@ -21,6 +21,7 @@ import com.klsjnh.common.enums.AuditType011;
 import com.klsjnh.common.exception.BusinessException;
 import com.klsjnh.common.identity.Operator011;
 
+import com.klsjnh.domain.iam.auth.AuthorizationPort;
 import com.klsjnh.domain.iam.user.UserAuditPort;
 import com.klsjnh.domain.platform011.export.ExportSheetSpec;
 import com.klsjnh.domain.platform011.export.XlsxWorkbookPort;
@@ -69,17 +70,24 @@ public class ImportUseCase {
     private final UserAuditPort userAuditPort;
 
     /**
+     * Authorization port.
+     */
+    private final AuthorizationPort authorizationPort;
+
+    /**
      * Create the use case.
      *
      * @param registry          import provider registry
      * @param xlsxWorkbookPort  xlsx port
      * @param userAuditPort     audit port
+     * @param authorizationPort authorization port
      */
     public ImportUseCase(ImportProviderRegistry registry, XlsxWorkbookPort xlsxWorkbookPort,
-            UserAuditPort userAuditPort) {
+            UserAuditPort userAuditPort, AuthorizationPort authorizationPort) {
         this.registry = registry;
         this.xlsxWorkbookPort = xlsxWorkbookPort;
         this.userAuditPort = userAuditPort;
+        this.authorizationPort = authorizationPort;
     }
 
     /**
@@ -102,6 +110,9 @@ public class ImportUseCase {
         if (provider == null) {
             throw BusinessException.badRequest(funcName + ": unknown import object " + objectCode);
         }
+
+        authorizationPort.assertHas(operator.id(),
+                provider.moduleCode() + ":" + provider.objectCode() + ":import");
 
         List<ExportSheetSpec> specs = provider.sheetSpecs();
         ImportBundle bundle = xlsxWorkbookPort.read(objectCode, bytes, specs);

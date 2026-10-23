@@ -19,31 +19,30 @@ import java.util.Locale;
 /**
  * Runtime mode of the framework, bound to {@code krt.status}.
  * <p>
- * Gates the auth filter: {@code DEBUG} accepts anonymous read-class requests
- * (write-class requests still need a valid token), {@code DEVELOPMENT}
- * requires a valid token and allows passwordless login, {@code PRODUCTION}
- * requires a valid token. A missing value resolves to {@code PRODUCTION} — a
- * missing config must never open the gate.
+ * Gates the auth filter: {@code DEBUG} is fully open (no token, virtual
+ * operator {@code dev011}), {@code DEVELOPMENT} requires a valid token but
+ * allows passwordless login, {@code PRODUCTION} requires a valid token and
+ * disables passwordless login. A missing value resolves to
+ * {@code PRODUCTION} — a missing config must never open the gate.
  * </p>
  * <p>
- * Also selects the permission PEP posture: {@code DEVELOPMENT} and
- * {@code PRODUCTION} run real {@code assertHas}/{@code has} checks
- * (development mirrors production so permission bugs surface before
- * shipping); {@code PRODUCTION} additionally enables the write whitelist
- * gate. {@code DEBUG} keeps the checks no-op (local integration is not
- * blocked). See IAM dynamic-permission docs.
+ * Also selects the permission PEP posture: {@code DEBUG} and
+ * {@code DEVELOPMENT} keep {@code assertHas}/{@code has} no-op so local
+ * integration and role-less development are not blocked; {@code PRODUCTION}
+ * runs real checks and enables the read/write whitelist gate. See IAM
+ * dynamic-permission docs.
  * </p>
  */
 
 public enum FrameworkStatus011 {
 
-    /** Anonymous read-class requests pass; write-class requests need a token; best-effort parses a token for the audit operator. */
+    /** Fully open: all requests pass; anonymous callers get the virtual dev011 operator. */
     DEBUG("debug"),
 
-    /** Token verified; real permission checks; login checks configured user list by username only. */
+    /** Token verified; passwordless GET/POST login enabled; permission checks are no-op. */
     DEVELOPMENT("development"),
 
-    /** Token verified; login checks database with bcrypt. */
+    /** Token verified; passwordless login disabled; real RBAC + read/write whitelist gate. */
     PRODUCTION("production");
 
     /**
@@ -83,10 +82,16 @@ public enum FrameworkStatus011 {
 
         String v = value.trim().toLowerCase(Locale.ROOT);
 
-        for (FrameworkStatus011 status : values()) {
-            if (status.code.equals(v)) {
-                return status;
-            }
+        if ("production".equals(v) || "prod".equals(v)) {
+            return PRODUCTION;
+        }
+
+        if (v.equals("debug") || v.startsWith("debug")) {
+            return DEBUG;
+        }
+
+        if (v.equals("development") || v.equals("dev") || v.startsWith("dev")) {
+            return DEVELOPMENT;
         }
 
         throw new IllegalArgumentException("unknown krt.status: " + value);
@@ -121,9 +126,9 @@ public enum FrameworkStatus011 {
 
     /**
      * Whether permission enforcement is whitelist (deny-by-default for
-     * unchecked mutating requests on protected paths). Bound to production
-     * status only; debug keeps {@code assertHas} a no-op, development runs
-     * real checks without the post-hoc whitelist gate.
+     * unchecked requests on protected paths, reads included). Bound to
+     * production status only; debug and development keep {@code assertHas} a
+     * no-op.
      *
      * @return true for {@code PRODUCTION}
      */

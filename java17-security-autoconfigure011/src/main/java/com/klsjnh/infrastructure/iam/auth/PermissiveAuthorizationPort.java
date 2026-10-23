@@ -38,13 +38,13 @@ import java.util.Set;
 public class PermissiveAuthorizationPort implements AuthorizationPort {
 
     /**
-     * Create the fallback port; refuse to start outside debug.
+     * Create the fallback port; refuse to start in production.
      *
      * @param runtimeStatusPort runtime status port
      */
     public PermissiveAuthorizationPort(RuntimeStatusPort runtimeStatusPort) {
-        if (!runtimeStatusPort.isDebug()) {
-            throw new IllegalStateException("krt.security.permissive=true is debug-only; "
+        if (runtimeStatusPort.isProduction()) {
+            throw new IllegalStateException("krt.security.permissive=true is not allowed in production; "
                     + "add center-access011-starter instead of running without authorization");
         }
     }

@@ -12,7 +12,7 @@ package com.klsjnh.infrastructure.iam.access.auth;
  *
  *      2026.09.24  authorization adapter (user roles to permission codes)
  *      2026.09.26  assertHas / has no-op when not production whitelist
- *      2026.10.05  real checks in development too (only debug stays permissive)
+ *      2026.10.23  non-production (debug / development) permission checks are no-op
  *
  */
 
@@ -138,7 +138,7 @@ public class AuthorizationAdapter implements AuthorizationPort {
      */
     @Override
     public boolean has(String operatorId, String permissionCode) {
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             return true;
         }
 
@@ -160,7 +160,7 @@ public class AuthorizationAdapter implements AuthorizationPort {
 
         PermissionCheckContext011.markChecked();
 
-        if (runtimeStatusPort.isDebug()) {
+        if (!runtimeStatusPort.isProduction()) {
             return;
         }
 

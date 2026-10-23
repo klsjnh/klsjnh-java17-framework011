@@ -33,7 +33,7 @@ class SqlGuard011Test {
      */
     @Test
     void plainSelectPasses() {
-        assertDoesNotThrow(() -> SqlGuard011.assertReadOnly("SELECT id, name FROM july_user WHERE id = ?"));
+        assertDoesNotThrow(() -> SqlGuard011.assertReadOnly("SELECT id, name FROM demo_table WHERE id = ?"));
     }
 
     /**
@@ -115,9 +115,9 @@ class SqlGuard011Test {
      */
     @Test
     void plainExecutePasses() {
-        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("UPDATE july_user SET name = 'n' WHERE id = 1"));
+        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("UPDATE demo_table SET name = 'n' WHERE id = 1"));
 
-        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("CREATE INDEX idx_name ON july_user (name)"));
+        assertDoesNotThrow(() -> SqlGuard011.assertExecutable("CREATE INDEX idx_name ON demo_table (name)"));
 
         assertDoesNotThrow(() -> SqlGuard011.assertExecutable("insert into t (id) values (1)"));
     }
@@ -127,6 +127,27 @@ class SqlGuard011Test {
      */
     @Test
     void keywordLikeIdentifierPasses() {
-        assertDoesNotThrow(() -> SqlGuard011.assertReadOnly("SELECT created_at FROM july_user"));
+        assertDoesNotThrow(() -> SqlGuard011.assertReadOnly("SELECT created_at FROM demo_table"));
+    }
+
+    /**
+     * Slow / lock functions are rejected.
+     */
+    @Test
+    void timeAndLockFunctionsAreRejected() {
+        assertThrows(BusinessException.class, () -> SqlGuard011.assertReadOnly("SELECT SLEEP(10)"));
+        assertThrows(BusinessException.class, () -> SqlGuard011.assertReadOnly("SELECT BENCHMARK(1000000, MD5('x'))"));
+        assertThrows(BusinessException.class, () -> SqlGuard011.assertReadOnly("SELECT pg_sleep(10)"));
+    }
+
+    /**
+     * Framework credential tables are rejected on both paths.
+     */
+    @Test
+    void credentialTablesAreRejected() {
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertReadOnly("SELECT * FROM july_user"));
+        assertThrows(BusinessException.class,
+                () -> SqlGuard011.assertExecutable("UPDATE july_ai_model_provider_api SET api_key = 'x'"));
     }
 }
